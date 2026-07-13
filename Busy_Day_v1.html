@@ -1,0 +1,4315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Busy Day at the Viv</title>
+<style>
+  :root {
+    --bg0: #08111f;
+    --bg1: #0d1a2f;
+    --bg2: #12233c;
+    --panel: rgba(10,18,31,0.82);
+    --panel-strong: rgba(8,14,24,0.92);
+    --line: rgba(160, 198, 225, 0.18);
+    --line-strong: rgba(160, 198, 225, 0.34);
+    --text: #eef6ff;
+    --muted: #b9c8d9;
+    --teal: #67d9cd;
+    --amber: #f1b95a;
+    --danger: #ff7272;
+    --gold: #e8d08a;
+    --success: #8ce7a6;
+    --shadow: 0 18px 42px rgba(0,0,0,0.32);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top, rgba(92,150,187,0.14), transparent 36%),
+      linear-gradient(180deg, #102340 0%, #08101d 100%);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  body {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+  #app {
+    position: relative;
+    width: min(100vw, 760px);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(12,24,42,0.96), rgba(6,12,22,0.98));
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 30px 80px rgba(0,0,0,0.45);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+  }
+  .hidden { display: none !important; }
+  .glass {
+    background: linear-gradient(180deg, rgba(16,29,49,0.88), rgba(7,14,25,0.92));
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  #titleScreen {
+    padding: calc(16px + var(--safe-top)) calc(14px + var(--safe-right)) calc(18px + var(--safe-bottom)) calc(14px + var(--safe-left));
+    overflow: auto;
+    background:
+      radial-gradient(circle at 20% 16%, rgba(100,217,205,0.12), transparent 35%),
+      radial-gradient(circle at 78% 4%, rgba(241,185,90,0.12), transparent 28%),
+      linear-gradient(180deg, rgba(10,22,40,0.86), rgba(4,8,15,0.96));
+  }
+  #titleCard {
+    margin: auto;
+    width: min(100%, 660px);
+    border-radius: 28px;
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+  }
+  .titleHero {
+    border-radius: 24px;
+    padding: 18px;
+    background:
+      linear-gradient(145deg, rgba(17,36,62,0.96), rgba(9,17,31,0.95)),
+      linear-gradient(90deg, rgba(103,217,205,0.12), rgba(232,208,138,0.09));
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .titleHero::before,
+  .titleHero::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(24px);
+    opacity: 0.52;
+    pointer-events: none;
+  }
+  .titleHero::before {
+    width: 180px;
+    height: 180px;
+    right: -48px;
+    top: -50px;
+    background: rgba(103,217,205,0.20);
+  }
+  .titleHero::after {
+    width: 160px;
+    height: 160px;
+    left: -50px;
+    bottom: -70px;
+    background: rgba(241,185,90,0.18);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(32px, 7vw, 54px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+  }
+  .subtitle {
+    margin-top: 8px;
+    color: #d8e8fa;
+    font-size: clamp(15px, 3.2vw, 20px);
+    max-width: 26ch;
+  }
+  .flavor {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 60ch;
+  }
+  .pillRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .pill {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #dce7f1;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 620px) {
+    .grid2 { grid-template-columns: 1.12fr 0.88fr; }
+  }
+  .panel {
+    border-radius: 22px;
+    padding: 16px;
+  }
+  .sectionTitle {
+    font-size: 13px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #b6cadc;
+    margin-bottom: 10px;
+  }
+  .characterGrid {
+    display: grid;
+    gap: 12px;
+  }
+  .characterCard {
+    position: relative;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.035);
+    cursor: pointer;
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    user-select: none;
+  }
+  .characterCard.selected {
+    border-color: rgba(103,217,205,0.58);
+    background: linear-gradient(180deg, rgba(103,217,205,0.12), rgba(255,255,255,0.04));
+    transform: translateY(-1px);
+  }
+  .characterNameRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .characterName {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .roleTag {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: #e6edf6;
+    border: 1px solid rgba(255,255,255,0.08);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .statMini {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .statMini b {
+    display: block;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .ctaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  button {
+    appearance: none;
+    border: 0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    color: var(--text);
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    background: linear-gradient(180deg, #1b385c, #122540);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  button.primary {
+    background: linear-gradient(180deg, #20b9a7, #157d7f);
+    color: #f5fffe;
+  }
+  button.gold {
+    background: linear-gradient(180deg, #d8bb74, #8b6e2f);
+    color: #fff8e4;
+  }
+  button.warn {
+    background: linear-gradient(180deg, #91595a, #5b2b30);
+  }
+  button:active { transform: translateY(1px) scale(0.99); }
+  .smallBtn { padding: 10px 12px; border-radius: 12px; font-size: 14px; }
+  .aheadList {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .aheadList li + li { margin-top: 6px; }
+  .saveLine {
+    font-size: 13px;
+    color: #cfe1f2;
+    opacity: 0.9;
+  }
+
+
+  #hud {
+    position: absolute;
+    left: calc(10px + var(--safe-left));
+    right: calc(10px + var(--safe-right));
+    top: calc(8px + var(--safe-top));
+    display: grid;
+    gap: 10px;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .hudRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1.26fr) minmax(126px, 0.78fr);
+    gap: 10px;
+    align-items: stretch;
+  }
+  .hudCard {
+    position: relative;
+    border-radius: 20px;
+    padding: 12px 14px;
+    background:
+      linear-gradient(180deg, rgba(11,21,37,0.92), rgba(5,11,21,0.92)),
+      radial-gradient(circle at top left, rgba(103,217,205,0.07), transparent 48%);
+    border: 1px solid rgba(177, 211, 236, 0.16);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .hudCard::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(103,217,205,0.9), rgba(103,217,205,0));
+    opacity: 0.7;
+  }
+  .statsBars {
+    display: grid;
+    gap: 10px;
+  }
+  .barLine {
+    display: grid;
+    grid-template-columns: 60px 1fr 34px;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #dce8f4;
+  }
+  .bar {
+    height: 12px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.15s ease;
+  }
+  .healthFill { background: linear-gradient(90deg, #ff9191, #df4d62); }
+  .staminaFill { background: linear-gradient(90deg, #7de6ce, #27bdbc); }
+  .stressFill { background: linear-gradient(90deg, #ffd487, #eea73a); }
+  .angerFill { background: linear-gradient(90deg, #ffd2d2, #d75050); }
+  .statTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .heroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    min-width: 0;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: #dce8f5;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .valueRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    height: 100%;
+  }
+  .valueBox {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 10px 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 58px;
+  }
+  .valueBox .label {
+    font-size: 10px;
+    color: #b7c8d9;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .valueBox .value {
+    font-weight: 800;
+    margin-top: 5px;
+    font-size: 17px;
+  }
+  .objectiveCard {
+    display: grid;
+    gap: 8px;
+    padding-right: 60px;
+  }
+  .phaseLine {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: #cfe0ee;
+  }
+  .objectiveText {
+    font-size: 14px;
+    line-height: 1.45;
+    color: #f2f8ff;
+  }
+  .subObjective {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #b7c8d9;
+  }
+
+  #toastWrap {
+    position: absolute;
+    left: calc(14px + var(--safe-left));
+    right: calc(14px + var(--safe-right));
+    bottom: calc(176px + var(--safe-bottom));
+    z-index: 7;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .toast {
+    width: min(100%, 520px);
+    background: rgba(7,13,24,0.9);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-left: 4px solid var(--teal);
+    color: #ebf6ff;
+    border-radius: 16px;
+    padding: 11px 13px;
+    box-shadow: var(--shadow);
+    animation: toastIn 0.22s ease;
+  }
+  .toast.warn { border-left-color: var(--amber); }
+  .toast.danger { border-left-color: var(--danger); }
+  .toast.gold { border-left-color: var(--gold); }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  #dialogueBox {
+    position: absolute;
+    left: calc(12px + var(--safe-left));
+    right: calc(12px + var(--safe-right));
+    bottom: calc(176px + var(--safe-bottom));
+    z-index: 8;
+    border-radius: 22px;
+    padding: 16px;
+    pointer-events: auto;
+    box-shadow: var(--shadow);
+  }
+  #dialogueBox .speaker {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+  #dialogueBox .text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #edf5ff;
+    margin-bottom: 12px;
+  }
+  .dialogueActions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  #pauseMenu,
+  #endScreen,
+  #failureScreen,
+  #levelUpBox {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    pointer-events: auto;
+    background: rgba(3,7,13,0.58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(18px + var(--safe-top)) 14px calc(18px + var(--safe-bottom));
+  }
+  .modal {
+    width: min(100%, 520px);
+    max-height: 88vh;
+    overflow: auto;
+    border-radius: 24px;
+    padding: 18px;
+  }
+  .modal h2 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .modal p {
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .rankGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .rankBox {
+    border-radius: 16px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+  }
+  .rankBox .big {
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .bonusList {
+    display: grid;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .bonusBtn {
+    width: 100%;
+    text-align: left;
+    border-radius: 16px;
+    padding: 14px;
+    background: linear-gradient(180deg, #163154, #0f2038);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .bonusBtn b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .miniNote { font-size: 12px; color: #bfd0de; }
+
+  #controls {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+  }
+  #controls::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(146px + var(--safe-bottom));
+    background: linear-gradient(180deg, rgba(4,8,15,0), rgba(4,8,15,0.24) 26%, rgba(4,8,15,0.6));
+    pointer-events: none;
+  }
+  .controlPad {
+    position: absolute;
+    bottom: calc(24px + var(--safe-bottom));
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 14px 28px rgba(0,0,0,0.25);
+    pointer-events: auto;
+    touch-action: none;
+  }
+  #joystick { left: calc(18px + var(--safe-left)); }
+  #stickKnob {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    left: 32px;
+    top: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.24), rgba(255,255,255,0.07));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.24);
+  }
+  #actionCluster {
+    position: absolute;
+    right: calc(18px + var(--safe-right));
+    bottom: calc(18px + var(--safe-bottom));
+    width: 152px;
+    height: 132px;
+    pointer-events: auto;
+  }
+  .touchBtn {
+    position: absolute;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(255,255,255,0.05));
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+    color: #ecf7ff;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: auto;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .touchBtn:active,
+  .touchBtn.active {
+    transform: scale(0.97);
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.28), rgba(255,255,255,0.08));
+  }
+  #useBtn { right: 0; bottom: 0; width: 66px; height: 66px; }
+  #dodgeBtn { left: 28px; bottom: 18px; width: 50px; height: 50px; font-size: 10px; }
+  #sprintBtn { left: 14px; top: 4px; width: 52px; height: 52px; font-size: 10px; }
+  #pauseBtn {
+    position: absolute;
+    right: calc(18px + var(--safe-right));
+    top: calc(148px + var(--safe-top));
+    z-index: 7;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    pointer-events: auto;
+    background: rgba(9,18,31,0.92);
+    border: 1px solid rgba(177, 211, 236, 0.14);
+    color: #e9f3ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+  }
+  #hintPrompt {
+    position: absolute;
+    left: 50%;
+    bottom: calc(162px + var(--safe-bottom));
+    transform: translateX(-50%);
+    z-index: 7;
+    background: rgba(6,12,21,0.84);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #eff7ff;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    text-align: center;
+    max-width: min(88%, 420px);
+  }
+  #minimapWrap {
+    position: absolute;
+    right: calc(16px + var(--safe-right));
+    bottom: calc(164px + var(--safe-bottom));
+    z-index: 5;
+    width: 92px;
+    height: 92px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(5,10,18,0.82);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow);
+    pointer-events: none;
+  }
+  #minimapLegend {
+    position: absolute;
+    left: calc(16px + var(--safe-left));
+    bottom: calc(162px + var(--safe-bottom));
+    z-index: 5;
+    max-width: min(44vw, 232px);
+    border-radius: 16px;
+    padding: 10px 12px;
+    background: rgba(6,11,20,0.78);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow);
+    font-size: 11px;
+    color: #d5e2ee;
+    pointer-events: none;
+  }
+  .legendRow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 5px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  #fpsDiag {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 50;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 6px;
+    border-radius: 8px;
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .touchBtn:hover,
+    .characterCard:hover,
+    button:hover { filter: brightness(1.06); }
+  }
+  @media (max-width: 520px) {
+    .hudRow { grid-template-columns: minmax(0, 1fr) 118px; }
+    .hudCard { padding: 11px 12px; }
+    .barLine { grid-template-columns: 52px 1fr 30px; gap: 6px; font-size: 12px; }
+    .valueBox { padding: 8px 5px; min-height: 54px; }
+    .valueBox .value { font-size: 15px; }
+    .heroBadge { font-size: 10px; padding: 7px 9px; }
+    #hud { gap: 8px; }
+    #minimapLegend { display: none !important; }
+    #dialogueBox .text { font-size: 14px; }
+    #pauseBtn { top: calc(144px + var(--safe-top)); }
+  }
+  @media (max-width: 430px), (pointer: coarse) and (max-width: 860px) {
+    .controlPad {
+      width: 124px;
+      height: 124px;
+      bottom: calc(20px + var(--safe-bottom));
+    }
+    #stickKnob {
+      width: 52px;
+      height: 52px;
+    }
+    #actionCluster {
+      right: calc(14px + var(--safe-right));
+      bottom: calc(14px + var(--safe-bottom));
+      width: 176px;
+      height: 152px;
+    }
+    #useBtn { width: 78px; height: 78px; font-size: 16px; }
+    #dodgeBtn { left: 30px; bottom: 18px; width: 58px; height: 58px; font-size: 11px; }
+    #sprintBtn { left: 14px; top: 2px; width: 60px; height: 60px; font-size: 11px; }
+    #hintPrompt { bottom: calc(188px + var(--safe-bottom)); font-size: 14px; padding: 11px 14px; }
+    #minimapWrap { width: 82px; height: 82px; bottom: calc(200px + var(--safe-bottom)); }
+  }
+  @media (max-width: 390px) {
+    .hudRow { grid-template-columns: minmax(0, 1fr) 108px; }
+    .barLine { grid-template-columns: 48px 1fr 28px; }
+    #actionCluster { right: calc(10px + var(--safe-right)); width: 170px; }
+    #joystick { left: calc(10px + var(--safe-left)); }
+    .controlPad { width: 118px; height: 118px; }
+    #stickKnob { width: 48px; height: 48px; }
+    #useBtn { width: 74px; height: 74px; }
+  }
+  @media (min-width: 760px) {
+    #hintPrompt { bottom: 164px; }
+    #dialogueBox { max-width: 620px; left: 50%; right: auto; transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="gameCanvas" width="720" height="1280" aria-label="Busy Day at the Viv game canvas"></canvas>
+
+  <div id="titleScreen" class="screen">
+    <div id="titleCard" class="glass">
+      <div class="titleHero">
+        <div class="pill">Stylized Mobile Action-RPG</div>
+        <h1>Busy Day at the Viv</h1>
+        <div class="subtitle">A heroic sprint through feed runs, cath lab prep, impossible parking, and professionally managed chaos.</div>
+        <div class="flavor">
+          The pens are loud, the schedule is slipping, the baboons need samples, Ross has seen you, and Thanh is somehow driving a tank through the precinct again. Keep the animals cared for, keep the procedures moving, survive the politics, and then make a glorious final dash to the coffee shop where Juan is waiting with your reward.
+        </div>
+        <div class="pillRow">
+          <div class="pill">Feed & sample</div>
+          <div class="pill">Carry & prep</div>
+          <div class="pill">Dodge hazards</div>
+          <div class="pill">Rearrange the car park</div>
+          <div class="pill">Earn the coffee</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel glass">
+          <div class="sectionTitle">Choose your shift lead</div>
+          <div class="characterGrid">
+            <div class="characterCard selected" data-character="mel">
+              <div class="characterNameRow">
+                <div class="characterName">Mel</div>
+                <div class="roleTag">Rapid multitasker</div>
+              </div>
+              <div class="miniNote">Fast on her feet, brilliant at juggling tasks, slightly less brute-force when heavy carrying starts.</div>
+              <div class="statsRow">
+                <div class="statMini">Move<b>High</b></div>
+                <div class="statMini">Multitask<b>High</b></div>
+                <div class="statMini">Carry<b>Light+</b></div>
+              </div>
+            </div>
+            <div class="characterCard" data-character="josh">
+              <div class="characterNameRow">
+                <div class="characterName">Josh</div>
+                <div class="roleTag">Solid procedure support</div>
+              </div>
+              <div class="miniNote">Stronger on transport and assistance work, tougher under pressure, a touch slower between crises.</div>
+              <div class="statsRow">
+                <div class="statMini">Move<b>Steady</b></div>
+                <div class="statMini">Stamina<b>High</b></div>
+                <div class="statMini">Carry<b>Strong</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel glass">
+          <div class="sectionTitle">What’s ahead today</div>
+          <ul class="aheadList">
+            <li>Morning setup and corridor prep before the facility wakes up properly.</li>
+            <li>Feed pigs, sheep, and baboons, then pull blood glucose samples before things get louder.</li>
+            <li>Help Alan and Luther get anaesthesia moving, assist prep, then transport the pig through scales to cath lab.</li>
+            <li>Handle the afternoon spillover, survive parking-gridlock diplomacy, and stop the whole place backing up.</li>
+            <li>Finish with a triumphant run out to the coffee shop, where Juan is waiting to buy you a coffee and finally admit the shift was absurd.</li>
+          </ul>
+          <div class="flavor" style="margin-top:12px;">
+            Keep the day on track, dodge the interruptions, bank XP and coins, grab minor upgrades mid-shift, and prove that heroism sometimes looks like pig transport under time pressure.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="ctaRow">
+          <button id="beginBtn" class="primary">Begin Shift</button>
+          <button id="resetProgressBtn" class="warn">Reset Progress</button>
+        </div>
+        <div id="saveLine" class="saveLine" style="margin-top:10px;">No saved shift history yet. Time to make one.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div class="hudRow">
+      <div class="hudCard">
+        <div class="statTop">
+          <div class="heroBadge"><span id="hudHero">Mel</span> · <span id="hudRole">Rapid multitasker</span></div>
+          <div class="heroBadge">Phase <span id="hudPhaseNum">1</span>/6</div>
+        </div>
+        <div class="statsBars">
+          <div class="barLine"><span>Health</span><div class="bar"><div id="healthFill" class="fill healthFill"></div></div><span id="healthValue">100</span></div>
+          <div class="barLine"><span>Stamina</span><div class="bar"><div id="staminaFill" class="fill staminaFill"></div></div><span id="staminaValue">100</span></div>
+          <div class="barLine"><span>Stress</span><div class="bar"><div id="stressFill" class="fill stressFill"></div></div><span id="stressValue">0</span></div>
+          <div class="barLine"><span>Wayne</span><div class="bar"><div id="angerFill" class="fill angerFill"></div></div><span id="angerValue">0</span></div>
+        </div>
+      </div>
+      <div class="hudCard">
+        <div class="valueRow">
+          <div class="valueBox"><div class="label">Level</div><div class="value" id="levelValue">1</div></div>
+          <div class="valueBox"><div class="label">XP</div><div class="value" id="xpValue">0</div></div>
+          <div class="valueBox"><div class="label">Coins</div><div class="value" id="coinValue">0</div></div>
+          <div class="valueBox"><div class="label">Tasks</div><div class="value" id="taskValue">0/0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="hudCard objectiveCard">
+      <div class="phaseLine"><span id="hudPhaseTitle">Morning setup</span><span id="shiftClock">06:45</span></div>
+      <div id="objectiveText" class="objectiveText">Report for the shift.</div>
+      <div id="subObjectiveText" class="subObjective">Stay moving and keep the whole day from collapsing.</div>
+    </div>
+  </div>
+
+  <div id="pauseBtn" class="hidden" title="Pause">❚❚</div>
+  <div id="hintPrompt" class="hidden">Move into range and tap USE.</div>
+
+  <div id="toastWrap"></div>
+
+  <div id="dialogueBox" class="glass hidden">
+    <div class="speaker" id="dialogueSpeaker">Speaker</div>
+    <div class="text" id="dialogueText">Dialogue text.</div>
+    <div class="dialogueActions">
+      <button id="dialogueDismiss" class="smallBtn primary">Continue</button>
+      <button id="dialogueAlt" class="smallBtn hidden">Okay</button>
+    </div>
+  </div>
+
+  <div id="pauseMenu" class="hidden">
+    <div class="modal glass">
+      <h2>Shift paused</h2>
+      <p>The animals are still judging your timing, but the day can wait for a moment.</p>
+      <div class="ctaRow">
+        <button id="resumeBtn" class="primary">Resume Shift</button>
+        <button id="restartBtn">Restart Shift</button>
+        <button id="backToTitleBtn" class="warn">Back to Title</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="endScreen" class="hidden">
+    <div class="modal glass">
+      <h2>Shift complete</h2>
+      <p id="endFlavor">Against all odds, the day stayed upright.</p>
+      <div class="rankGrid">
+        <div class="rankBox"><div class="miniNote">Performance</div><div class="big" id="endRank">A</div></div>
+        <div class="rankBox"><div class="miniNote">Coins banked</div><div class="big" id="endCoins">0</div></div>
+        <div class="rankBox"><div class="miniNote">Completed tasks</div><div class="big" id="endTasks">0</div></div>
+        <div class="rankBox"><div class="miniNote">Best today</div><div class="big" id="endBest">A</div></div>
+      </div>
+      <p id="endSummary">Juan is waiting at the coffee shop with a fresh cup and the end-of-shift victory you earned.</p>
+      <div class="ctaRow">
+        <button id="playAgainBtn" class="gold">Run Another Shift</button>
+        <button id="endToTitleBtn">Title Screen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="failureScreen" class="hidden">
+    <div class="modal glass">
+      <h2>Shift collapsed</h2>
+      <p id="failureText">Too many delays, too much damage, or one Wayne incident too far. The day won this round.</p>
+      <div class="ctaRow">
+        <button id="retryFailBtn" class="primary">Try Again</button>
+        <button id="failToTitleBtn">Title Screen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="levelUpBox" class="hidden">
+    <div class="modal glass">
+      <h2>Rank up</h2>
+      <p>You found a second wind in the middle of the chaos. Pick a minor bonus for the rest of the shift.</p>
+      <div id="bonusList" class="bonusList"></div>
+    </div>
+  </div>
+
+  <div id="controls" class="hidden">
+    <div id="joystick" class="controlPad">
+      <div id="stickKnob"></div>
+    </div>
+    <div id="actionCluster">
+      <div id="sprintBtn" class="touchBtn">Sprint</div>
+      <div id="dodgeBtn" class="touchBtn">Dodge</div>
+      <div id="useBtn" class="touchBtn">Use</div>
+    </div>
+  </div>
+
+  <div id="minimapWrap" class="hidden"><canvas id="minimap" width="128" height="128"></canvas></div>
+  <div id="minimapLegend" class="hidden">
+    <div><b>Navigation</b></div>
+    <div class="legendRow"><span class="dot" style="background:#67d9cd;"></span>Current objective</div>
+    <div class="legendRow"><span class="dot" style="background:#ff7272;"></span>Hazard / pressure</div>
+    <div class="legendRow"><span class="dot" style="background:#e8d08a;"></span>You</div>
+  </div>
+  <div id="fpsDiag"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // =========================================================
+  // Utility helpers
+  // =========================================================
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const choice = arr => arr[(Math.random() * arr.length) | 0];
+  const now = () => performance.now();
+  const fmtClock = minutes => {
+    const total = Math.floor(minutes);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  };
+
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const minimap = document.getElementById('minimap');
+  const mctx = minimap.getContext('2d');
+
+  // =========================================================
+  // DOM references
+  // =========================================================
+  const titleScreen = document.getElementById('titleScreen');
+  const hud = document.getElementById('hud');
+  const controls = document.getElementById('controls');
+  const minimapWrap = document.getElementById('minimapWrap');
+  const minimapLegend = document.getElementById('minimapLegend');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const hintPrompt = document.getElementById('hintPrompt');
+  const toastWrap = document.getElementById('toastWrap');
+  const dialogueBox = document.getElementById('dialogueBox');
+  const dialogueSpeaker = document.getElementById('dialogueSpeaker');
+  const dialogueText = document.getElementById('dialogueText');
+  const dialogueDismiss = document.getElementById('dialogueDismiss');
+  const dialogueAlt = document.getElementById('dialogueAlt');
+  const pauseMenu = document.getElementById('pauseMenu');
+  const endScreen = document.getElementById('endScreen');
+  const failureScreen = document.getElementById('failureScreen');
+  const levelUpBox = document.getElementById('levelUpBox');
+  const bonusList = document.getElementById('bonusList');
+  const saveLine = document.getElementById('saveLine');
+  const fpsDiag = document.getElementById('fpsDiag');
+
+  const ui = {
+    hero: document.getElementById('hudHero'),
+    role: document.getElementById('hudRole'),
+    phaseNum: document.getElementById('hudPhaseNum'),
+    phaseTitle: document.getElementById('hudPhaseTitle'),
+    shiftClock: document.getElementById('shiftClock'),
+    objectiveText: document.getElementById('objectiveText'),
+    subObjectiveText: document.getElementById('subObjectiveText'),
+    healthFill: document.getElementById('healthFill'),
+    healthValue: document.getElementById('healthValue'),
+    staminaFill: document.getElementById('staminaFill'),
+    staminaValue: document.getElementById('staminaValue'),
+    stressFill: document.getElementById('stressFill'),
+    stressValue: document.getElementById('stressValue'),
+    angerFill: document.getElementById('angerFill'),
+    angerValue: document.getElementById('angerValue'),
+    levelValue: document.getElementById('levelValue'),
+    xpValue: document.getElementById('xpValue'),
+    coinValue: document.getElementById('coinValue'),
+    taskValue: document.getElementById('taskValue')
+  };
+
+  // =========================================================
+  // Audio system - offline synthesized music and SFX
+  // =========================================================
+  const AudioSystem = (() => {
+    let ac = null;
+    let master = null;
+    let musicGain = null;
+    let fxGain = null;
+    let unlocked = false;
+    let musicStarted = false;
+    let melodyTimer = 0;
+    let beatTimer = 0;
+    let musicStep = 0;
+    const melody = [0, 4, 7, 11, 9, 7, 4, 2, 0, 4, 9, 7, 4, 2, -1, 2];
+    const bass = [0, 0, -5, -5, -7, -7, -5, -5];
+    const noteHz = n => 220 * Math.pow(2, n / 12);
+
+    function ensure() {
+      if (ac) return true;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return false;
+      ac = new Ctx();
+      master = ac.createGain();
+      musicGain = ac.createGain();
+      fxGain = ac.createGain();
+      master.gain.value = 0.86;
+      musicGain.gain.value = 0.54;
+      fxGain.gain.value = 0.94;
+      musicGain.connect(master);
+      fxGain.connect(master);
+      master.connect(ac.destination);
+      return true;
+    }
+
+    function env(node, t, a, d, s, r, peak = 1) {
+      node.gain.cancelScheduledValues(t);
+      node.gain.setValueAtTime(0.0001, t);
+      node.gain.linearRampToValueAtTime(peak, t + a);
+      node.gain.linearRampToValueAtTime(s, t + a + d);
+      node.gain.linearRampToValueAtTime(0.0001, t + a + d + r);
+    }
+
+    function tone(type, freq, duration, gainValue, filterFreq, detune = 0, pan = 0) {
+      if (!ac) return;
+      const t = ac.currentTime;
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      const f = ac.createBiquadFilter();
+      const p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      o.detune.setValueAtTime(detune, t);
+      f.type = 'lowpass';
+      f.frequency.setValueAtTime(filterFreq, t);
+      g.gain.value = 0.0001;
+      o.connect(f);
+      f.connect(g);
+      if (p) {
+        p.pan.value = pan;
+        g.connect(p);
+        p.connect(fxGain);
+      } else g.connect(fxGain);
+      env(g, t, 0.01, duration * 0.18, gainValue * 0.58, duration * 0.82, gainValue);
+      o.start(t);
+      o.stop(t + duration + 0.05);
+    }
+
+    function noise(duration, gainValue, hp = 500, lp = 5000) {
+      if (!ac) return;
+      const length = Math.ceil(ac.sampleRate * duration);
+      const buffer = ac.createBuffer(1, length, ac.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+      const src = ac.createBufferSource();
+      src.buffer = buffer;
+      const hpF = ac.createBiquadFilter();
+      const lpF = ac.createBiquadFilter();
+      const g = ac.createGain();
+      hpF.type = 'highpass'; hpF.frequency.value = hp;
+      lpF.type = 'lowpass'; lpF.frequency.value = lp;
+      g.gain.value = 0.0001;
+      src.connect(hpF); hpF.connect(lpF); lpF.connect(g); g.connect(fxGain);
+      const t = ac.currentTime;
+      env(g, t, 0.004, duration * 0.15, gainValue * 0.34, duration * 0.7, gainValue);
+      src.start(t);
+      src.stop(t + duration + 0.05);
+    }
+
+    function click() {
+      tone('square', 780, 0.08, 0.11, 4000);
+      tone('triangle', 420, 0.11, 0.06, 2000);
+    }
+    function task() {
+      tone('triangle', 520, 0.16, 0.13, 2600);
+      tone('triangle', 780, 0.13, 0.10, 3200, 0, 0.1);
+    }
+    function feed() {
+      tone('sine', 270, 0.14, 0.10, 2200, 0, -0.15);
+      noise(0.05, 0.04, 800, 2400);
+    }
+    function sample() {
+      tone('square', 640, 0.1, 0.10, 3800, 0, 0.12);
+      tone('triangle', 860, 0.14, 0.08, 4000);
+    }
+    function carry() {
+      tone('sawtooth', 160, 0.12, 0.05, 900);
+    }
+    function alert() {
+      tone('square', 360, 0.14, 0.10, 2500);
+      tone('square', 280, 0.16, 0.09, 2400, 0, -0.1);
+    }
+    function hit() {
+      noise(0.18, 0.18, 180, 1800);
+      tone('sawtooth', 110, 0.22, 0.08, 700);
+    }
+    function success() {
+      tone('triangle', 523.25, 0.15, 0.12, 3800);
+      setTimeout(() => tone('triangle', 659.25, 0.18, 0.11, 3800), 70);
+      setTimeout(() => tone('triangle', 783.99, 0.24, 0.12, 3800), 130);
+    }
+    function victory() {
+      [392, 523.25, 659.25, 783.99].forEach((f, i) => setTimeout(() => tone('triangle', f, 0.34, 0.12, 4200), i * 120));
+      setTimeout(() => noise(0.12, 0.08, 400, 5000), 380);
+    }
+    function finale() {
+      [659.25, 783.99, 987.77, 1174.66].forEach((f, i) => setTimeout(() => tone('triangle', f, 0.28, 0.14, 4600, 0, i * 0.08 - 0.12), i * 95));
+      setTimeout(() => tone('sawtooth', 220, 0.42, 0.10, 1800), 130);
+      setTimeout(() => noise(0.16, 0.06, 900, 7000), 260);
+    }
+    function coffee() {
+      tone('sine', 988, 0.12, 0.12, 4200, 0, -0.1);
+      setTimeout(() => tone('triangle', 1318.51, 0.18, 0.12, 4800, 0, 0.12), 60);
+      setTimeout(() => tone('triangle', 1567.98, 0.26, 0.11, 5200), 130);
+      setTimeout(() => noise(0.1, 0.05, 1400, 6200), 200);
+    }
+
+    function musicTick(dt) {
+      if (!ac || !musicStarted) return;
+      const finaleLift = (typeof state !== 'undefined' && state.currentObjective && state.currentObjective.id === 'coffee_finale') ? 0.68 : 0.54;
+      musicGain.gain.setTargetAtTime(finaleLift, ac.currentTime, 0.18);
+      melodyTimer -= dt;
+      beatTimer -= dt;
+      if (beatTimer <= 0) {
+        beatTimer += 0.48;
+        const t = ac.currentTime;
+        const bassGainNode = ac.createGain();
+        const o = ac.createOscillator();
+        const f = ac.createBiquadFilter();
+        o.type = 'sawtooth';
+        o.frequency.value = noteHz(bass[musicStep % bass.length] - 12);
+        f.type = 'lowpass';
+        f.frequency.value = 900;
+        bassGainNode.gain.value = 0.0001;
+        o.connect(f); f.connect(bassGainNode); bassGainNode.connect(musicGain);
+        env(bassGainNode, t, 0.01, 0.08, 0.08, 0.31, 0.14);
+        o.start(t); o.stop(t + 0.4);
+
+        noise(0.04, 0.02, 2600, 6000);
+        if ((musicStep & 1) === 0) {
+          const kick = ac.createOscillator();
+          const kg = ac.createGain();
+          kick.type = 'sine';
+          kick.frequency.setValueAtTime(120, t);
+          kick.frequency.exponentialRampToValueAtTime(48, t + 0.08);
+          kg.gain.setValueAtTime(0.0001, t);
+          kg.gain.linearRampToValueAtTime(0.12, t + 0.005);
+          kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+          kick.connect(kg); kg.connect(musicGain); kick.start(t); kick.stop(t + 0.18);
+        }
+        musicStep++;
+      }
+      if (melodyTimer <= 0) {
+        melodyTimer += 0.24;
+        const n = melody[(musicStep + 3) % melody.length];
+        if (n >= 0) {
+          const t = ac.currentTime;
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          const f = ac.createBiquadFilter();
+          o.type = 'triangle';
+          o.frequency.value = noteHz(n + 12);
+          f.type = 'lowpass';
+          f.frequency.value = 2400;
+          g.gain.value = 0.0001;
+          o.connect(f); f.connect(g); g.connect(musicGain);
+          env(g, t, 0.01, 0.06, 0.06, 0.21, 0.08);
+          o.start(t); o.stop(t + 0.28);
+        }
+      }
+    }
+
+    function unlock() {
+      if (!ensure()) return;
+      if (ac.state === 'suspended') ac.resume();
+      unlocked = true;
+      if (!musicStarted) {
+        musicStarted = true;
+        musicStep = 0;
+        melodyTimer = 0;
+        beatTimer = 0;
+      }
+      click();
+    }
+
+    return {
+      unlock,
+      tick: musicTick,
+      click, task, feed, sample, carry, alert, hit, success, victory, finale, coffee,
+      isReady: () => unlocked
+    };
+  })();
+
+  // =========================================================
+  // Persistent progress
+  // =========================================================
+  const SAVE_KEY = 'busy_day_at_the_viv_save_v1';
+  const loadSave = () => {
+    try {
+      return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  };
+  const storeSave = data => localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+
+  // =========================================================
+  // Game data
+  // =========================================================
+  const CHARACTERS = {
+    mel: {
+      id: 'mel',
+      name: 'Mel',
+      role: 'Rapid multitasker',
+      desc: 'Fast movement, smooth task cadence, slightly lighter carrying strength.',
+      color: '#7fe0d4',
+      move: 112,
+      sprint: 170,
+      stamina: 100,
+      carryStrength: 0.9,
+      assist: 1.05,
+      multitask: 1.15,
+      stressResist: 1.0
+    },
+    josh: {
+      id: 'josh',
+      name: 'Josh',
+      role: 'Solid procedure support',
+      desc: 'Stronger carrying and procedure assistance, slower pace, deeper stamina pool.',
+      color: '#9ab9ff',
+      move: 98,
+      sprint: 152,
+      stamina: 116,
+      carryStrength: 1.2,
+      assist: 1.15,
+      multitask: 1.0,
+      stressResist: 1.1
+    }
+  };
+
+  const ZONES = [
+    { id: 'break', name: 'Break Area', x: 160, z: 84, w: 170, h: 118, color: '#29405d', floor: '#203751' },
+    { id: 'storage', name: 'Storage', x: 400, z: 84, w: 180, h: 118, color: '#374a60', floor: '#2a3e53' },
+    { id: 'maincorridor', name: 'Main Corridor', x: 92, z: 246, w: 794, h: 92, color: '#2a4761', floor: '#22384d' },
+    { id: 'pigbay', name: 'Pig Holding', x: 92, z: 394, w: 272, h: 200, color: '#42566f', floor: '#31465c' },
+    { id: 'sheep', name: 'Sheep Pens', x: 420, z: 390, w: 220, h: 186, color: '#526578', floor: '#415668' },
+    { id: 'baboon', name: 'Baboon Area', x: 694, z: 382, w: 210, h: 200, color: '#5e5b74', floor: '#473f5f' },
+    { id: 'prep', name: 'Procedure Prep', x: 100, z: 674, w: 278, h: 182, color: '#30546f', floor: '#28475d' },
+    { id: 'scales', name: 'Scales', x: 430, z: 688, w: 160, h: 144, color: '#4c586c', floor: '#394354' },
+    { id: 'cath', name: 'Cath Lab', x: 648, z: 662, w: 250, h: 218, color: '#294a65', floor: '#1f374f' },
+    { id: 'utility', name: 'Utility Corridor', x: 98, z: 944, w: 620, h: 96, color: '#384b61', floor: '#2c3f53' },
+    { id: 'carpark', name: 'Car Park', x: 100, z: 1090, w: 796, h: 248, color: '#3f465b', floor: '#31374c' },
+    { id: 'coffee', name: 'Coffee Shop', x: 992, z: 148, w: 206, h: 124, color: '#6d5637', floor: '#574429', exterior: true },
+    { id: 'hospital', name: 'Human Hospital', x: 980, z: 436, w: 220, h: 212, color: '#4d6475', floor: '#304657', exterior: true },
+    { id: 'road', name: 'Busy Road', x: 934, z: 760, w: 286, h: 598, color: '#444c61', floor: '#262d3d', exterior: true },
+    { id: 'plaza', name: 'Outside Walk', x: 904, z: 650, w: 318, h: 92, color: '#54606d', floor: '#394452', exterior: true }
+  ];
+
+  const WORLD_BOUNDS = { minX: 26, minZ: 34, maxX: 1240, maxZ: 1428 };
+  const VIV_FENCE = { x: 62, z: 56, w: 862, h: 1270, gapStart: 948, gapEnd: 1046 };
+  const FENCE_SEGMENTS = [
+    { x: 62, z: 56, w: 862, h: 10, height: 18, kind: 'fence' },
+    { x: 62, z: 1316, w: 862, h: 10, height: 18, kind: 'fence' },
+    { x: 62, z: 56, w: 10, h: 1270, height: 18, kind: 'fence' },
+    { x: 914, z: 56, w: 10, h: 892, height: 18, kind: 'fence' },
+    { x: 914, z: 1046, w: 10, h: 280, height: 18, kind: 'fence' },
+    { x: 902, z: 940, w: 22, h: 12, height: 18, kind: 'fence' },
+    { x: 902, z: 1046, w: 22, h: 12, height: 18, kind: 'fence' }
+  ];
+  const RUSH_POINT = { x: 520, z: 1168 };
+
+  const OBSTACLES = [
+    { x: 128, z: 124, w: 52, h: 22, height: 20, kind: 'bench' },
+    { x: 242, z: 146, w: 54, h: 20, height: 18, kind: 'bench' },
+    { x: 448, z: 118, w: 96, h: 24, height: 28, kind: 'shelf' },
+    { x: 124, z: 430, w: 54, h: 114, height: 26, kind: 'stall' },
+    { x: 206, z: 430, w: 54, h: 114, height: 26, kind: 'stall' },
+    { x: 288, z: 430, w: 54, h: 114, height: 26, kind: 'stall' },
+    { x: 458, z: 426, w: 54, h: 104, height: 24, kind: 'pen' },
+    { x: 538, z: 426, w: 54, h: 104, height: 24, kind: 'pen' },
+    { x: 730, z: 412, w: 44, h: 132, height: 20, kind: 'cage' },
+    { x: 804, z: 412, w: 44, h: 132, height: 20, kind: 'cage' },
+    { x: 138, z: 720, w: 72, h: 82, height: 18, kind: 'prepTable' },
+    { x: 252, z: 720, w: 70, h: 82, height: 18, kind: 'prepTable' },
+    { x: 462, z: 728, w: 72, h: 66, height: 20, kind: 'scaleUnit' },
+    { x: 696, z: 718, w: 60, h: 118, height: 20, kind: 'labUnit' },
+    { x: 790, z: 718, w: 54, h: 120, height: 20, kind: 'labUnit' },
+    { x: 1030, z: 200, w: 34, h: 34, height: 16, kind: 'planter' },
+    { x: 1088, z: 200, w: 34, h: 34, height: 16, kind: 'planter' },
+    { x: 1016, z: 510, w: 150, h: 18, height: 14, kind: 'awning' },
+    { x: 1048, z: 846, w: 28, h: 324, height: 16, kind: 'median' }
+  ];
+
+  const INTERACT_POINTS = {
+    board: { x: 292, z: 154, zone: 'break' },
+    feedCart: { x: 492, z: 154, zone: 'storage' },
+    pigFeed: { x: 222, z: 516, zone: 'pigbay' },
+    sheepFeed: { x: 520, z: 500, zone: 'sheep' },
+    baboonFeed: { x: 796, z: 510, zone: 'baboon' },
+    baboonSample: { x: 804, z: 456, zone: 'baboon' },
+    prepStation: { x: 282, z: 782, zone: 'prep' },
+    anaesthesia: { x: 180, z: 782, zone: 'prep' },
+    scales: { x: 506, z: 774, zone: 'scales' },
+    cathDoor: { x: 712, z: 794, zone: 'cath' },
+    cathAssist: { x: 820, z: 794, zone: 'cath' },
+    shears: { x: 454, z: 470, zone: 'sheep' },
+    coffeeSpot: { x: 1082, z: 212, zone: 'coffee' }
+  };
+
+
+  const SCENE_ANIMALS = {
+    pigs: [
+      { x: 198, z: 464, scale: 1.06, dir: 1, seed: 0.2 },
+      { x: 286, z: 506, scale: 0.98, dir: -1, seed: 1.1 }
+    ],
+    sheep: [
+      { x: 474, z: 470, scale: 1.02, dir: -1, seed: 0.7 },
+      { x: 560, z: 452, scale: 0.94, dir: 1, seed: 1.6 },
+      { x: 596, z: 522, scale: 1.08, dir: -1, seed: 2.4 }
+    ],
+    baboons: [
+      { x: 748, z: 470, scale: 0.96, dir: 1, seed: 0.8 },
+      { x: 810, z: 444, scale: 0.88, dir: -1, seed: 1.9 },
+      { x: 852, z: 520, scale: 1.02, dir: -1, seed: 2.7 }
+    ]
+  };
+
+  const ANIMAL_TASK_POINTS = {
+    pigFeed: SCENE_ANIMALS.pigs.map((pig, i) => ({ id: 'feedPig_' + i, label: 'Feed pig ' + (i + 1), x: pig.x + (i === 0 ? 18 : -14), z: pig.z + 18, zone: 'pigbay', index: i })),
+    sheepFeed: SCENE_ANIMALS.sheep.map((sheep, i) => ({ id: 'feedSheep_' + i, label: 'Feed sheep ' + (i + 1), x: sheep.x + (i - 1) * 10, z: sheep.z + 18, zone: 'sheep', index: i })),
+    baboonFeed: SCENE_ANIMALS.baboons.map((baboon, i) => ({ id: 'feedBaboon_' + i, label: 'Feed baboon ' + (i + 1), x: baboon.x + (i === 1 ? 18 : -12), z: baboon.z + 18, zone: 'baboon', index: i })),
+    baboonSamples: SCENE_ANIMALS.baboons.map((baboon, i) => ({ id: 'sampleBaboon_' + i, label: 'Collect sample ' + (i + 1), x: baboon.x + 18, z: baboon.z - 10, zone: 'baboon', index: i }))
+  };
+
+  const PIG_TRANSPORT_POINTS = {
+    prep: { x: 144, z: 522, face: 0.08 },
+    scales: { x: INTERACT_POINTS.scales.x - 6, z: INTERACT_POINTS.scales.z + 6, face: 0.05 },
+    cath: { x: INTERACT_POINTS.cathDoor.x + 40, z: INTERACT_POINTS.cathDoor.z + 12, face: 0.08 }
+  };
+
+  const CARPARK_EXIT_LANE_Z = 1186;
+  const CARPARK_OWNER_WAIT_POINTS = {
+    Juan: { x: 430, z: 1296 },
+    Wayne: { x: 238, z: 1296 }
+  };
+  const UTILITY_CORRIDOR_WAIT_POINTS = [
+    { x: 154, z: 980 }, { x: 246, z: 986 }, { x: 338, z: 978 }, { x: 430, z: 986 }, { x: 522, z: 978 }, { x: 612, z: 984 }
+  ];
+  const CARPARK_BYSTANDER_POINTS = [
+    { x: 132, z: 1298 }, { x: 306, z: 1298 }, { x: 514, z: 1298 }, { x: 708, z: 1298 }, { x: 840, z: 1298 },
+    { x: 144, z: 1110 }, { x: 356, z: 1110 }, { x: 566, z: 1110 }, { x: 776, z: 1110 }, { x: 844, z: 1188 }
+  ];
+
+  const PHASES = [
+    { title: 'Morning setup', sub: 'Report in, collect the feed cart, and get the day moving.' },
+    { title: 'Animal feeding and samples', sub: 'Handle the feed run before sample collection slips.' },
+    { title: 'Procedure prep', sub: 'Support anaesthesia and prep before the pig transport begins.' },
+    { title: 'Pig transport and cath lab delivery', sub: 'Move the anaesthetised pig through scales into the lab.' },
+    { title: 'Afternoon overflow and car park', sub: 'Shear sheep, fix the parking mess, and keep departures flowing.' },
+    { title: 'Coffee shop finale', sub: 'Get out to the coffee shop where Juan is waiting with an earned coffee and a fantastic finish.' }
+  ];
+
+  const NPC_DEFS = [
+    ['Juan', 'cardiologist', '#9fd5ff', 'cath'],
+    ['Sally', 'cardiologist', '#8fead8', 'break'],
+    ['Xing', 'cardiologist', '#d5bcff', 'cath'],
+    ['Anugra', 'cardiologist', '#b8e2ff', 'cath'],
+    ['Alan', 'vet', '#ffcd8c', 'prep'],
+    ['Luther', 'vet', '#ffb4a6', 'prep'],
+    ['Ross', 'welfare', '#f6e39e', 'maincorridor'],
+    ['Tony', 'engineer', '#8cd8be', 'utility'],
+    ['Vu', 'engineer', '#95b4ff', 'utility'],
+    ['Urja', 'engineer', '#f0c8ff', 'utility'],
+    ['Dhanya', 'researcher', '#a8dcff', 'maincorridor'],
+    ['Poonam', 'researcher', '#ffb8d5', 'maincorridor'],
+    ['Max', 'researcher', '#d8e5a5', 'maincorridor'],
+    ['Leila', 'researcher', '#a0d1ff', 'maincorridor'],
+    ['Erin', 'researcher', '#f8d2af', 'maincorridor'],
+    ['Sam', 'physiologist', '#bde1ff', 'cath'],
+    ['Mitch', 'physiologist', '#c6f0d1', 'cath'],
+    ['Wayne', 'pi', '#ffd0d0', 'carpark'],
+    ['James', 'pi', '#d8d7ff', 'break'],
+    ['Eddy', 'pi', '#e2f0b1', 'break'],
+    ['Pierre', 'pi', '#ffd9a6', 'break'],
+    ['Thanh', 'hazard', '#ff7f8e', 'carpark']
+  ];
+
+  const DIALOGUE = {
+    Sally: [
+      'Morning. The board is already optimistic. Grab the feed cart and outrun reality.',
+      'Keep the pens calm, keep prep on time, and try not to become a scheduling cautionary tale.'
+    ],
+    Juan: [
+      'If you get this whole day over the line, meet me at the coffee shop outside. Coffee is on me. No heroic speeches. Just coffee.',
+      'Cath lab is ready when the trolley arrives from the scales. Not earlier. Certainly not later.'
+    ],
+    Xing: ['I need timing, not drama. But if the timing fails, I will accept drama as a backup.'],
+    Anugra: ['Everything is fine until the transport stalls. Then suddenly everyone discovers urgency.'],
+    Alan: ['Prep first, then stay with me for the anaesthetic. Calm hands, steady pace, no mystery delays.'],
+    Luther: ['This would all be easier if nobody needed anything at exactly the same minute.'],
+    Ross: ['Quick question. While you are here, have you considered the full philosophical meaning of corridor etiquette?'],
+    Tony: ['If the monitor flickers again, pretend it is intentional until I get there.'],
+    Vu: ['One cable is essential. Four cables are suspicious.'],
+    Urja: ['Engineering update: the thing works, unless observed directly.'],
+    Dhanya: ['Please tell me the car park situation is a rumour.'],
+    Poonam: ['I just need to leave on time. Which means I absolutely will not.'],
+    Max: ['I was promised a normal day. I can only assume that was theoretical.'],
+    Leila: ['Everyone is walking faster, which is somehow making the corridor slower.'],
+    Erin: ['I can feel the schedule slipping through the walls.'],
+    Sam: ['Measurements are ready. The rest of the world apparently is not.'],
+    Mitch: ['I can help. I can also worry productively, if that is useful.'],
+    Wayne: ['If this procedure slips because of chaos in the car park, I will become a problem.', 'Do not touch my car. Ask me and I will move it myself. Carefully.'],
+    James: ['Leadership update: I am observing with concern and excellent posture.'],
+    Eddy: ['A smooth afternoon would be nice. Purely as a novelty.'],
+    Pierre: ['The facility runs on precision, improvisation, and thinly veiled panic.'],
+    Thanh: ['HONK.']
+  };
+
+  const BONUS_POOL = [
+    { id: 'feeding', name: 'Faster Feeding', desc: '+18% feed and sample interaction speed.', apply: p => p.bonuses.feedSpeed += 0.18 },
+    { id: 'carry', name: 'Stronger Carrying', desc: '+18% carrying power and less slowdown when hauling.', apply: p => p.bonuses.carryBoost += 0.18 },
+    { id: 'stamina', name: 'Better Stamina', desc: '+14 max stamina and faster recovery.', apply: p => { p.maxStamina += 14; p.stamina += 14; p.bonuses.staminaRegen += 0.22; } },
+    { id: 'stress', name: 'Stress Shielding', desc: '-20% stress taken from hazards and interruptions.', apply: p => p.bonuses.stressResist += 0.20 },
+    { id: 'dodge', name: 'Clean Footwork', desc: 'Shorter dodge cooldown and slightly longer burst.', apply: p => { p.bonuses.dodgePower += 0.12; p.bonuses.dodgeCooldownMult *= 0.84; } }
+  ];
+
+  // =========================================================
+  // Game state
+  // =========================================================
+  const state = {
+    running: false,
+    paused: false,
+    scene: 'title',
+    selectedCharacter: 'mel',
+    worldTimeMinutes: 6 * 60 + 45,
+    worldElapsed: 0,
+    phase: 0,
+    objectiveIndex: 0,
+    completedTasks: 0,
+    totalTasks: 0,
+    currentObjective: null,
+    objectiveTimer: 0,
+    objectiveWarned: false,
+    toasts: [],
+    dialogueQueue: [],
+    activeDialogue: null,
+    interactionProgress: 0,
+    interactionTarget: null,
+    interactionFocus: null,
+    hasFeedCart: false,
+    animalFeed: { pigs: [], sheep: [], baboons: [] },
+    baboonSamples: [],
+    carryingPig: false,
+    pigAtScales: false,
+    pigInCath: false,
+    pigReady: false,
+    sheepSheared: false,
+    finalRushTimer: 0,
+    victoryDelay: 0,
+    failReason: '',
+    coffeeGranted: false,
+    finaleBurst: 0,
+    spawnSafe: { x: 254, z: 168 },
+    wayneAnger: 0,
+    rossTrapMeter: 0,
+    rossTrapActive: false,
+    rossMash: 0,
+    laneOpen: false,
+    debug: false,
+    fps: 0,
+    chatterCooldown: 0,
+    autoTest: location.hash === '#test',
+    testPassed: false,
+    cars: [],
+    npcs: [],
+    hazards: [],
+    interactables: [],
+    doorVisuals: [],
+    messagesSeen: new Set(),
+    achievements: [],
+    player: null,
+    input: {
+      keys: Object.create(null),
+      moveX: 0,
+      moveZ: 0,
+      sprint: false,
+      use: false,
+      dodge: false,
+      joystickActive: false,
+      pointerMap: new Map()
+    },
+    camera: { x: 0, z: 0, zoom: 1 },
+    save: loadSave(),
+    diagnostics: []
+  };
+
+  // =========================================================
+  // Entities and world setup
+  // =========================================================
+  function createPlayer(charId) {
+    const base = CHARACTERS[charId];
+    return {
+      id: charId,
+      name: base.name,
+      role: base.role,
+      color: base.color,
+      x: state.spawnSafe.x,
+      z: state.spawnSafe.z,
+      y: 0,
+      r: 11,
+      face: 0,
+      speed: 0,
+      vx: 0,
+      vz: 0,
+      health: 100,
+      maxHealth: 100,
+      stamina: base.stamina,
+      maxStamina: base.stamina,
+      stress: 0,
+      moveSpeed: base.move,
+      sprintSpeed: base.sprint,
+      carryStrength: base.carryStrength,
+      assist: base.assist,
+      multitask: base.multitask,
+      stressBaseResist: base.stressResist,
+      dodgeCooldown: 0,
+      dodgeTime: 0,
+      xp: 0,
+      level: 1,
+      coins: 0,
+      rankUpsTaken: [],
+      bonuses: {
+        feedSpeed: 0,
+        carryBoost: 0,
+        staminaRegen: 0,
+        stressResist: 0,
+        dodgePower: 0,
+        dodgeCooldownMult: 1
+      },
+      anim: 0,
+      footstep: 0,
+      immunity: 0,
+      recentTalks: {},
+      knocked: 0,
+      hidden: false
+    };
+  }
+
+  function makeNPC(name, role, color, zoneId) {
+    const zone = getZone(zoneId);
+    const npc = {
+      name,
+      role,
+      color,
+      x: zone.x + zone.w * rand(0.25, 0.75),
+      z: zone.z + zone.h * rand(0.25, 0.75),
+      homeZone: zoneId,
+      zoneId,
+      r: name === 'Thanh' ? 16 : 10,
+      speed: role === 'hazard' ? 180 : rand(18, 34),
+      targetX: 0,
+      targetZ: 0,
+      wait: rand(0.2, 1.4),
+      face: rand(-Math.PI, Math.PI),
+      mood: 0,
+      schedule: [],
+      speechCooldown: 0,
+      bob: Math.random() * Math.PI * 2,
+      active: true,
+      state: role === 'hazard' ? 'drive' : 'wander',
+      note: '',
+      vehicle: name === 'Thanh',
+      pathIndex: 0
+    };
+    setNpcTargetInZone(npc, zoneId);
+    return npc;
+  }
+
+  function getZone(id) {
+    return ZONES.find(z => z.id === id);
+  }
+
+  function utilityCorridorAnchorForNpc(npc) {
+    const idx = state.npcs.filter(n => n.name !== 'Thanh' && !CARPARK_OWNER_WAIT_POINTS[n.name]).findIndex(n => n.name === npc.name);
+    return UTILITY_CORRIDOR_WAIT_POINTS[((idx % UTILITY_CORRIDOR_WAIT_POINTS.length) + UTILITY_CORRIDOR_WAIT_POINTS.length) % UTILITY_CORRIDOR_WAIT_POINTS.length];
+  }
+
+  function carParkAnchorForNpc(npc) {
+    if (CARPARK_OWNER_WAIT_POINTS[npc.name]) return CARPARK_OWNER_WAIT_POINTS[npc.name];
+    if (state.currentObjective && state.currentObjective.id === 'carpark') return utilityCorridorAnchorForNpc(npc);
+    const idx = state.npcs.filter(n => n.name !== 'Thanh').findIndex(n => n.name === npc.name);
+    return CARPARK_BYSTANDER_POINTS[((idx % CARPARK_BYSTANDER_POINTS.length) + CARPARK_BYSTANDER_POINTS.length) % CARPARK_BYSTANDER_POINTS.length];
+  }
+
+  function setupCarParkScene() {
+    for (const npc of state.npcs) {
+      if (npc.name === 'Thanh') continue;
+      if ((npc.schedule[Math.min(4, npc.schedule.length - 1)] || npc.homeZone) !== 'carpark') continue;
+      const anchor = carParkAnchorForNpc(npc);
+      npc.zoneId = CARPARK_OWNER_WAIT_POINTS[npc.name] ? 'carpark' : 'utility';
+      npc.targetX = anchor.x;
+      npc.targetZ = anchor.z;
+      npc.wait = Math.max(npc.wait || 0, 3.2);
+      if (dist(npc.x, npc.z, anchor.x, anchor.z) > 220) {
+        npc.x = anchor.x + rand(-12, 12);
+        npc.z = anchor.z + rand(-10, 10);
+      }
+    }
+  }
+
+
+  function setupCoffeeFinale() {
+    const juan = state.npcs.find(n => n.name === 'Juan');
+    if (juan) {
+      juan.zoneId = 'coffee';
+      juan.x = INTERACT_POINTS.coffeeSpot.x - 42;
+      juan.z = INTERACT_POINTS.coffeeSpot.z + 10;
+      juan.targetX = INTERACT_POINTS.coffeeSpot.x - 22;
+      juan.targetZ = INTERACT_POINTS.coffeeSpot.z + 10;
+      juan.wait = 999;
+      juan.scripted = false;
+    }
+    state.rossTrapActive = false;
+    state.rossTrapMeter = 0;
+    state.finaleBurst = Math.max(state.finaleBurst || 0, 2.8);
+    addToast('Coffee finale: head out through the fence gap to Coffee Shop and talk to Juan.', 'gold', 4.5);
+    queueDialogue('Juan', 'Coffee shop. Outside. Come and collect the most deserved caffeine of your life.');
+    AudioSystem.finale();
+  }
+
+  function setNpcTargetInZone(npc, zoneId) {
+    const redirectZoneId = zoneId === 'carpark' && state.currentObjective && state.currentObjective.id === 'carpark' && npc.name !== 'Thanh'
+      ? (CARPARK_OWNER_WAIT_POINTS[npc.name] ? 'carpark' : 'utility')
+      : zoneId;
+    const zone = getZone(redirectZoneId);
+    npc.zoneId = redirectZoneId;
+    if (zoneId === 'carpark' && state.currentObjective && state.currentObjective.id === 'carpark' && npc.name !== 'Thanh') {
+      const anchor = carParkAnchorForNpc(npc);
+      npc.targetX = anchor.x + rand(-10, 10);
+      npc.targetZ = anchor.z + rand(-8, 8);
+      return;
+    }
+    npc.targetX = zone.x + zone.w * rand(0.16, 0.84);
+    npc.targetZ = zone.z + zone.h * rand(0.16, 0.84);
+  }
+
+  function resetAnimalTaskProgress() {
+    state.hasFeedCart = false;
+    state.animalFeed = {
+      pigs: SCENE_ANIMALS.pigs.map(() => false),
+      sheep: SCENE_ANIMALS.sheep.map(() => false),
+      baboons: SCENE_ANIMALS.baboons.map(() => false)
+    };
+    state.baboonSamples = SCENE_ANIMALS.baboons.map(() => false);
+  }
+
+  function resetWorld(characterId) {
+    state.player = createPlayer(characterId);
+    state.phase = 0;
+    state.objectiveIndex = 0;
+    state.completedTasks = 0;
+    state.currentObjective = null;
+    state.worldTimeMinutes = 6 * 60 + 45;
+    state.worldElapsed = 0;
+    state.objectiveTimer = 0;
+    state.objectiveWarned = false;
+    state.toasts.length = 0;
+    state.dialogueQueue.length = 0;
+    state.activeDialogue = null;
+    state.interactionProgress = 0;
+    state.interactionTarget = null;
+    state.interactionFocus = null;
+    resetAnimalTaskProgress();
+    state.carryingPig = false;
+    state.pigAtScales = false;
+    state.pigInCath = false;
+    state.pigReady = false;
+    state.sheepSheared = false;
+    state.finalRushTimer = 0;
+    state.victoryDelay = 0;
+    state.failReason = '';
+    state.coffeeGranted = false;
+    state.finaleBurst = 0;
+    state.wayneAnger = 0;
+    state.rossTrapMeter = 0;
+    state.rossTrapActive = false;
+    state.rossMash = 0;
+    state.laneOpen = false;
+    state.messagesSeen.clear();
+    state.achievements.length = 0;
+    state.camera.x = state.player.x;
+    state.camera.z = state.player.z;
+    state.interactables = buildInteractables();
+    state.npcs = NPC_DEFS.map(def => makeNPC(...def));
+    state.hazards = buildHazards();
+    state.cars = buildCars();
+    assignNpcSchedules();
+    setupObjectives();
+    safeSpawnPlayer();
+    updateHud(true);
+  }
+
+  function buildHazards() {
+    return [
+      {
+        id: 'thanhTank',
+        name: 'Thanh',
+        type: 'vehicle',
+        x: 140,
+        z: 1130,
+        r: 22,
+        speed: 212,
+        route: [
+          { x: 140, z: 1130 },
+          { x: 860, z: 1130 },
+          { x: 860, z: 1262 },
+          { x: 188, z: 1262 },
+          { x: 948, z: 1180 },
+          { x: 948, z: 900 },
+          { x: 860, z: 980 }
+        ],
+        routeIndex: 0,
+        dir: 0,
+        cool: 0,
+        activeFromPhase: 3
+      }
+    ];
+  }
+
+  function buildInteractables() {
+    return [
+      { id: 'shiftBoard', label: 'Check shift board', x: INTERACT_POINTS.board.x, z: INTERACT_POINTS.board.z, radius: 22, type: 'board' },
+      { id: 'feedCart', label: 'Collect feed cart', x: INTERACT_POINTS.feedCart.x, z: INTERACT_POINTS.feedCart.z, radius: 18, type: 'item' },
+      ...ANIMAL_TASK_POINTS.pigFeed.map(pt => ({ ...pt, radius: 20, type: 'task' })),
+      ...ANIMAL_TASK_POINTS.sheepFeed.map(pt => ({ ...pt, radius: 20, type: 'task' })),
+      ...ANIMAL_TASK_POINTS.baboonFeed.map(pt => ({ ...pt, radius: 21, type: 'task' })),
+      ...ANIMAL_TASK_POINTS.baboonSamples.map(pt => ({ ...pt, radius: 21, type: 'task' })),
+      { id: 'pigPrep', label: 'Complete pig prep with Alan', x: INTERACT_POINTS.prepStation.x, z: INTERACT_POINTS.prepStation.z, radius: 22, type: 'task' },
+      { id: 'anaesthesiaPrep', label: 'Help Alan anaesthetise the pig', x: INTERACT_POINTS.anaesthesia.x, z: INTERACT_POINTS.anaesthesia.z, radius: 24, type: 'task' },
+      { id: 'pickPig', label: 'Load pig onto trolley', x: 136, z: 522, radius: 22, type: 'carry' },
+      { id: 'weighPig', label: 'Wheel trolley onto scales', x: INTERACT_POINTS.scales.x, z: INTERACT_POINTS.scales.z, radius: 22, type: 'carryDrop' },
+      { id: 'deliverPig', label: 'Wheel trolley into cath lab', x: INTERACT_POINTS.cathDoor.x, z: INTERACT_POINTS.cathDoor.z, radius: 24, type: 'carryDrop' },
+      { id: 'cathAssist', label: 'Support cardiac procedure', x: INTERACT_POINTS.cathAssist.x, z: INTERACT_POINTS.cathAssist.z, radius: 22, type: 'task' },
+      { id: 'shearSheep', label: 'Shear sheep', x: INTERACT_POINTS.shears.x, z: INTERACT_POINTS.shears.z, radius: 24, type: 'task' },
+      { id: 'coffee', label: 'Take the coffee', x: INTERACT_POINTS.coffeeSpot.x, z: INTERACT_POINTS.coffeeSpot.z, radius: 20, type: 'reward' }
+    ];
+  }
+
+  function buildCars() {
+    const slots = [
+      { x: 156, z: 1130, lane: 'north' },
+      { x: 232, z: 1130, lane: 'north' },
+      { x: 308, z: 1130, lane: 'north' },
+      { x: 384, z: 1130, lane: 'north' },
+      { x: 460, z: 1130, lane: 'north' },
+      { x: 536, z: 1130, lane: 'north' },
+      { x: 612, z: 1130, lane: 'north' },
+      { x: 688, z: 1130, lane: 'north' },
+      { x: 232, z: 1242, lane: 'south' },
+      { x: 308, z: 1242, lane: 'south' },
+      { x: 384, z: 1242, lane: 'south' },
+      { x: 460, z: 1242, lane: 'south' },
+      { x: 536, z: 1242, lane: 'south' },
+      { x: 612, z: 1242, lane: 'south' }
+    ];
+    const defs = [
+      { id: 'juanCar', owner: 'Juan', color: '#8bb5da', slot: 0, target: 4, locked: true },
+      { id: 'wayneCar', owner: 'Wayne', color: '#b85d67', slot: 1, target: 1, locked: true },
+      { id: 'sallyCar', owner: 'Sally', color: '#9dd9b7', slot: 2, target: 9, locked: false },
+      { id: 'alanCar', owner: 'Alan', color: '#dbbb81', slot: 3, target: 10, locked: false },
+      { id: 'vuCar', owner: 'Vu', color: '#839ff1', slot: 8, target: 5, locked: false },
+      { id: 'maxCar', owner: 'Max', color: '#c3d48b', slot: 9, target: 11, locked: false }
+    ];
+    return defs.map(def => ({
+      ...def,
+      x: slots[def.slot].x,
+      z: slots[def.slot].z,
+      w: 36,
+      h: 64,
+      face: Math.PI * 0.5,
+      done: false,
+      motion: null,
+      driverName: '',
+      driverColor: '',
+      slots
+    }));
+  }
+
+  function assignNpcSchedules() {
+    const map = Object.fromEntries(state.npcs.map(n => [n.name, n]));
+    const set = (name, arr) => { if (map[name]) map[name].schedule = arr; };
+    set('Sally', ['break', 'maincorridor', 'pigbay', 'break', 'carpark', 'break']);
+    set('Juan', ['break', 'cath', 'cath', 'cath', 'carpark', 'coffee']);
+    set('Xing', ['break', 'cath', 'cath', 'cath', 'carpark', 'cath']);
+    set('Anugra', ['break', 'cath', 'cath', 'cath', 'carpark', 'cath']);
+    set('Alan', ['prep', 'prep', 'prep', 'prep', 'carpark', 'utility']);
+    set('Luther', ['prep', 'prep', 'prep', 'prep', 'carpark', 'utility']);
+    set('Ross', ['maincorridor', 'maincorridor', 'utility', 'maincorridor', 'carpark', 'maincorridor']);
+    set('Tony', ['utility', 'utility', 'prep', 'cath', 'carpark', 'utility']);
+    set('Vu', ['utility', 'utility', 'prep', 'cath', 'carpark', 'utility']);
+    set('Urja', ['utility', 'utility', 'prep', 'cath', 'carpark', 'utility']);
+    set('Dhanya', ['maincorridor', 'maincorridor', 'cath', 'carpark', 'carpark', 'break']);
+    set('Poonam', ['maincorridor', 'maincorridor', 'cath', 'carpark', 'carpark', 'break']);
+    set('Max', ['maincorridor', 'baboon', 'cath', 'carpark', 'carpark', 'break']);
+    set('Leila', ['maincorridor', 'pigbay', 'cath', 'carpark', 'carpark', 'break']);
+    set('Erin', ['maincorridor', 'sheep', 'prep', 'carpark', 'carpark', 'break']);
+    set('Sam', ['cath', 'cath', 'cath', 'cath', 'carpark', 'cath']);
+    set('Mitch', ['cath', 'cath', 'cath', 'cath', 'carpark', 'cath']);
+    set('Wayne', ['break', 'cath', 'cath', 'carpark', 'carpark', 'carpark']);
+    set('James', ['break', 'break', 'prep', 'cath', 'carpark', 'break']);
+    set('Eddy', ['break', 'break', 'prep', 'cath', 'carpark', 'break']);
+    set('Pierre', ['break', 'break', 'cath', 'cath', 'carpark', 'break']);
+    set('Thanh', ['carpark', 'carpark', 'carpark', 'carpark', 'carpark', 'carpark']);
+  }
+
+  function safeSpawnPlayer() {
+    const p = state.player;
+    p.x = state.spawnSafe.x;
+    p.z = state.spawnSafe.z;
+    for (let i = 0; i < 20; i++) {
+      const collision = [...OBSTACLES, ...FENCE_SEGMENTS].some(o => circleRectHit(p.x, p.z, p.r + 2, o));
+      if (!collision) break;
+      p.x += 12;
+      p.z += 8;
+    }
+  }
+
+  function setupObjectives() {
+    const all = [
+      { id: 'check_board', phase: 0, text: 'Check the shift board in the break area.', sub: 'Sally wants the board checked before the chaos properly starts.', target: 'shiftBoard', duration: 999, interact: 0.7, reward: { xp: 12, coins: 6 } },
+      { id: 'collect_cart', phase: 0, text: 'Collect the feed cart from storage.', sub: 'Wheel it out before the pen-by-pen feed run starts.', target: 'feedCart', duration: 999, interact: 0.8, reward: { xp: 14, coins: 7 } },
+      { id: 'feed_pigs', phase: 1, text: 'Feed each pig in Bay A.', sub: 'Wheel the feed cart to each pig and feed them one by one.', target: 'feedPigs', duration: 90, interact: 1.2, reward: { xp: 18, coins: 8 } },
+      { id: 'feed_sheep', phase: 1, text: 'Feed each sheep before procedure prep begins.', sub: 'Take the feed cart to every sheep pen individually.', target: 'feedSheep', duration: 82, interact: 1.2, reward: { xp: 16, coins: 8 } },
+      { id: 'feed_baboons', phase: 1, text: 'Feed each baboon.', sub: 'Approach cleanly and feed them one by one from the cart.', target: 'feedBaboons', duration: 84, interact: 1.25, reward: { xp: 16, coins: 8 } },
+      { id: 'sample_baboons', phase: 1, text: 'Collect blood glucose samples from each baboon.', sub: 'Three separate samples. Stay calm or the baboon area turns theatrical.', target: 'sampleBaboons', duration: 92, interact: 1.6, samples: 3, reward: { xp: 26, coins: 12 } },
+      { id: 'pig_prep', phase: 2, text: 'Complete pig prep with Alan at the prep station.', sub: 'Set the prep up cleanly before the anaesthetic starts.', target: 'pigPrep', duration: 92, interact: 1.6, reward: { xp: 20, coins: 10 } },
+      { id: 'anaesthetise_pigs', phase: 2, text: 'Help Alan anaesthetise the pig.', sub: 'After prep, stay with Alan and get the pig fully under before transport.', target: 'anaesthesiaPrep', duration: 92, interact: 1.8, reward: { xp: 22, coins: 11 } },
+      { id: 'carry_to_scales', phase: 3, text: 'Load the anaesthetised pig onto the trolley and wheel it to the scales.', sub: 'Heavy, awkward, and suddenly urgent. Keep the trolley steady.', target: 'pickPig', duration: 95, interact: 0.9, reward: { xp: 22, coins: 11 } },
+      { id: 'weigh_pig', phase: 3, text: 'Stop at the scales and weigh the pig on the trolley.', sub: 'Weigh it, then keep hold of the trolley for the trip to cath.', target: 'weighPig', duration: 75, interact: 0.8, reward: { xp: 18, coins: 10 } },
+      { id: 'deliver_cath', phase: 3, text: 'Wheel the same trolley from the scales into the cath lab.', sub: 'Juan, Xing, Sam, and Mitch are waiting for the handover.', target: 'deliverPig', duration: 80, interact: 0.95, reward: { xp: 25, coins: 12 } },
+      { id: 'support_cath', phase: 3, text: 'Support progression into the cardiac procedure.', sub: 'Cath lab assistance is where this shift starts to look like legend.', target: 'cathAssist', duration: 85, interact: 1.7, reward: { xp: 28, coins: 14 } },
+      { id: 'shear_sheep', phase: 4, text: 'Shear the sheep before the afternoon spillover gets worse.', sub: 'No, of course this couldn’t happen on a quieter day.', target: 'shearSheep', duration: 86, interact: 1.65, reward: { xp: 20, coins: 10 } },
+      { id: 'carpark', phase: 4, text: 'Rearrange the blocked cars so everyone can come and go.', sub: 'Move the free cars yourself. The other staff clear into utility; Juan and Wayne wait at the lower edge so you can ask them to move their own.', target: 'carTask', duration: 160, interact: 0, reward: { xp: 34, coins: 18 } },
+      { id: 'coffee_finale', phase: 5, text: 'Get to the coffee shop and meet Juan.', sub: 'He is waiting outside with your coffee. Head through the fence gap and talk to him for the final reward.', target: 'juanCoffee', duration: 999, interact: 0.35, reward: { xp: 58, coins: 32 } }
+    ];
+    state.objectives = all;
+    state.totalTasks = all.length;
+    activateObjective(0);
+  }
+
+  function activateObjective(index) {
+    state.objectiveIndex = index;
+    state.currentObjective = state.objectives[index] || null;
+    state.interactionProgress = 0;
+    state.interactionTarget = null;
+    state.objectiveWarned = false;
+    if (!state.currentObjective) return;
+    state.phase = state.currentObjective.phase;
+    state.objectiveTimer = state.currentObjective.duration || 999;
+    announcePhaseIfNeeded();
+    if (state.currentObjective.id === 'survive') {
+      state.finalRushTimer = state.currentObjective.duration;
+      addToast('Final rush. No extra interaction now: just stay alive until the timer hits zero.', 'gold');
+      queueDialogue('Juan', 'Hold the line. Coffee is becoming a realistic outcome.');
+    }
+    if (state.currentObjective.id === 'coffee_finale') {
+      setupCoffeeFinale();
+    }
+    if (state.currentObjective.id === 'carpark') {
+      setupCarParkScene();
+      addToast('Car park phase: the crowd has cleared into utility so the cars are reachable. Move the free cars yourself and ask Juan and Wayne for theirs.', 'warn');
+      queueDialogue('Wayne', 'Do not touch my car. Ask me and I will move it myself. Carefully.');
+    }
+  }
+
+  function announcePhaseIfNeeded() {
+    const key = 'phase_' + state.phase;
+    if (state.messagesSeen.has(key)) return;
+    state.messagesSeen.add(key);
+    const phase = PHASES[state.phase];
+    addToast(phase.title + ': ' + phase.sub, state.phase >= 4 ? 'warn' : 'gold', 4.2);
+  }
+
+  function addToast(text, type = '', life = 2.6) {
+    state.toasts.forEach(item => item.node.remove());
+    state.toasts.length = 0;
+    const node = document.createElement('div');
+    node.className = 'toast ' + type;
+    node.textContent = text;
+    toastWrap.appendChild(node);
+    const item = { node, expire: now() + life * 1000 };
+    state.toasts.push(item);
+  }
+
+  function cleanupToasts() {
+    const t = now();
+    state.toasts = state.toasts.filter(item => {
+      if (item.expire <= t) {
+        item.node.remove();
+        return false;
+      }
+      return true;
+    });
+  }
+
+  function queueDialogue(speaker, text, options = null) {
+    state.dialogueQueue.push({ speaker, text, options });
+  }
+
+  function showNextDialogue() {
+    if (state.activeDialogue || state.dialogueQueue.length === 0 || state.scene !== 'game') return;
+    state.activeDialogue = state.dialogueQueue.shift();
+    toastWrap.style.opacity = '0';
+    dialogueSpeaker.textContent = state.activeDialogue.speaker;
+    dialogueText.textContent = state.activeDialogue.text;
+    dialogueAlt.classList.add('hidden');
+    dialogueBox.classList.remove('hidden');
+  }
+
+  function dismissDialogue(alt = false) {
+    if (!state.activeDialogue) return;
+    toastWrap.style.opacity = '1';
+    const d = state.activeDialogue;
+    if (d.options && alt && d.options.alt) d.options.alt();
+    if (d.options && !alt && d.options.onDismiss) d.options.onDismiss();
+    state.activeDialogue = null;
+    dialogueBox.classList.add('hidden');
+  }
+
+  // =========================================================
+  // Progression
+  // =========================================================
+  function gainRewards(reward, label) {
+    const p = state.player;
+    p.xp += reward.xp;
+    p.coins += reward.coins;
+    state.completedTasks++;
+    addToast('Completed: ' + label + ' · +' + reward.xp + ' XP · +' + reward.coins + ' coins');
+    AudioSystem.success();
+    maybeLevelUp();
+  }
+
+  function maybeLevelUp() {
+    const p = state.player;
+    const needed = p.level === 1 ? 35 : p.level === 2 ? 80 : p.level === 3 ? 135 : 9999;
+    if (p.xp < needed || p.level >= 4) return;
+    p.level++;
+    openLevelChoices();
+  }
+
+  function openLevelChoices() {
+    state.paused = true;
+    levelUpBox.classList.remove('hidden');
+    bonusList.innerHTML = '';
+    const p = state.player;
+    const options = [...BONUS_POOL].filter(b => !p.rankUpsTaken.includes(b.id)).sort(() => Math.random() - 0.5).slice(0, 3);
+    if (state.autoTest && options[0]) {
+      options[0].apply(p);
+      p.rankUpsTaken.push(options[0].id);
+      levelUpBox.classList.add('hidden');
+      state.paused = false;
+      updateHud(true);
+      return;
+    }
+    options.forEach(option => {
+      const btn = document.createElement('button');
+      btn.className = 'bonusBtn';
+      btn.innerHTML = '<b>' + option.name + '</b><div class="miniNote">' + option.desc + '</div>';
+      btn.addEventListener('click', () => {
+        AudioSystem.click();
+        option.apply(p);
+        p.rankUpsTaken.push(option.id);
+        addToast('Rank up: ' + option.name, 'gold');
+        levelUpBox.classList.add('hidden');
+        state.paused = false;
+        updateHud(true);
+      });
+      bonusList.appendChild(btn);
+    });
+  }
+
+  // =========================================================
+  // Objective helpers
+  // =========================================================
+  function objectiveById(id) {
+    return state.objectives.find(o => o.id === id);
+  }
+
+  function nearestPendingPoint(points, doneList) {
+    const pending = points.filter((pt, i) => !doneList[i]);
+    if (!pending.length) return null;
+    const origin = state.player || state.spawnSafe;
+    return pending.reduce((best, pt) => {
+      if (!best) return pt;
+      return dist(origin.x, origin.z, pt.x, pt.z) < dist(origin.x, origin.z, best.x, best.z) ? pt : best;
+    }, null);
+  }
+
+  function nextCarParkTarget() {
+    const unresolved = state.cars.filter(c => !c.done);
+    if (!unresolved.length) return null;
+    const waitingLocked = unresolved.find(c => c.locked && !c.motion);
+    if (waitingLocked) {
+      const ownerNpc = state.npcs.find(n => n.name === waitingLocked.owner && !n.hidden);
+      if (ownerNpc) return { x: ownerNpc.x, z: ownerNpc.z, label: 'Talk to ' + waitingLocked.owner + ' at the edge of the car park' };
+      return waitingLocked;
+    }
+    return unresolved.find(c => !c.motion) || unresolved[0];
+  }
+
+  function currentObjectiveTargetPoint() {
+    const obj = state.currentObjective;
+    if (!obj) return null;
+    if (obj.target === 'feedPigs') return nearestPendingPoint(ANIMAL_TASK_POINTS.pigFeed, state.animalFeed.pigs);
+    if (obj.target === 'feedSheep') return nearestPendingPoint(ANIMAL_TASK_POINTS.sheepFeed, state.animalFeed.sheep);
+    if (obj.target === 'feedBaboons') return nearestPendingPoint(ANIMAL_TASK_POINTS.baboonFeed, state.animalFeed.baboons);
+    if (obj.target === 'sampleBaboons') return nearestPendingPoint(ANIMAL_TASK_POINTS.baboonSamples, state.baboonSamples);
+    if (obj.target === 'carTask') return nextCarParkTarget();
+    if (obj.target === 'rush') return RUSH_POINT;
+    if (obj.target === 'juanCoffee') return state.npcs.find(n => n.name === 'Juan') || INTERACT_POINTS.coffeeSpot;
+    if (obj.target === 'coffee') return INTERACT_POINTS.coffeeSpot;
+    return state.interactables.find(i => i.id === obj.target) || null;
+  }
+
+  function objectiveProgressSubtext(obj) {
+    if (!obj) return '';
+    if (obj.id === 'feed_pigs') return state.animalFeed.pigs.filter(Boolean).length + '/' + state.animalFeed.pigs.length + ' pigs fed. Wheel the cart to the next pig.';
+    if (obj.id === 'feed_sheep') return state.animalFeed.sheep.filter(Boolean).length + '/' + state.animalFeed.sheep.length + ' sheep fed. Feed each pen individually.';
+    if (obj.id === 'feed_baboons') return state.animalFeed.baboons.filter(Boolean).length + '/' + state.animalFeed.baboons.length + ' baboons fed. Keep the cart moving.';
+    if (obj.id === 'sample_baboons') return state.baboonSamples.filter(Boolean).length + '/' + state.baboonSamples.length + ' baboon samples collected.';
+    if (obj.id === 'survive') return 'No extra interaction required — stay alive until the timer reaches 0.';
+    if (obj.id === 'coffee_finale') return 'Head to Coffee Shop outside the main fence and talk to Juan when you reach him.';
+    return obj.sub;
+  }
+
+  function completeObjective(id) {
+    const obj = state.currentObjective;
+    if (!obj || obj.id !== id) return;
+    if (obj.reward) gainRewards(obj.reward, obj.text);
+    activateObjective(state.objectiveIndex + 1);
+    updateHud(true);
+    if (obj.id === 'coffee' || obj.id === 'coffee_finale') finishGame();
+  }
+
+  function failShift(reason) {
+    if (state.scene !== 'game') return;
+    state.scene = 'failure';
+    state.failReason = reason;
+    failureScreen.classList.remove('hidden');
+    document.getElementById('failureText').textContent = reason;
+    AudioSystem.alert();
+  }
+
+  function finishGame() {
+    if (state.scene !== 'game') return;
+    state.scene = 'end';
+    state.running = false;
+    state.coffeeGranted = true;
+    AudioSystem.victory();
+    const rank = computeRank();
+    const best = state.save.bestRank || rank;
+    const updatedBest = bestRank(best, rank);
+    state.save.bestRank = updatedBest;
+    state.save.bestCoins = Math.max(state.save.bestCoins || 0, state.player.coins);
+    state.save.bestTasks = Math.max(state.save.bestTasks || 0, state.completedTasks);
+    storeSave(state.save);
+    renderSaveLine();
+    document.getElementById('endRank').textContent = rank;
+    document.getElementById('endCoins').textContent = state.player.coins;
+    document.getElementById('endTasks').textContent = state.completedTasks + '/' + state.totalTasks;
+    document.getElementById('endBest').textContent = updatedBest;
+    document.getElementById('endFlavor').textContent = 'The shift finally spills out into the coffee shop, all neon glow, steam, and impossible relief.';
+    document.getElementById('endSummary').textContent = 'Juan is waiting with a proper coffee, a ridiculous grin, and the kind of finish that makes the whole disaster feel almost cinematic.';
+    endScreen.classList.remove('hidden');
+  }
+
+  function computeRank() {
+    const p = state.player;
+    let score = 0;
+    score += state.completedTasks / state.totalTasks * 55;
+    score += clamp(p.health, 0, 100) * 0.16;
+    score += (100 - clamp(p.stress, 0, 100)) * 0.11;
+    score += (100 - clamp(state.wayneAnger, 0, 100)) * 0.08;
+    score += clamp(p.coins / 3, 0, 12);
+    if (score >= 86) return 'S';
+    if (score >= 74) return 'A';
+    if (score >= 60) return 'B';
+    if (score >= 48) return 'C';
+    return 'D';
+  }
+
+  function bestRank(a, b) {
+    const order = ['D', 'C', 'B', 'A', 'S'];
+    return order.indexOf(a) > order.indexOf(b) ? a : b;
+  }
+
+  // =========================================================
+  // Input system
+  // =========================================================
+  const joystick = document.getElementById('joystick');
+  const stickKnob = document.getElementById('stickKnob');
+  const useBtn = document.getElementById('useBtn');
+  const sprintBtn = document.getElementById('sprintBtn');
+  const dodgeBtn = document.getElementById('dodgeBtn');
+  let joystickId = null;
+  let touchJoystickId = null;
+
+  function centerStickKnob() {
+    const left = (joystick.clientWidth - stickKnob.clientWidth) * 0.5;
+    const top = (joystick.clientHeight - stickKnob.clientHeight) * 0.5;
+    stickKnob.style.left = left + 'px';
+    stickKnob.style.top = top + 'px';
+  }
+
+  function onPointerDown(e) {
+    AudioSystem.unlock();
+    if (e.target.closest('.touchBtn, .controlPad, button, .characterCard, #pauseBtn')) e.preventDefault();
+  }
+  document.addEventListener('pointerdown', onPointerDown, { passive: false });
+
+  document.addEventListener('keydown', e => {
+    state.input.keys[e.key.toLowerCase()] = true;
+    if (e.key === ' ' || e.key.toLowerCase() === 'e') state.input.use = true;
+    if (e.key.toLowerCase() === 'shift') state.input.sprint = true;
+    if (e.key.toLowerCase() === 'q') state.input.dodge = true;
+    if (e.key.toLowerCase() === 'escape') togglePause();
+  });
+  document.addEventListener('keyup', e => {
+    state.input.keys[e.key.toLowerCase()] = false;
+    if (e.key === ' ' || e.key.toLowerCase() === 'e') state.input.use = false;
+    if (e.key.toLowerCase() === 'shift') state.input.sprint = false;
+  });
+
+  function updateKeyboardAxes() {
+    let mx = 0, mz = 0;
+    if (state.input.keys['arrowleft'] || state.input.keys['a']) mx -= 1;
+    if (state.input.keys['arrowright'] || state.input.keys['d']) mx += 1;
+    if (state.input.keys['arrowup'] || state.input.keys['w']) mz -= 1;
+    if (state.input.keys['arrowdown'] || state.input.keys['s']) mz += 1;
+    if (!state.input.joystickActive) {
+      const len = Math.hypot(mx, mz) || 1;
+      state.input.moveX = mx / len;
+      state.input.moveZ = mz / len;
+    }
+  }
+
+  joystick.addEventListener('pointerdown', e => {
+    joystickId = e.pointerId;
+    state.input.joystickActive = true;
+    joystick.setPointerCapture(e.pointerId);
+    updateStick(e);
+  });
+  joystick.addEventListener('pointermove', e => {
+    if (joystickId !== e.pointerId) return;
+    updateStick(e);
+  });
+  const endStick = e => {
+    if (joystickId !== e.pointerId) return;
+    joystickId = null;
+    state.input.joystickActive = false;
+    state.input.moveX = 0;
+    state.input.moveZ = 0;
+    centerStickKnob();
+  };
+  joystick.addEventListener('pointerup', endStick);
+  joystick.addEventListener('pointercancel', endStick);
+  joystick.addEventListener('pointerleave', e => { if (e.pressure === 0) endStick(e); });
+
+  const prefersTouchFallback = !window.PointerEvent || /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (prefersTouchFallback) {
+    joystick.addEventListener('touchstart', e => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      touchJoystickId = touch.identifier;
+      state.input.joystickActive = true;
+      updateStick(touch);
+      e.preventDefault();
+    }, { passive: false });
+    joystick.addEventListener('touchmove', e => {
+      const touch = [...e.changedTouches].find(t => t.identifier === touchJoystickId);
+      if (!touch) return;
+      updateStick(touch);
+      e.preventDefault();
+    }, { passive: false });
+    const endTouchStick = e => {
+      const touch = [...e.changedTouches].find(t => t.identifier === touchJoystickId);
+      if (!touch && e.type !== 'touchcancel') return;
+      touchJoystickId = null;
+      state.input.joystickActive = false;
+      state.input.moveX = 0;
+      state.input.moveZ = 0;
+      centerStickKnob();
+    };
+    joystick.addEventListener('touchend', endTouchStick, { passive: false });
+    joystick.addEventListener('touchcancel', endTouchStick, { passive: false });
+  }
+
+  function updateStick(e) {
+    const rect = joystick.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const max = Math.max(28, (Math.min(rect.width, rect.height) - Math.min(stickKnob.clientWidth, stickKnob.clientHeight)) * 0.5);
+    const len = Math.hypot(dx, dy);
+    if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+    const baseLeft = (rect.width - stickKnob.clientWidth) * 0.5;
+    const baseTop = (rect.height - stickKnob.clientHeight) * 0.5;
+    stickKnob.style.left = (baseLeft + dx) + 'px';
+    stickKnob.style.top = (baseTop + dy) + 'px';
+    state.input.moveX = dx / max;
+    state.input.moveZ = dy / max;
+  }
+
+  function bindHoldButton(el, key) {
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      el.classList.add('active');
+      state.input[key] = true;
+    }, { passive: false });
+    const off = () => { el.classList.remove('active'); state.input[key] = false; };
+    el.addEventListener('pointerup', off);
+    el.addEventListener('pointercancel', off);
+    el.addEventListener('pointerleave', off);
+    if (prefersTouchFallback) {
+      el.addEventListener('touchstart', e => {
+        e.preventDefault();
+        el.classList.add('active');
+        state.input[key] = true;
+      }, { passive: false });
+      el.addEventListener('touchend', off, { passive: false });
+      el.addEventListener('touchcancel', off, { passive: false });
+    }
+  }
+  bindHoldButton(useBtn, 'use');
+  bindHoldButton(sprintBtn, 'sprint');
+  dodgeBtn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    dodgeBtn.classList.add('active');
+    state.input.dodge = true;
+    setTimeout(() => dodgeBtn.classList.remove('active'), 120);
+  }, { passive: false });
+  if (prefersTouchFallback) {
+    dodgeBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dodgeBtn.classList.add('active');
+      state.input.dodge = true;
+      setTimeout(() => dodgeBtn.classList.remove('active'), 120);
+    }, { passive: false });
+  }
+
+  // =========================================================
+  // Collision and movement
+  // =========================================================
+  function circleRectHit(cx, cz, r, rect) {
+    const dx = clamp(cx, rect.x, rect.x + rect.w) - cx;
+    const dz = clamp(cz, rect.z, rect.z + rect.h) - cz;
+    return dx * dx + dz * dz < r * r;
+  }
+
+  function insideWorld(x, z, r) {
+    return x > WORLD_BOUNDS.minX + r && x < WORLD_BOUNDS.maxX - r && z > WORLD_BOUNDS.minZ + r && z < WORLD_BOUNDS.maxZ - r;
+  }
+
+  function moveWithCollisions(ent, dx, dz) {
+    let nx = ent.x + dx;
+    let nz = ent.z + dz;
+    if (!insideWorld(nx, ent.z, ent.r)) nx = ent.x;
+    if (!insideWorld(ent.x, nz, ent.r)) nz = ent.z;
+
+    const blockers = [
+      ...OBSTACLES.filter(o => o.kind !== 'car'),
+      ...FENCE_SEGMENTS,
+      ...state.cars.map(c => ({ x: c.x - c.w/2, z: c.z - c.h/2, w: c.w, h: c.h, height: 16 }))
+    ];
+
+    for (const o of blockers) {
+      if (circleRectHit(nx, ent.z, ent.r, o)) nx = ent.x;
+      if (circleRectHit(ent.x, nz, ent.r, o)) nz = ent.z;
+    }
+    ent.x = nx;
+    ent.z = nz;
+  }
+
+  function useStress(amount) {
+    const p = state.player;
+    const resist = p.stressBaseResist + p.bonuses.stressResist;
+    p.stress = clamp(p.stress + amount / resist, 0, 100);
+  }
+
+  function useDamage(amount) {
+    const p = state.player;
+    if (p.immunity > 0) return;
+    p.health = clamp(p.health - amount, 0, 100);
+    useStress(amount * 1.2);
+    p.immunity = 0.8;
+    AudioSystem.hit();
+    addToast('Ouch. Keep your footing.', 'danger', 1.7);
+    if (p.health <= 0) failShift('You went down in the middle of the shift. The Viv took the round.');
+  }
+
+  function triggerDodge() {
+    const p = state.player;
+    if (p.dodgeCooldown > 0 || p.stamina < 10 || state.rossTrapActive) return;
+    let mx = state.input.moveX, mz = state.input.moveZ;
+    if (Math.hypot(mx, mz) < 0.1) {
+      mx = Math.cos(p.face);
+      mz = Math.sin(p.face);
+    }
+    const len = Math.hypot(mx, mz) || 1;
+    mx /= len; mz /= len;
+    const power = 80 * (1 + p.bonuses.dodgePower);
+    moveWithCollisions(p, mx * power * 0.18, mz * power * 0.18);
+    p.dodgeTime = 0.18;
+    p.dodgeCooldown = 0.85 * p.bonuses.dodgeCooldownMult;
+    p.stamina = clamp(p.stamina - 10, 0, p.maxStamina);
+    AudioSystem.click();
+  }
+
+  // =========================================================
+  // Interaction logic
+  // =========================================================
+  function getNearestInteractable() {
+    const p = state.player;
+    const activeCars = state.currentObjective && state.currentObjective.id === 'carpark' ? state.cars : [];
+    let best = null;
+    let bestD = Infinity;
+    for (const it of state.interactables) {
+      if (!isInteractableRelevant(it.id)) continue;
+      const d = dist(p.x, p.z, it.x, it.z);
+      if (d < (it.radius + 26) && d < bestD) { bestD = d; best = it; }
+    }
+    for (const car of activeCars) {
+      const d = dist(p.x, p.z, car.x, car.z);
+      if (d < 56 && d < bestD) {
+        bestD = d;
+        best = { id: 'car_' + car.id, label: car.locked ? 'Ask ' + car.owner + ' to move their car' : 'Reposition ' + car.owner + '\'s car', type: 'car', car };
+      }
+    }
+    const talkNpc = nearestTalkNpc();
+    const shouldPreferTalk = !(state.currentObjective && state.currentObjective.id === 'carpark' && best && best.type === 'car');
+    if (talkNpc && shouldPreferTalk && talkNpc.d < bestD && talkNpc.d < 40) {
+      best = { id: 'talk_' + talkNpc.npc.name, label: 'Talk to ' + talkNpc.npc.name, type: 'talk', npc: talkNpc.npc };
+    }
+    return best;
+  }
+
+  function targetStillInteractable(target) {
+    if (!target) return false;
+    const p = state.player;
+    if (target.type === 'car') {
+      return state.currentObjective && state.currentObjective.id === 'carpark' && target.car && !target.car.done && !target.car.motion && dist(p.x, p.z, target.car.x, target.car.z) < 64;
+    }
+    if (target.type === 'talk') {
+      return target.npc && target.npc.active && !target.npc.hidden && !target.npc.scripted && dist(p.x, p.z, target.npc.x, target.npc.z) < 42;
+    }
+    return isInteractableRelevant(target.id) && dist(p.x, p.z, target.x, target.z) < ((target.radius || 20) + 30);
+  }
+
+  function nearestTalkNpc() {
+    const p = state.player;
+    let best = null;
+    let bestD = Infinity;
+    for (const npc of state.npcs) {
+      if (!npc.active || npc.hidden || npc.scripted || npc.role === 'hazard') continue;
+      const d = dist(p.x, p.z, npc.x, npc.z);
+      if (d < bestD) { bestD = d; best = npc; }
+    }
+    return best ? { npc: best, d: bestD } : null;
+  }
+
+  function isInteractableRelevant(id) {
+    const obj = state.currentObjective;
+    if (!obj) return false;
+    if (obj.target === 'feedPigs') return id.startsWith('feedPig_') && !state.animalFeed.pigs[Number(id.split('_')[1])];
+    if (obj.target === 'feedSheep') return id.startsWith('feedSheep_') && !state.animalFeed.sheep[Number(id.split('_')[1])];
+    if (obj.target === 'feedBaboons') return id.startsWith('feedBaboon_') && !state.animalFeed.baboons[Number(id.split('_')[1])];
+    if (obj.target === 'sampleBaboons') return id.startsWith('sampleBaboon_') && !state.baboonSamples[Number(id.split('_')[1])];
+    if (obj.target === 'carTask') return id === 'shearSheep' ? !state.sheepSheared : false;
+    if (obj.target === 'rush') return false;
+    if (obj.target === 'juanCoffee') return false;
+    if (obj.target === 'coffee') return id === 'coffee';
+    return obj.target === id;
+  }
+
+  function interactionTimeFor(target) {
+    const obj = state.currentObjective;
+    const p = state.player;
+    if (!obj) return 0.6;
+    let t = obj.interact || 0.75;
+    const speedFactor = 1 + p.multitask * 0.05 + p.bonuses.feedSpeed;
+    if (target.id.startsWith('feedPig_') || target.id.startsWith('feedSheep_') || target.id.startsWith('feedBaboon_') || target.id.startsWith('sampleBaboon_')) t /= speedFactor;
+    if (target.id === 'pickPig' || target.id === 'weighPig' || target.id === 'deliverPig') t /= (p.carryStrength + p.bonuses.carryBoost);
+    if (target.id === 'anaesthesiaPrep' || target.id === 'pigPrep' || target.id === 'cathAssist') t /= p.assist;
+    return t;
+  }
+
+  function handleInteract(dt) {
+    const p = state.player;
+    if (p.hidden) {
+      state.interactionTarget = null;
+      state.interactionFocus = null;
+      state.interactionProgress = 0;
+      hintPrompt.classList.add('hidden');
+      return;
+    }
+    const nearest = getNearestInteractable();
+    if (!state.input.use) state.interactionFocus = null;
+    let target = nearest;
+    if (state.input.use && state.interactionFocus && targetStillInteractable(state.interactionFocus)) {
+      target = state.interactionFocus;
+    } else if (state.input.use && nearest) {
+      state.interactionFocus = nearest;
+      target = nearest;
+    }
+    state.interactionTarget = target;
+    hintPrompt.classList.toggle('hidden', !target || !!state.activeDialogue || state.rossTrapActive);
+    if (target) {
+      hintPrompt.textContent = target.type === 'talk' ? target.label : target.label + ' · HOLD USE';
+    }
+
+    if (state.activeDialogue || state.rossTrapActive) {
+      state.interactionProgress = 0;
+      return;
+    }
+
+    if (!state.input.use || !target) {
+      state.interactionProgress = 0;
+      return;
+    }
+
+    const required = target.type === 'talk' || target.type === 'car' ? 0.35 : interactionTimeFor(target);
+    state.interactionProgress += dt;
+    if (state.interactionProgress >= required) {
+      state.interactionProgress = 0;
+      state.interactionFocus = null;
+      executeInteraction(target);
+    }
+  }
+
+  function executeInteraction(target) {
+    AudioSystem.task();
+    if (target.type === 'talk') return talkToNpc(target.npc);
+    if (target.type === 'car') return interactCar(target.car);
+    const obj = state.currentObjective;
+    if (!obj) return;
+
+    if (target.id.startsWith('feedPig_')) {
+      if (!state.hasFeedCart) { addToast('You need the feed cart first.', 'warn'); return; }
+      const index = Number(target.id.split('_')[1]);
+      if (!state.animalFeed.pigs[index]) {
+        AudioSystem.feed();
+        state.animalFeed.pigs[index] = true;
+        addToast('Pig ' + (index + 1) + ' fed.');
+        if (state.animalFeed.pigs.every(Boolean)) completeObjective('feed_pigs');
+        else updateHud(true);
+      }
+      return;
+    }
+    if (target.id.startsWith('feedSheep_')) {
+      if (!state.hasFeedCart) { addToast('You need the feed cart first.', 'warn'); return; }
+      const index = Number(target.id.split('_')[1]);
+      if (!state.animalFeed.sheep[index]) {
+        AudioSystem.feed();
+        state.animalFeed.sheep[index] = true;
+        addToast('Sheep ' + (index + 1) + ' fed.');
+        if (state.animalFeed.sheep.every(Boolean)) completeObjective('feed_sheep');
+        else updateHud(true);
+      }
+      return;
+    }
+    if (target.id.startsWith('feedBaboon_')) {
+      if (!state.hasFeedCart) { addToast('You need the feed cart first.', 'warn'); return; }
+      const index = Number(target.id.split('_')[1]);
+      if (!state.animalFeed.baboons[index]) {
+        AudioSystem.feed();
+        if (state.input.sprint) {
+          useStress(5);
+          addToast('The baboons objected to the sprinty energy.', 'warn', 2.1);
+        }
+        state.animalFeed.baboons[index] = true;
+        addToast('Baboon ' + (index + 1) + ' fed.');
+        if (state.animalFeed.baboons.every(Boolean)) completeObjective('feed_baboons');
+        else updateHud(true);
+      }
+      return;
+    }
+    if (target.id.startsWith('sampleBaboon_')) {
+      const index = Number(target.id.split('_')[1]);
+      if (!state.baboonSamples[index]) {
+        AudioSystem.sample();
+        state.baboonSamples[index] = true;
+        addToast('Sample ' + (state.baboonSamples.filter(Boolean).length) + '/' + state.baboonSamples.length + ' collected.');
+        if (state.baboonSamples.every(Boolean)) completeObjective('sample_baboons');
+        else updateHud(true);
+      }
+      return;
+    }
+
+    switch (target.id) {
+      case 'shiftBoard':
+        queueDialogue('Sally', 'Board checked. It is already overbooked in a way that feels personal. Grab the cart.');
+        completeObjective('check_board');
+        break;
+      case 'feedCart':
+        state.hasFeedCart = true;
+        addToast('Feed cart acquired. Wheel it to each animal pen.');
+        completeObjective('collect_cart');
+        break;
+      case 'pigPrep':
+        queueDialogue('Alan', 'Prep is clean. Stay with me now — we anaesthetise the pig together before transport.');
+        completeObjective('pig_prep');
+        break;
+      case 'anaesthesiaPrep':
+        state.pigReady = true;
+        queueDialogue('Alan', 'Good. The pig is under. Load onto the trolley and keep it moving to scales.');
+        completeObjective('anaesthetise_pigs');
+        break;
+      case 'pickPig':
+        if (!state.pigReady) {
+          addToast('The pig is not ready for the trolley yet.', 'warn');
+          return;
+        }
+        state.carryingPig = true;
+        state.pigAtScales = false;
+        addToast('Pig loaded onto the wheeled trolley. Movement slowed under load.', 'warn');
+        completeObjective('carry_to_scales');
+        break;
+      case 'weighPig':
+        if (!state.carryingPig) { addToast('You need the pig trolley first.', 'warn'); return; }
+        state.pigAtScales = true;
+        addToast('Pig weighed on the scales. Keep wheeling the same trolley into cath lab.');
+        completeObjective('weigh_pig');
+        break;
+      case 'deliverPig':
+        if (!state.carryingPig || !state.pigAtScales) { addToast('Wheel the trolley from the scales to cath lab.', 'warn'); return; }
+        state.pigInCath = true;
+        state.pigAtScales = false;
+        state.carryingPig = false;
+        addToast('Pig trolley handed over inside cath lab.');
+        completeObjective('deliver_cath');
+        break;
+      case 'cathAssist':
+        if (!state.pigInCath) { addToast('Cath lab is waiting on the transport handover.', 'warn'); return; }
+        queueDialogue('Juan', 'That is exactly what I needed. You might actually make the coffee bracket.');
+        completeObjective('support_cath');
+        break;
+      case 'shearSheep':
+        state.sheepSheared = true;
+        completeObjective('shear_sheep');
+        break;
+      case 'coffee':
+        queueDialogue('Juan', 'You got the whole day over the line. Here. This coffee is earned.', { onDismiss: () => completeObjective('coffee') });
+        break;
+    }
+  }
+
+  function interactCar(car) {
+    if (!state.currentObjective || state.currentObjective.id !== 'carpark') return;
+    if (car.done || car.motion) return;
+    if (car.locked) {
+      const ownerNpc = state.npcs.find(n => n.name === car.owner && !n.hidden);
+      if (ownerNpc && dist(state.player.x, state.player.z, ownerNpc.x, ownerNpc.z) < 44) {
+        if (car.owner === 'Wayne') {
+          if (state.wayneAnger > 60) {
+            queueDialogue('Wayne', 'No. Not while the rest of this place still looks like a mistake.');
+            useStress(6);
+            state.wayneAnger = clamp(state.wayneAnger + 8, 0, 100);
+            return;
+          }
+          queueDialogue('Wayne', 'Fine. I am walking over and moving it. Nobody say this was easy.');
+        } else {
+          queueDialogue(car.owner, 'On it. I will go to my car and move it.');
+        }
+        moveCarToTarget(car, { name: ownerNpc.name, color: ownerNpc.color, npcName: ownerNpc.name });
+      } else {
+        addToast('Talk to ' + car.owner + ' directly so they move their own car.', 'warn');
+        if (car.owner === 'Wayne') state.wayneAnger = clamp(state.wayneAnger + 6, 0, 100);
+      }
+    } else {
+      moveCarToTarget(car, { name: state.player.name, color: state.player.color, isPlayer: true });
+      addToast('You jump into ' + car.owner + "'s car and steer it into place. Nearby staff keep clear in utility.");
+    }
+  }
+
+  function moveCarToTarget(car, driver = null) {
+    if (car.motion || car.done) return;
+    car.driverName = driver?.name || car.owner;
+    car.driverColor = driver?.color || '#f0e0c4';
+    if (driver && driver.isPlayer) {
+      state.player.hidden = true;
+      state.player.x = car.x;
+      state.player.z = car.z;
+      state.player.face = car.face || Math.PI * 0.5;
+      car.motion = { phase: 'drive', speed: 218, isPlayer: true, npcName: null };
+    } else {
+      const npc = state.npcs.find(n => n.name === (driver?.npcName || car.owner));
+      if (!npc) {
+        car.motion = { phase: 'drive', speed: 188, isPlayer: false, npcName: driver?.npcName || car.owner };
+      } else {
+        npc.scripted = true;
+        car.motion = { phase: 'walkToCar', walkSpeed: 112, speed: 188, isPlayer: false, npcName: npc.name };
+      }
+    }
+  }
+
+  function checkCarParkSolved() {
+    const movableDone = state.cars.every(c => c.done);
+    state.laneOpen = movableDone;
+    return movableDone;
+  }
+
+  function talkToNpc(npc) {
+    if (!npc) return;
+    AudioSystem.click();
+
+    if (state.currentObjective && state.currentObjective.id === 'carpark') {
+      const lockedCar = state.cars.find(c => c.owner === npc.name && c.locked && !c.done);
+      if (lockedCar) {
+        interactCar(lockedCar);
+        return;
+      }
+    }
+
+    if (state.currentObjective && state.currentObjective.id === 'coffee_finale' && npc.name === 'Juan') {
+      state.coffeeGranted = true;
+      state.finaleBurst = Math.max(state.finaleBurst || 0, 5.2);
+      AudioSystem.coffee();
+      queueDialogue('Juan', 'You made it. I am buying the coffee. No debate. Take the win, take the caffeine, and enjoy the fact that the shift ended like a film.', { onDismiss: () => completeObjective('coffee_finale') });
+      return;
+    }
+
+    if (npc.name === 'Ross') {
+      queueDialogue('Ross', 'Fascinating that you found me now. I have several corridor concerns and zero sense of timing.');
+      return;
+    }
+
+    const lines = DIALOGUE[npc.name] || [npc.name + ' nods with highly specific workplace energy.'];
+    queueDialogue(npc.name, choice(lines));
+  }
+
+  // =========================================================
+  // Car movement and NPC logic
+  // =========================================================
+  function carWalkExitPoint(car, driverName = '') {
+    const preferred = driverName && CARPARK_OWNER_WAIT_POINTS[driverName]
+      ? { x: CARPARK_OWNER_WAIT_POINTS[driverName].x, z: CARPARK_OWNER_WAIT_POINTS[driverName].z }
+      : { x: clamp(car.x, 138, 854), z: CARPARK_EXIT_LANE_Z };
+    const candidates = [
+      preferred,
+      { x: clamp(car.x - 48, 120, 876), z: CARPARK_EXIT_LANE_Z },
+      { x: clamp(car.x + 48, 120, 876), z: CARPARK_EXIT_LANE_Z },
+      { x: clamp(car.x, 120, 876), z: 1298 },
+      { x: clamp(car.x, 120, 876), z: 1110 }
+    ];
+    const blockers = [
+      ...OBSTACLES.filter(o => o.kind !== 'car'),
+      ...FENCE_SEGMENTS,
+      ...state.cars.map(c => ({ x: c.x - c.w/2 - 4, z: c.z - c.h/2 - 4, w: c.w + 8, h: c.h + 8, height: 16 }))
+    ];
+    for (const pt of candidates) {
+      if (!insideWorld(pt.x, pt.z, 12)) continue;
+      if (!blockers.some(o => circleRectHit(pt.x, pt.z, 12, o))) return pt;
+    }
+    return preferred;
+  }
+
+  function finishCarMove(car) {
+    const motion = car.motion;
+    if (!motion) return;
+    const wasPlayer = !!motion.isPlayer;
+    const npcName = motion.npcName;
+    const exitPoint = carWalkExitPoint(car, npcName || car.driverName || '');
+    car.motion = null;
+    car.done = true;
+    if (wasPlayer) {
+      state.player.hidden = false;
+      state.player.x = exitPoint.x;
+      state.player.z = exitPoint.z;
+      state.player.face = Math.atan2(exitPoint.z - car.z, exitPoint.x - car.x);
+      addToast('You parked ' + car.owner + "'s car and stepped back into the lane.");
+    } else if (npcName) {
+      const npc = state.npcs.find(n => n.name === npcName);
+      if (npc) {
+        npc.hidden = false;
+        npc.active = true;
+        npc.scripted = false;
+        npc.x = exitPoint.x;
+        npc.z = exitPoint.z;
+        npc.face = Math.atan2(exitPoint.z - car.z, exitPoint.x - car.x);
+        npc.zoneId = 'carpark';
+        npc.targetX = npc.x;
+        npc.targetZ = npc.z;
+        npc.wait = 1.6;
+      }
+      addToast(car.owner + ' moved their car and cleared the lane.');
+    }
+    state.player.coins += 2;
+    AudioSystem.task();
+    if (checkCarParkSolved()) completeObjective('carpark');
+  }
+
+  function updateCars(dt) {
+    for (const car of state.cars) {
+      if (!car.motion) continue;
+      if (car.motion.phase === 'walkToCar') {
+        const npc = state.npcs.find(n => n.name === car.motion.npcName);
+        if (!npc) {
+          car.motion.phase = 'drive';
+        } else {
+          npc.scripted = true;
+          npc.active = true;
+          const doorX = car.x - 18;
+          const doorZ = car.z + 12;
+          const dx = doorX - npc.x;
+          const dz = doorZ - npc.z;
+          const len = Math.hypot(dx, dz);
+          if (len <= 7) {
+            npc.hidden = true;
+            npc.active = false;
+            car.motion.phase = 'drive';
+          } else {
+            npc.face = Math.atan2(dz, dx);
+            const step = Math.min(len, (car.motion.walkSpeed || 108) * dt);
+            npc.x += dx / len * step;
+            npc.z += dz / len * step;
+          }
+        }
+      }
+
+      if (car.motion && car.motion.phase === 'drive') {
+        const slot = car.slots[car.target];
+        const dx = slot.x - car.x;
+        const dz = slot.z - car.z;
+        const len = Math.hypot(dx, dz);
+        if (len <= 3) {
+          car.x = slot.x;
+          car.z = slot.z;
+          car.motion.phase = 'exit';
+          car.motion.timer = 0.24;
+        } else {
+          car.face = Math.atan2(dz, dx);
+          const step = Math.min(len, (car.motion.speed || 188) * dt);
+          car.x += dx / len * step;
+          car.z += dz / len * step;
+          if (car.motion.isPlayer) {
+            state.player.x = car.x;
+            state.player.z = car.z;
+            state.player.face = car.face;
+          }
+        }
+      }
+
+      if (car.motion && car.motion.phase === 'exit') {
+        car.motion.timer -= dt;
+        if (car.motion.timer <= 0) finishCarMove(car);
+      }
+    }
+  }
+
+  function updateNPCs(dt) {
+    const p = state.player;
+    for (const npc of state.npcs) {
+      if (!npc.active || npc.hidden) continue;
+      npc.speechCooldown = Math.max(0, npc.speechCooldown - dt);
+      npc.bob += dt * (npc.role === 'hazard' ? 6 : 3);
+      const scheduleZone = npc.schedule[Math.min(state.phase, npc.schedule.length - 1)] || npc.homeZone;
+      if (npc.role !== 'hazard' && npc.zoneId !== scheduleZone && dist(npc.x, npc.z, npc.targetX, npc.targetZ) < 20) {
+        setNpcTargetInZone(npc, scheduleZone);
+      }
+
+      if (npc.scripted) continue;
+
+      if (npc.name === 'Thanh') {
+        const hazard = state.hazards[0];
+        npc.x = hazard.x;
+        npc.z = hazard.z;
+        npc.face = hazard.dir;
+        continue;
+      }
+
+      const speed = npc.speed;
+      npc.wait -= dt;
+      if (npc.wait <= 0 || dist(npc.x, npc.z, npc.targetX, npc.targetZ) < 12) {
+        npc.wait = rand(0.4, 2.0);
+        setNpcTargetInZone(npc, scheduleZone);
+      }
+      const dx = npc.targetX - npc.x;
+      const dz = npc.targetZ - npc.z;
+      const len = Math.hypot(dx, dz);
+      if (len > 1) {
+        npc.face = Math.atan2(dz, dx);
+        const step = Math.min(len, speed * dt);
+        npc.x += dx / len * step;
+        npc.z += dz / len * step;
+      }
+
+      if (npc.name === 'Wayne') {
+        if (state.currentObjective && state.currentObjective.phase >= 2 && state.objectiveTimer < 18) state.wayneAnger = clamp(state.wayneAnger + dt * 2.8, 0, 100);
+      }
+      if (!state.activeDialogue && state.chatterCooldown <= 0 && dist(p.x, p.z, npc.x, npc.z) < 34 && npc.name !== 'Ross' && npc.name !== 'Thanh' && npc.speechCooldown <= 0 && Math.random() < dt * 0.05) {
+        npc.speechCooldown = rand(8, 14);
+        state.chatterCooldown = rand(7, 11);
+        addToast(npc.name + ': ' + choice(DIALOGUE[npc.name] || ['Busy.']), '', 2.0);
+      }
+    }
+  }
+
+  function updateRossTrap(dt) {
+    if (state.currentObjective && state.currentObjective.id === 'coffee_finale') {
+      state.rossTrapActive = false;
+      state.rossTrapMeter = 0;
+      return;
+    }
+    const ross = state.npcs.find(n => n.name === 'Ross');
+    if (!ross) return;
+    const d = dist(state.player.x, state.player.z, ross.x, ross.z);
+    if (!state.rossTrapActive && d < 46 && !state.player.dodgeTime) {
+      state.rossTrapMeter += dt;
+      if (state.rossTrapMeter > 1.45) {
+        state.rossTrapActive = true;
+        state.rossMash = 0;
+        queueDialogue('Ross', 'Since you are here, let me walk you through a surprisingly comprehensive corridor ethics situation. Tap DODGE or USE repeatedly to escape.');
+        useStress(9);
+        AudioSystem.alert();
+      }
+    } else if (!state.rossTrapActive) {
+      state.rossTrapMeter = Math.max(0, state.rossTrapMeter - dt * 1.8);
+    }
+    if (state.rossTrapActive) {
+      state.player.stamina = clamp(state.player.stamina - dt * 6, 0, state.player.maxStamina);
+      if (state.input.use || state.input.dodge) {
+        state.rossMash += dt * 6;
+      }
+      if (state.rossMash >= 5) {
+        state.rossTrapActive = false;
+        state.rossTrapMeter = 0;
+        dismissDialogue();
+        addToast('You escaped the Ross conversation loop.', 'gold');
+      }
+    }
+  }
+
+  // =========================================================
+  // Hazards and pressure
+  // =========================================================
+  function updateHazards(dt) {
+    if (state.currentObjective && state.currentObjective.id === 'coffee_finale') {
+      return;
+    }
+    for (const hz of state.hazards) {
+      if (state.phase < hz.activeFromPhase) continue;
+      const target = hz.route[(hz.routeIndex + 1) % hz.route.length];
+      const dx = target.x - hz.x;
+      const dz = target.z - hz.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 4) {
+        hz.routeIndex = (hz.routeIndex + 1) % hz.route.length;
+      } else {
+        hz.dir = Math.atan2(dz, dx);
+        const step = Math.min(len, hz.speed * dt);
+        hz.x += dx / len * step;
+        hz.z += dz / len * step;
+      }
+      if (dist(state.player.x, state.player.z, hz.x, hz.z) < hz.r + state.player.r + 3) {
+        useDamage(12);
+        state.player.knocked = 0.45;
+        moveWithCollisions(state.player, Math.cos(hz.dir) * 18, Math.sin(hz.dir) * 18);
+        addToast('Thanh barrels through the zone.', 'danger');
+      }
+    }
+
+    if (state.currentObjective && state.currentObjective.phase >= 2) {
+      state.objectiveTimer -= dt;
+      if (state.objectiveTimer < 18 && !state.objectiveWarned && state.currentObjective.duration < 999) {
+        addToast('Objective running late. Wayne can feel it from across the facility.', 'warn', 2.8);
+        AudioSystem.alert();
+        state.objectiveWarned = true;
+      }
+      if (state.objectiveTimer <= 0 && state.currentObjective.duration < 999) {
+        state.objectiveTimer = 0;
+        state.wayneAnger = clamp(state.wayneAnger + 18, 0, 100);
+        useStress(10);
+        addToast('Delay penalty. The whole day tightens up.', 'danger', 3.0);
+        activateObjective(Math.max(0, state.objectiveIndex));
+      }
+    }
+
+    if (state.wayneAnger >= 100) {
+      failShift('Wayne has reached critical anger. Procedure confidence has evaporated and the day is over.');
+    }
+  }
+
+  // =========================================================
+  // Gameplay update
+  // =========================================================
+  function update(dt) {
+    cleanupToasts();
+    showNextDialogue();
+    updateKeyboardAxes();
+    AudioSystem.tick(dt);
+    if (state.scene !== 'game' || state.paused) return;
+
+    const p = state.player;
+    p.immunity = Math.max(0, p.immunity - dt);
+    p.dodgeCooldown = Math.max(0, p.dodgeCooldown - dt);
+    p.dodgeTime = Math.max(0, p.dodgeTime - dt);
+    p.knocked = Math.max(0, p.knocked - dt);
+
+    if (state.input.dodge) {
+      triggerDodge();
+      state.input.dodge = false;
+    }
+
+    let mx = state.input.moveX;
+    let mz = state.input.moveZ;
+    if (p.hidden) { mx = 0; mz = 0; }
+    let len = Math.hypot(mx, mz);
+    if (len > 1) { mx /= len; mz /= len; len = 1; }
+    if (p.knocked > 0) { mx = 0; mz = 0; len = 0; }
+
+    const wantsSprint = state.input.sprint && p.stamina > 2 && len > 0.25 && !state.carryingPig && !state.rossTrapActive;
+    let speed = wantsSprint ? p.sprintSpeed : p.moveSpeed;
+    if (state.carryingPig) speed *= 0.64 + (p.carryStrength + p.bonuses.carryBoost - 1) * 0.18;
+    if (p.stress > 70) speed *= 0.92;
+    if (p.dodgeTime > 0) speed *= 1.35;
+    p.speed = speed * len;
+
+    if (len > 0.08 && !state.rossTrapActive) {
+      p.face = Math.atan2(mz, mx);
+      moveWithCollisions(p, mx * speed * dt, mz * speed * dt);
+      p.anim += dt * (wantsSprint ? 12 : 8);
+      p.footstep += dt * speed;
+      if (state.carryingPig && p.footstep > 64) {
+        p.footstep = 0;
+        AudioSystem.carry();
+      }
+    } else {
+      p.speed = 0;
+    }
+
+    if (wantsSprint) p.stamina = clamp(p.stamina - dt * 17, 0, p.maxStamina);
+    else p.stamina = clamp(p.stamina + dt * (12 + p.bonuses.staminaRegen * 8), 0, p.maxStamina);
+
+    p.stress = clamp(p.stress - dt * 1.4, 0, 100);
+    if (state.carryingPig) useStress(dt * 2.4);
+    if (state.phase >= 4) useStress(dt * 0.36);
+
+    updateCars(dt);
+    updateNPCs(dt);
+    updateRossTrap(dt);
+    updateHazards(dt);
+    updateSpecialObjectives(dt);
+    handleInteract(dt);
+
+    state.worldElapsed += dt;
+    state.worldTimeMinutes += dt * 6.2;
+    state.camera.x = lerp(state.camera.x, p.x, 1 - Math.exp(-dt * 4));
+    state.camera.z = lerp(state.camera.z, p.z + 30, 1 - Math.exp(-dt * 4));
+
+    if (state.player.health <= 0) failShift('You were overwhelmed before the shift could end.');
+    updateHud();
+  }
+
+  function updateSpecialObjectives(dt) {
+    const obj = state.currentObjective;
+    if (!obj) return;
+    if (obj.id === 'carpark') {
+      ui.subObjectiveText.textContent = carParkStatusText();
+      const nearWayneCar = dist(state.player.x, state.player.z, state.cars.find(c => c.owner === 'Wayne').x, state.cars.find(c => c.owner === 'Wayne').z) < 44;
+      if (nearWayneCar && !state.messagesSeen.has('wayne_warning')) {
+        state.messagesSeen.add('wayne_warning');
+        addToast('Wayne\'s car is off-limits unless Wayne moves it himself.', 'warn', 3.2);
+      }
+      if (checkCarParkSolved()) completeObjective('carpark');
+    }
+    if (obj.id === 'survive') {
+      state.finalRushTimer -= dt;
+      const waves = [70, 50, 32, 16];
+      waves.forEach((t, i) => {
+        const key = 'rush_' + t;
+        if (state.finalRushTimer < t && !state.messagesSeen.has(key)) {
+          state.messagesSeen.add(key);
+          if (i === 0) {
+            queueDialogue('Tony', 'Utility monitor wobble. Ignore it just convincingly enough.');
+            state.wayneAnger = clamp(state.wayneAnger + 4, 0, 100);
+          } else if (i === 1) {
+            queueDialogue('Mitch', 'Need a quick measurement handoff. Emotionally, I am choosing confidence.');
+            useStress(6);
+          } else if (i === 2) {
+            queueDialogue('Ross', 'One more corridor note before you go—');
+            state.rossTrapMeter = Math.max(state.rossTrapMeter, 1.15);
+          } else {
+            addToast('Thanh sweeps the car park faster. Keep moving.', 'danger', 2.8);
+            state.hazards[0].speed = 250;
+          }
+        }
+      });
+      if (state.finalRushTimer <= 0) {
+        completeObjective('survive');
+      } else {
+        ui.subObjectiveText.textContent = 'Survive for ' + state.finalRushTimer.toFixed(0) + ' more seconds. No extra task — just stay alive, avoid Thanh and Ross, and keep moving.';
+      }
+    }
+    if (obj.id === 'coffee_finale') {
+      ui.subObjectiveText.textContent = 'Follow the glowing route to Coffee Shop outside the fence, then talk to Juan for your coffee.';
+    }
+  }
+
+  function carParkStatusText() {
+    const total = state.cars.length;
+    const done = state.cars.filter(c => c.done).length;
+    const moving = state.cars.filter(c => c.motion).map(c => c.owner);
+    const next = nextCarParkTarget();
+    const nextLine = !next ? 'All cars are moving into place.' : next.label ? next.label + '.' : (next.locked ? 'Talk to ' + next.owner + ' at the lower edge so they move their own car.' : 'Move ' + next.owner + "'s car next. The rest of the crowd has cleared into utility.");
+    const movingLine = moving.length ? ' In motion: ' + moving.join(', ') + '.' : '';
+    return done + '/' + total + ' cars cleared. ' + nextLine + movingLine;
+  }
+
+  // =========================================================
+  // Rendering - stylized pseudo-3D
+  // =========================================================
+  let W = canvas.width, H = canvas.height;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    W = canvas.width;
+    H = canvas.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    centerStickKnob();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function worldToScreen(x, z, y = 0) {
+    const narrow = canvas.getBoundingClientRect().width < 520;
+    const scale = Math.min(W / 720, H / 1280) * (narrow ? 2.08 : 1.62);
+    const sx = W * 0.5 + (x - state.camera.x) * scale;
+    const sy = H * (narrow ? 0.56 : 0.60) + (z - state.camera.z) * scale * 0.58 - y * scale * 1.2;
+    return { x: sx, y: sy, scale };
+  }
+
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#16325b');
+    sky.addColorStop(0.5, '#11203b');
+    sky.addColorStop(1, '#07101d');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    const glow1 = ctx.createRadialGradient(W*0.8, H*0.08, 10, W*0.8, H*0.08, W*0.55);
+    glow1.addColorStop(0, 'rgba(241,185,90,0.18)');
+    glow1.addColorStop(1, 'rgba(241,185,90,0)');
+    ctx.fillStyle = glow1;
+    ctx.fillRect(0, 0, W, H);
+
+    const glow2 = ctx.createRadialGradient(W*0.14, H*0.14, 10, W*0.14, H*0.14, W*0.5);
+    glow2.addColorStop(0, 'rgba(103,217,205,0.16)');
+    glow2.addColorStop(1, 'rgba(103,217,205,0)');
+    ctx.fillStyle = glow2;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawZone(zone) {
+    const p0 = worldToScreen(zone.x, zone.z);
+    const p1 = worldToScreen(zone.x + zone.w, zone.z);
+    const p2 = worldToScreen(zone.x + zone.w, zone.z + zone.h);
+    const p3 = worldToScreen(zone.x, zone.z + zone.h);
+
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineTo(p3.x, p3.y);
+    ctx.closePath();
+    const floor = ctx.createLinearGradient(p0.x, p0.y, p2.x, p2.y);
+    floor.addColorStop(0, zone.floor);
+    floor.addColorStop(1, shade(zone.floor, zone.exterior ? -16 : -10));
+    ctx.fillStyle = floor;
+    ctx.fill();
+
+    ctx.strokeStyle = zone.exterior ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = Math.max(1, p0.scale * 0.9);
+    ctx.stroke();
+
+    ctx.strokeStyle = zone.exterior ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.045)';
+    for (let i = 1; i < 6; i++) {
+      const tx = zone.x + zone.w * (i / 6);
+      const a = worldToScreen(tx, zone.z);
+      const b = worldToScreen(tx, zone.z + zone.h);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (let i = 1; i < 5; i++) {
+      const tz = zone.z + zone.h * (i / 5);
+      const a = worldToScreen(zone.x, tz);
+      const b = worldToScreen(zone.x + zone.w, tz);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    const title = worldToScreen(zone.x + zone.w * 0.06, zone.z + 10);
+    ctx.fillStyle = zone.exterior ? 'rgba(232,240,248,0.74)' : 'rgba(255,255,255,0.82)';
+    ctx.font = Math.round(10 * p0.scale + (zone.exterior ? 7 : 8)) + 'px system-ui, sans-serif';
+    ctx.fillText(zone.name, title.x, title.y - 6 * p0.scale);
+  }
+
+
+  function drawCoffeeCup(wx, wz, scaleMul = 1, steamPhase = 0) {
+    const p = worldToScreen(wx, wz, 0);
+    const scale = p.scale * scaleMul;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 8 * scale, 9 * scale, 3 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f7efe3';
+    roundRect(ctx, p.x - 8 * scale, p.y - 8 * scale, 16 * scale, 12 * scale, 3 * scale, true, false);
+    ctx.strokeStyle = '#c99255';
+    ctx.lineWidth = Math.max(1, 1.4 * scale);
+    ctx.beginPath();
+    ctx.arc(p.x + 9 * scale, p.y - 2 * scale, 4 * scale, -Math.PI * 0.4, Math.PI * 0.55);
+    ctx.stroke();
+    ctx.fillStyle = '#8a5b38';
+    roundRect(ctx, p.x - 6 * scale, p.y - 6 * scale, 12 * scale, 5 * scale, 2 * scale, true, false);
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    for (let i = 0; i < 3; i++) {
+      const sway = Math.sin(state.worldElapsed * 2.8 + steamPhase + i * 0.8) * 2.2 * scale;
+      ctx.beginPath();
+      ctx.moveTo(p.x + (-4 + i * 4) * scale, p.y - 10 * scale);
+      ctx.quadraticCurveTo(p.x + (-2 + i * 4) * scale + sway, p.y - 18 * scale, p.x + (-5 + i * 4) * scale + sway * 0.8, p.y - 25 * scale);
+      ctx.stroke();
+    }
+  }
+
+  function drawCoffeeCornerDecor() {
+    const zone = getZone('coffee');
+    if (!zone) return;
+    const finaleActive = state.currentObjective && state.currentObjective.id === 'coffee_finale';
+    const glow = finaleActive || state.scene === 'end';
+    const sign = worldToScreen(zone.x + zone.w * 0.52, zone.z + 20, 0);
+    const awnL = worldToScreen(zone.x + 18, zone.z + 42, 0);
+    const awnR = worldToScreen(zone.x + zone.w - 18, zone.z + 42, 0);
+    const awnD = worldToScreen(zone.x + zone.w - 18, zone.z + 70, 0);
+    ctx.fillStyle = glow ? 'rgba(255,191,109,0.18)' : 'rgba(255,191,109,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(sign.x, sign.y + 8 * sign.scale, 82 * sign.scale, 38 * sign.scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3f2618';
+    roundRect(ctx, awnL.x, awnL.y, awnR.x - awnL.x, awnD.y - awnL.y, 8 * sign.scale, true, false);
+    const stripeW = (awnR.x - awnL.x) / 7;
+    for (let i = 0; i < 7; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#ffd792' : '#9b5638';
+      roundRect(ctx, awnL.x + i * stripeW, awnL.y, stripeW + 1, awnD.y - awnL.y, 2 * sign.scale, true, false);
+    }
+    ctx.fillStyle = glow ? '#ffe9b8' : '#f1d9aa';
+    ctx.font = Math.round(12 * sign.scale + 10) + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('COFFEE SHOP', sign.x, sign.y);
+    ctx.font = Math.round(9 * sign.scale + 7) + 'px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,244,220,0.9)';
+    ctx.fillText('Open late for legends', sign.x, sign.y + 16 * sign.scale);
+    ctx.textAlign = 'left';
+    for (let i = 0; i < 6; i++) {
+      const lx = zone.x + 20 + i * 30;
+      const a = worldToScreen(lx, zone.z + 34, 0);
+      ctx.fillStyle = i % 2 ? '#ffd08d' : '#67d9cd';
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, 3.2 * a.scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    [
+      { x: zone.x + 50, z: zone.z + 88 },
+      { x: zone.x + 112, z: zone.z + 96 },
+      { x: zone.x + 166, z: zone.z + 84 }
+    ].forEach((tbl, i) => {
+      const p = worldToScreen(tbl.x, tbl.z, 0);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 10 * p.scale, 11 * p.scale, 4 * p.scale, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5d3928';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, 12 * p.scale, 7 * p.scale, 0, 0, Math.PI * 2); ctx.fill();
+      drawCoffeeCup(tbl.x + 5, tbl.z - 2, 0.72, i + 0.4);
+    });
+    drawCoffeeCup(INTERACT_POINTS.coffeeSpot.x + 12, INTERACT_POINTS.coffeeSpot.z - 4, glow ? 0.9 : 0.78, 1.9);
+    if (glow) {
+      const pulse = 1 + Math.sin(state.worldElapsed * 5.2) * 0.08;
+      for (let i = 0; i < 12; i++) {
+        const ang = state.worldElapsed * 0.9 + i * (Math.PI * 2 / 12);
+        const wx = INTERACT_POINTS.coffeeSpot.x + Math.cos(ang) * 36;
+        const wz = INTERACT_POINTS.coffeeSpot.z + Math.sin(ang) * 24;
+        const p = worldToScreen(wx, wz, 0);
+        ctx.fillStyle = i % 2 ? 'rgba(255,214,130,0.85)' : 'rgba(103,217,205,0.85)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.4 * p.scale * pulse, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const pathDots = [
+        { x: 930, z: 998 }, { x: 958, z: 918 }, { x: 972, z: 840 }, { x: 986, z: 742 },
+        { x: 1008, z: 642 }, { x: 1028, z: 532 }, { x: 1044, z: 414 }, { x: 1060, z: 306 }, { x: 1072, z: 234 }
+      ];
+      pathDots.forEach((pt, i) => {
+        const p = worldToScreen(pt.x, pt.z, 0);
+        const alpha = 0.24 + 0.22 * Math.sin(state.worldElapsed * 4 + i * 0.8);
+        ctx.fillStyle = `rgba(255,220,136,${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4.8 * p.scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+  }
+
+  function drawFenceSegments() {
+    for (const seg of FENCE_SEGMENTS) {
+      const p = worldToScreen(seg.x, seg.z, 0);
+      const scale = p.scale;
+      const w = seg.w * scale;
+      const h = seg.h * scale * 0.58;
+      ctx.fillStyle = 'rgba(7, 15, 25, 0.96)';
+      roundRect(ctx, p.x, p.y, w, h, Math.max(4, 4 * scale), true, false);
+      ctx.fillStyle = 'rgba(107, 195, 184, 0.32)';
+      roundRect(ctx, p.x, p.y + h * 0.18, w, Math.max(3, h * 0.26), Math.max(3, 3 * scale), true, false);
+      ctx.strokeStyle = 'rgba(205, 237, 240, 0.18)';
+      ctx.lineWidth = 1.4;
+      roundRect(ctx, p.x, p.y, w, h, Math.max(4, 4 * scale), false, true);
+      if (seg.w > seg.h) {
+        const count = Math.max(3, Math.round(seg.w / 58));
+        for (let i = 0; i <= count; i++) {
+          const xx = p.x + (w * i / count);
+          ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+          ctx.beginPath();
+          ctx.moveTo(xx, p.y - 6 * scale);
+          ctx.lineTo(xx, p.y + h + 6 * scale);
+          ctx.stroke();
+        }
+      } else {
+        const count = Math.max(3, Math.round(seg.h / 58));
+        for (let i = 0; i <= count; i++) {
+          const yy = p.y + (h * i / count);
+          ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+          ctx.beginPath();
+          ctx.moveTo(p.x - 6 * scale, yy);
+          ctx.lineTo(p.x + w + 6 * scale, yy);
+          ctx.stroke();
+        }
+      }
+    }
+    const breach = worldToScreen(920, 1000, 0);
+    ctx.fillStyle = 'rgba(241,185,90,0.82)';
+    ctx.font = Math.round(8 * breach.scale + 8) + 'px system-ui, sans-serif';
+    ctx.fillText('Fence gap', breach.x + 4, breach.y - 10 * breach.scale);
+  }
+
+  function drawOutsideActivity() {
+    const t = state.worldElapsed;
+    const roadLeft = 964, roadRight = 1178;
+    const laneX = [1002, 1082, 1150];
+    for (let i = 0; i < laneX.length; i++) {
+      const zz = 792 + ((t * (70 + i * 18) + i * 130) % 520);
+      drawTrafficCar(laneX[i], zz, i % 2 === 0 ? '#9fb7ff' : '#ffb47a');
+    }
+    const walkers = [
+      { x: 1030 + Math.sin(t * 0.9) * 24, z: 232 + Math.cos(t * 0.9) * 12, c: '#c6f0d1' },
+      { x: 1098 + Math.sin(t * 1.1 + 1.2) * 22, z: 540 + Math.cos(t * 1.1 + 1.2) * 16, c: '#ffd5b2' },
+      { x: 1128 + Math.sin(t * 0.75 + 0.4) * 18, z: 598 + Math.cos(t * 0.75 + 0.4) * 12, c: '#d8d7ff' }
+    ];
+    walkers.forEach(w => drawCharacter({ x: w.x, z: w.z, color: w.c, face: 0, bob: t * 5, anim: t * 5, name: '' }, false));
+  }
+
+  function drawDetailedCarScreen(x, y, scale, color, opts = {}) {
+    const w = (opts.w || 34) * scale;
+    const h = (opts.h || 56) * scale;
+    const angle = opts.angle || 0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.26)';
+    ctx.beginPath();
+    ctx.ellipse(0, h * 0.34, w * 0.54, h * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const body = ctx.createLinearGradient(-w * 0.4, -h * 0.5, w * 0.4, h * 0.5);
+    body.addColorStop(0, shade(color, 18));
+    body.addColorStop(1, shade(color, -18));
+    ctx.fillStyle = body;
+    roundRect(ctx, -w * 0.42, -h * 0.5, w * 0.84, h, 8 * scale, true, false);
+
+    ctx.fillStyle = shade(color, 26);
+    roundRect(ctx, -w * 0.24, -h * 0.26, w * 0.48, h * 0.42, 5 * scale, true, false);
+    ctx.fillStyle = 'rgba(217,237,255,0.82)';
+    roundRect(ctx, -w * 0.2, -h * 0.22, w * 0.4, h * 0.2, 4 * scale, true, false);
+    roundRect(ctx, -w * 0.2, 0, w * 0.4, h * 0.12, 4 * scale, true, false);
+
+    [-1, 1].forEach(side => {
+      ctx.fillStyle = '#252d38';
+      ctx.beginPath();
+      ctx.ellipse(side * w * 0.36, -h * 0.3, 5 * scale, 8 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(side * w * 0.36, h * 0.3, 5 * scale, 8 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#a9b7c3';
+      ctx.beginPath();
+      ctx.arc(side * w * 0.36, -h * 0.3, 2.1 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(side * w * 0.36, h * 0.3, 2.1 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    if (opts.driverColor) {
+      ctx.fillStyle = opts.driverColor;
+      ctx.beginPath(); ctx.arc(0, -h * 0.08, 4.2 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = shade(opts.driverColor, -14);
+      roundRect(ctx, -5 * scale, -1 * scale, 10 * scale, 10 * scale, 4 * scale, true, false);
+      ctx.strokeStyle = '#d9ecff';
+      ctx.lineWidth = Math.max(1, 1.4 * scale);
+      ctx.beginPath();
+      ctx.arc(0, 5 * scale, 5 * scale, Math.PI * 0.15, Math.PI * 1.85);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#ffe09b';
+    roundRect(ctx, -w * 0.29, -h * 0.48, 6 * scale, 4 * scale, 1.6 * scale, true, false);
+    roundRect(ctx, w * 0.29 - 6 * scale, -h * 0.48, 6 * scale, 4 * scale, 1.6 * scale, true, false);
+    ctx.fillStyle = '#ff8579';
+    roundRect(ctx, -w * 0.29, h * 0.44, 6 * scale, 4 * scale, 1.6 * scale, true, false);
+    roundRect(ctx, w * 0.29 - 6 * scale, h * 0.44, 6 * scale, 4 * scale, 1.6 * scale, true, false);
+
+    ctx.restore();
+  }
+
+  function drawTrafficCar(x, z, color) {
+    const p = worldToScreen(x, z, 0);
+    const sway = Math.sin(state.worldElapsed * 6 + x * 0.01) * 0.04;
+    drawDetailedCarScreen(p.x, p.y, p.scale * 0.78, color, { w: 30, h: 44, angle: sway, driverColor: '#f1e3c9' });
+  }
+
+  function shade(hex, amount) {
+    const v = hex.replace('#', '');
+    const n = parseInt(v, 16);
+    let r = (n >> 16) + amount;
+    let g = ((n >> 8) & 255) + amount;
+    let b = (n & 255) + amount;
+    r = clamp(r, 0, 255); g = clamp(g, 0, 255); b = clamp(b, 0, 255);
+    return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+
+  function drawBlock(o, color = '#647a8c') {
+    const p = worldToScreen(o.x, o.z, 0);
+    const p2 = worldToScreen(o.x + o.w, o.z + o.h, o.height * 0.1);
+    const sx = p.x;
+    const sy = p.y;
+    const w = (o.w * p.scale);
+    const h = (o.h * p.scale * 0.58);
+    const lift = o.height * p.scale * 0.16;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    roundRect(ctx, sx + 4, sy + 4, w, h, 8 * p.scale, true, false);
+
+    ctx.fillStyle = shade(color, -18);
+    roundRect(ctx, sx, sy + lift, w, h, 8 * p.scale, true, false);
+    ctx.fillStyle = color;
+    roundRect(ctx, sx, sy, w, h, 8 * p.scale, true, false);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    roundRect(ctx, sx, sy, w, h, 8 * p.scale, false, true);
+  }
+
+  function drawCharacter(ent, isPlayer = false) {
+    const p = worldToScreen(ent.x, ent.z, 0);
+    const bob = Math.sin((ent.anim || ent.bob || 0)) * (isPlayer ? 2 : 1.2);
+    const scale = p.scale;
+    const bodyH = 18 * scale;
+    const bodyW = (isPlayer ? 12 : 11) * scale;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(p.x + 1, p.y + 8, bodyW * 1.05, bodyW * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (ent.vehicle) {
+      drawVehicle(ent, p, scale);
+      return;
+    }
+
+    ctx.fillStyle = shade(ent.color, -10);
+    roundRect(ctx, p.x - bodyW / 2, p.y - bodyH + 8 + bob, bodyW, bodyH, bodyW * 0.45, true, false);
+    ctx.fillStyle = ent.color;
+    roundRect(ctx, p.x - bodyW / 2, p.y - bodyH + bob, bodyW, bodyH, bodyW * 0.45, true, false);
+
+    ctx.fillStyle = isPlayer ? '#fff0c4' : '#f0e0c4';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - bodyH - 5 * scale + bob, 5.6 * scale, 0, Math.PI * 2);
+    ctx.fill();
+
+
+    const faceX = p.x + Math.cos(ent.face || 0) * 3 * scale;
+    const faceY = p.y - bodyH - 5 * scale + Math.sin(ent.face || 0) * 1.2 * scale + bob;
+    ctx.fillStyle = '#152233';
+    ctx.beginPath(); ctx.arc(faceX, faceY, 1.3 * scale, 0, Math.PI * 2); ctx.fill();
+
+    if (ent.name === 'Juan' && (state.currentObjective && state.currentObjective.id === 'coffee_finale' || state.scene === 'end')) {
+      ctx.fillStyle = 'rgba(255,209,121,0.24)';
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - bodyH + bob, 16 * scale, 8 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      drawCoffeeCup(ent.x + 12, ent.z - 4, 0.66, 0.6);
+    }
+
+    const highlightNpc = state.interactionTarget && state.interactionTarget.npc === ent;
+    if (isPlayer || highlightNpc || dist(state.player.x, state.player.z, ent.x, ent.z) < 22) {
+      ctx.fillStyle = isPlayer ? '#fff7d3' : 'rgba(237,245,255,0.92)';
+      ctx.font = Math.round(9 * scale + 7) + 'px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(ent.name, p.x, p.y - bodyH - 14 * scale);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  function drawVehicle(ent, p, scale) {
+    drawDetailedCarScreen(p.x, p.y, scale * 0.95, '#994551', {
+      w: 34,
+      h: 50,
+      angle: clamp(Math.sin(ent.face || 0) * 0.22, -0.22, 0.22),
+      driverColor: '#ffcfbf'
+    });
+    ctx.fillStyle = '#ecf7ff';
+    ctx.font = Math.round(10 * scale + 6) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('THANH', p.x, p.y - 22 * scale);
+    ctx.textAlign = 'left';
+  }
+
+  function drawPigPayload(x, y, scale, opts = {}) {
+    const dir = opts.dir || 1;
+    const sleeping = !!opts.sleeping;
+    const bob = opts.bob || 0;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(dir, 1);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.beginPath();
+    ctx.ellipse(2 * scale, 15 * scale, 18 * scale, 5.5 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const body = ctx.createLinearGradient(-24 * scale, -10 * scale, 22 * scale, 12 * scale);
+    body.addColorStop(0, '#f4d3d8');
+    body.addColorStop(1, '#dfb4bc');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.ellipse(-2 * scale, 0, 20 * scale, 13 * scale, sleeping ? -0.1 : 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#f7e2e5';
+    ctx.beginPath();
+    ctx.ellipse(13 * scale, -2 * scale, 8.6 * scale, 7.1 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ebb3bc';
+    ctx.beginPath();
+    ctx.moveTo(12 * scale, -7 * scale);
+    ctx.lineTo(18 * scale, -13 * scale);
+    ctx.lineTo(18 * scale, -4 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(2 * scale, -7 * scale);
+    ctx.lineTo(7 * scale, -13 * scale);
+    ctx.lineTo(8 * scale, -4 * scale);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#d79aa3';
+    ctx.beginPath();
+    ctx.ellipse(18.5 * scale, 0.5 * scale, 7.4 * scale, 5.2 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#7b4f59';
+    ctx.beginPath(); ctx.arc(16 * scale, 0.5 * scale, 1.1 * scale, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(20.8 * scale, 0.8 * scale, 1.1 * scale, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#7b4f59';
+    ctx.lineWidth = Math.max(1, 1.4 * scale);
+    if (sleeping) {
+      ctx.beginPath();
+      ctx.moveTo(10.5 * scale, -2.5 * scale);
+      ctx.lineTo(14.2 * scale, -2.5 * scale);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#2c2330';
+      ctx.beginPath(); ctx.arc(11 * scale, -2.4 * scale, 1.2 * scale, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.strokeStyle = '#b77b85';
+    ctx.lineWidth = Math.max(1, 1.5 * scale);
+    ctx.beginPath();
+    ctx.moveTo(-20 * scale, -1 * scale);
+    ctx.bezierCurveTo(-28 * scale, -8 * scale, -30 * scale, 7 * scale, -21 * scale, 8 * scale);
+    ctx.stroke();
+
+    ctx.fillStyle = '#cc9fa7';
+    const legY = sleeping ? 8.5 : 9.2;
+    [-12, -3, 7, 15].forEach((lx, i) => {
+      const legH = sleeping ? 4.2 : (i % 2 ? 7.6 : 8.4);
+      roundRect(ctx, lx * scale, legY * scale, 3.5 * scale, legH * scale, 1.4 * scale, true, false);
+    });
+
+    ctx.restore();
+  }
+
+  function drawSheepSprite(x, y, scale, opts = {}) {
+    const dir = opts.dir || 1;
+    const sheared = !!opts.sheared;
+    const bob = opts.bob || 0;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(dir, 1);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14 * scale, 17 * scale, 5.5 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (sheared) {
+      const wool = ctx.createLinearGradient(-18 * scale, -10 * scale, 22 * scale, 12 * scale);
+      wool.addColorStop(0, '#eee7db');
+      wool.addColorStop(1, '#dcd1c3');
+      ctx.fillStyle = wool;
+      roundRect(ctx, -18 * scale, -8 * scale, 34 * scale, 20 * scale, 8 * scale, true, false);
+    } else {
+      const puffs = [
+        [-14, -3, 7], [-7, -8, 8], [2, -8, 9], [11, -4, 7], [10, 5, 8], [0, 7, 9], [-11, 5, 7]
+      ];
+      puffs.forEach(([px, py, pr]) => {
+        const puff = ctx.createRadialGradient(px * scale, py * scale, 1, px * scale, py * scale, pr * scale);
+        puff.addColorStop(0, '#fffdfa');
+        puff.addColorStop(1, '#e2dbd1');
+        ctx.fillStyle = puff;
+        ctx.beginPath();
+        ctx.arc(px * scale, py * scale, pr * scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    ctx.fillStyle = '#5e514d';
+    ctx.beginPath();
+    ctx.ellipse(18 * scale, -1 * scale, 7.4 * scale, 6.2 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -5 * scale); ctx.lineTo(18 * scale, -11 * scale); ctx.lineTo(19 * scale, -4 * scale); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(21 * scale, -5 * scale); ctx.lineTo(25 * scale, -10 * scale); ctx.lineTo(24 * scale, -3 * scale); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#101522';
+    ctx.beginPath(); ctx.arc(20 * scale, -2 * scale, 1.1 * scale, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#5e514d';
+    [-11, -2, 8, 15].forEach((lx, i) => {
+      roundRect(ctx, lx * scale, 9 * scale, 3.5 * scale, (i % 2 ? 8.6 : 9.4) * scale, 1.4 * scale, true, false);
+    });
+
+    ctx.restore();
+  }
+
+  function drawBaboonSprite(x, y, scale, opts = {}) {
+    const dir = opts.dir || 1;
+    const bob = opts.bob || 0;
+    const sit = !!opts.sit;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(dir, 1);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(1 * scale, 14 * scale, 15 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#8f7b60';
+    ctx.lineWidth = Math.max(1, 2.2 * scale);
+    ctx.beginPath();
+    ctx.moveTo(-16 * scale, -2 * scale);
+    ctx.bezierCurveTo(-30 * scale, -20 * scale, -18 * scale, -26 * scale, -8 * scale, -10 * scale);
+    ctx.stroke();
+
+    const body = ctx.createLinearGradient(-10 * scale, -12 * scale, 16 * scale, 18 * scale);
+    body.addColorStop(0, '#9d8368');
+    body.addColorStop(1, '#705c4c');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 12.5 * scale, 15 * scale, sit ? -0.2 : 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#b89b7a';
+    ctx.beginPath();
+    ctx.ellipse(11 * scale, -8 * scale, 8 * scale, 8.5 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d8c0a3';
+    ctx.beginPath();
+    ctx.ellipse(13 * scale, -5 * scale, 4.3 * scale, 3.4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1f1c22';
+    ctx.beginPath(); ctx.arc(12 * scale, -8.3 * scale, 1.1 * scale, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#705c4c';
+    ctx.lineWidth = Math.max(1, 2.1 * scale);
+    ctx.beginPath();
+    ctx.moveTo(-2 * scale, 6 * scale); ctx.lineTo(-10 * scale, 16 * scale);
+    ctx.moveTo(6 * scale, 6 * scale); ctx.lineTo(14 * scale, 15 * scale);
+    ctx.moveTo(-5 * scale, -1 * scale); ctx.lineTo(-15 * scale, 8 * scale);
+    ctx.moveTo(5 * scale, -1 * scale); ctx.lineTo(15 * scale, 8 * scale);
+    ctx.stroke();
+
+    ctx.fillStyle = '#d78d8d';
+    ctx.beginPath();
+    ctx.ellipse(-1 * scale, 5.5 * scale, 4.5 * scale, 3.4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawTransportTrolley(wx, wz, opts = {}) {
+    const p = worldToScreen(wx, wz, 0);
+    const scale = p.scale * (opts.scale || 1);
+    const face = opts.face ?? 0;
+    const tilt = Math.sin(face) * 0.08;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(tilt);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.24)';
+    ctx.beginPath();
+    ctx.ellipse(0, 18 * scale, 27 * scale, 7 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tray = ctx.createLinearGradient(-22 * scale, -12 * scale, 22 * scale, 10 * scale);
+    tray.addColorStop(0, '#8fa9bd');
+    tray.addColorStop(1, '#596c82');
+    ctx.fillStyle = tray;
+    roundRect(ctx, -20 * scale, -10 * scale, 40 * scale, 16 * scale, 4 * scale, true, false);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    roundRect(ctx, -15 * scale, -6 * scale, 30 * scale, 4 * scale, 2 * scale, true, false);
+
+    ctx.strokeStyle = '#91aabd';
+    ctx.lineWidth = Math.max(1.4, 2 * scale);
+    ctx.beginPath();
+    ctx.moveTo(-20 * scale, 4 * scale);
+    ctx.lineTo(18 * scale, 4 * scale);
+    ctx.lineTo(25 * scale, -10 * scale);
+    ctx.moveTo(-18 * scale, -10 * scale);
+    ctx.lineTo(18 * scale, -10 * scale);
+    ctx.lineTo(25 * scale, 4 * scale);
+    ctx.moveTo(-20 * scale, 4 * scale);
+    ctx.lineTo(-25 * scale, -12 * scale);
+    ctx.lineTo(-12 * scale, -20 * scale);
+    ctx.stroke();
+
+    [-16, 16].forEach(wx2 => {
+      ctx.fillStyle = '#2b3340';
+      ctx.beginPath(); ctx.arc(wx2 * scale, 12 * scale, 5.1 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#9fb5c5';
+      ctx.beginPath(); ctx.arc(wx2 * scale, 12 * scale, 2.3 * scale, 0, Math.PI * 2); ctx.fill();
+    });
+
+    if (opts.loadedPig !== false) {
+      drawPigPayload(0, -11 * scale, scale * 0.78, { sleeping: true, dir: 1 });
+      ctx.strokeStyle = 'rgba(228,240,255,0.42)';
+      ctx.lineWidth = Math.max(1, 1.2 * scale);
+      ctx.beginPath();
+      ctx.moveTo(-12 * scale, -2 * scale);
+      ctx.lineTo(13 * scale, -2 * scale);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawFeedCart(wx, wz, opts = {}) {
+    const p = worldToScreen(wx, wz, 0);
+    const scale = p.scale * (opts.scale || 1);
+    const face = opts.face ?? 0;
+    const tilt = Math.sin(face) * 0.07;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(tilt);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14 * scale, 22 * scale, 6 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const bin = ctx.createLinearGradient(-18 * scale, -12 * scale, 18 * scale, 10 * scale);
+    bin.addColorStop(0, '#6e8a7b');
+    bin.addColorStop(1, '#46594f');
+    ctx.fillStyle = bin;
+    roundRect(ctx, -16 * scale, -11 * scale, 32 * scale, 18 * scale, 4 * scale, true, false);
+    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    roundRect(ctx, -13 * scale, -8 * scale, 26 * scale, 4 * scale, 2 * scale, true, false);
+
+    ctx.strokeStyle = '#9cb5aa';
+    ctx.lineWidth = Math.max(1.3, 1.8 * scale);
+    ctx.beginPath();
+    ctx.moveTo(-17 * scale, 6 * scale);
+    ctx.lineTo(16 * scale, 6 * scale);
+    ctx.lineTo(22 * scale, -9 * scale);
+    ctx.moveTo(-14 * scale, -11 * scale);
+    ctx.lineTo(-22 * scale, -18 * scale);
+    ctx.lineTo(-24 * scale, -2 * scale);
+    ctx.stroke();
+
+    [-12, 12].forEach(wx2 => {
+      ctx.fillStyle = '#28313b';
+      ctx.beginPath(); ctx.arc(wx2 * scale, 11 * scale, 4.5 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#9fb7c4';
+      ctx.beginPath(); ctx.arc(wx2 * scale, 11 * scale, 1.9 * scale, 0, Math.PI * 2); ctx.fill();
+    });
+
+    ctx.fillStyle = '#d9c17f';
+    roundRect(ctx, -9 * scale, -6 * scale, 8 * scale, 8 * scale, 2 * scale, true, false);
+    roundRect(ctx, 1 * scale, -7 * scale, 10 * scale, 9 * scale, 2 * scale, true, false);
+    ctx.fillStyle = '#7bcdb0';
+    roundRect(ctx, -2 * scale, -1 * scale, 8 * scale, 6 * scale, 2 * scale, true, false);
+    ctx.restore();
+  }
+
+  function drawCathPigTable(wx, wz) {
+    const p = worldToScreen(wx, wz, 0);
+    const scale = p.scale;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 16 * scale, 26 * scale, 7 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#73889c';
+    roundRect(ctx, p.x - 24 * scale, p.y - 7 * scale, 48 * scale, 14 * scale, 4 * scale, true, false);
+    ctx.fillStyle = '#8ba5b5';
+    roundRect(ctx, p.x - 18 * scale, p.y - 4 * scale, 36 * scale, 8 * scale, 3 * scale, true, false);
+    ctx.fillStyle = '#526577';
+    [-16, 16].forEach(dx => roundRect(ctx, p.x + dx * scale, p.y + 7 * scale, 4 * scale, 12 * scale, 2 * scale, true, false));
+    drawPigPayload(p.x, p.y - 8 * scale, scale * 0.82, { sleeping: true, dir: 1 });
+  }
+
+  function addAnimalDrawables(drawables) {
+    const t = state.worldElapsed;
+
+    if (!state.hasFeedCart && (!state.currentObjective || state.currentObjective.id === 'collect_cart' || state.phase <= 1)) {
+      drawables.push({
+        z: INTERACT_POINTS.feedCart.z - 1,
+        draw: () => drawFeedCart(INTERACT_POINTS.feedCart.x, INTERACT_POINTS.feedCart.z, { face: -0.12, scale: 0.96 })
+      });
+    }
+
+    if (state.hasFeedCart && state.phase <= 1 && !state.carryingPig) {
+      const face = state.player.face || 0;
+      const fx = state.player.x - Math.cos(face) * 18 + Math.sin(face) * 10;
+      const fz = state.player.z - Math.sin(face) * 18 - Math.cos(face) * 4;
+      drawables.push({
+        z: fz - 0.1,
+        draw: () => drawFeedCart(fx, fz, { face, scale: 0.98 })
+      });
+    }
+    SCENE_ANIMALS.pigs.forEach((pig, i) => {
+      drawables.push({
+        z: pig.z,
+        draw: () => drawPigPayload(worldToScreen(pig.x, pig.z).x, worldToScreen(pig.x, pig.z).y - 5 * worldToScreen(pig.x, pig.z).scale, worldToScreen(pig.x, pig.z).scale * 0.8 * pig.scale, {
+          dir: pig.dir,
+          bob: Math.sin(t * 2.4 + pig.seed) * 1.3
+        })
+      });
+    });
+
+    SCENE_ANIMALS.sheep.forEach((sheep, i) => {
+      drawables.push({
+        z: sheep.z,
+        draw: () => {
+          const p = worldToScreen(sheep.x, sheep.z, 0);
+          drawSheepSprite(p.x, p.y - 4 * p.scale, p.scale * 0.82 * sheep.scale, {
+            dir: sheep.dir,
+            sheared: state.sheepSheared,
+            bob: Math.sin(t * 2.2 + sheep.seed) * 1.1
+          });
+        }
+      });
+    });
+
+    SCENE_ANIMALS.baboons.forEach((baboon, i) => {
+      drawables.push({
+        z: baboon.z,
+        draw: () => {
+          const p = worldToScreen(baboon.x, baboon.z, 0);
+          drawBaboonSprite(p.x, p.y - 5 * p.scale, p.scale * 0.82 * baboon.scale, {
+            dir: baboon.dir,
+            sit: i === 1,
+            bob: Math.sin(t * 2.8 + baboon.seed) * 1.3
+          });
+        }
+      });
+    });
+
+    if (state.pigReady && !state.carryingPig && !state.pigAtScales && !state.pigInCath) {
+      drawables.push({
+        z: PIG_TRANSPORT_POINTS.prep.z,
+        draw: () => drawTransportTrolley(PIG_TRANSPORT_POINTS.prep.x, PIG_TRANSPORT_POINTS.prep.z, {
+          loadedPig: true,
+          face: PIG_TRANSPORT_POINTS.prep.face,
+          scale: 0.98
+        })
+      });
+    }
+
+    if (state.carryingPig) {
+      const face = state.player.face || 0;
+      const tx = state.player.x - Math.cos(face) * 20;
+      const tz = state.player.z - Math.sin(face) * 18 + 8;
+      drawables.push({
+        z: tz - 0.08,
+        draw: () => drawTransportTrolley(tx, tz, { loadedPig: true, face, scale: 1.02 })
+      });
+    }
+
+    if (state.pigAtScales && !state.carryingPig) {
+      drawables.push({
+        z: PIG_TRANSPORT_POINTS.scales.z,
+        draw: () => drawTransportTrolley(PIG_TRANSPORT_POINTS.scales.x, PIG_TRANSPORT_POINTS.scales.z, {
+          loadedPig: true,
+          face: PIG_TRANSPORT_POINTS.scales.face,
+          scale: 0.98
+        })
+      });
+    }
+
+    if (state.pigInCath) {
+      drawables.push({
+        z: PIG_TRANSPORT_POINTS.cath.z,
+        draw: () => drawCathPigTable(PIG_TRANSPORT_POINTS.cath.x, PIG_TRANSPORT_POINTS.cath.z)
+      });
+    }
+  }
+
+  function drawInteractable(it) {
+    if (!isInteractableRelevant(it.id) && !(state.currentObjective && state.currentObjective.id === 'coffee' && it.id === 'coffee')) return;
+    const p = worldToScreen(it.x, it.z, 0);
+    const pulse = Math.sin(state.worldElapsed * 5) * 0.12 + 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 11 * p.scale * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(103,217,205,0.22)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5 * p.scale, 0, Math.PI * 2);
+    ctx.fillStyle = '#67d9cd';
+    ctx.fill();
+  }
+
+  function drawCar(car) {
+    const p = worldToScreen(car.x, car.z);
+    const angle = car.motion ? clamp(Math.sin(car.face || 0) * 0.24, -0.24, 0.24) : 0;
+    drawDetailedCarScreen(p.x, p.y, p.scale * 0.94, car.color, {
+      w: 34,
+      h: 56,
+      angle,
+      driverColor: car.motion ? car.driverColor || '#f1e3c9' : null
+    });
+    if (state.currentObjective && state.currentObjective.id === 'carpark' && !car.done) {
+      ctx.strokeStyle = car.locked ? '#ff7272' : '#67d9cd';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 18 * p.scale, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function drawObjectiveArrow() {
+    const obj = state.currentObjective;
+    if (!obj) return;
+    const target = currentObjectiveTargetPoint();
+    if (!target) return;
+
+    const screenTarget = worldToScreen(target.x, target.z, 0);
+    const dx = screenTarget.x - W / 2;
+    const dy = screenTarget.y - H / 2;
+    const angle = Math.atan2(dy, dx);
+    const edgeX = W / 2 + Math.cos(angle) * Math.min(W, H) * 0.22;
+    const edgeY = H / 2 + Math.sin(angle) * Math.min(W, H) * 0.18;
+    ctx.save();
+    ctx.translate(edgeX, edgeY);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#67d9cd';
+    ctx.beginPath();
+    ctx.moveTo(18, 0); ctx.lineTo(-8, -10); ctx.lineTo(-8, 10); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawProgressRing() {
+    if (!state.interactionTarget || state.interactionProgress <= 0) return;
+    const target = state.interactionTarget.type === 'car' ? state.interactionTarget.car : state.interactionTarget.npc || state.interactionTarget;
+    const wx = target.x, wz = target.z;
+    const p = worldToScreen(wx, wz, 0);
+    const required = state.interactionTarget.type === 'talk' || state.interactionTarget.type === 'car' ? 0.35 : interactionTimeFor(state.interactionTarget);
+    const frac = clamp(state.interactionProgress / required, 0, 1);
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(p.x, p.y - 24 * p.scale, 14 * p.scale, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#67d9cd';
+    ctx.beginPath(); ctx.arc(p.x, p.y - 24 * p.scale, 14 * p.scale, -Math.PI/2, -Math.PI/2 + Math.PI*2*frac); ctx.stroke();
+  }
+
+  function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
+  }
+
+  function render() {
+    drawBackground();
+    if (state.scene === 'title') {
+      renderTitleBackdrop();
+      return;
+    }
+
+    const drawables = [];
+    for (const zone of ZONES) drawZone(zone);
+    drawCoffeeCornerDecor();
+    drawOutsideActivity();
+    drawFenceSegments();
+    OBSTACLES.filter(o => o.kind !== 'car').forEach(o => drawBlock(o, obstacleColor(o.kind)));
+    state.cars.forEach(car => drawables.push({ z: car.z, draw: () => drawCar(car) }));
+    state.interactables.forEach(it => drawables.push({ z: it.z - 1, draw: () => drawInteractable(it) }));
+    addAnimalDrawables(drawables);
+    state.npcs.filter(npc => npc.name !== 'Thanh' && !npc.hidden).forEach(npc => drawables.push({ z: npc.z, draw: () => drawCharacter(npc, false) }));
+    if (!state.player.hidden) drawables.push({ z: state.player.z + 0.1, draw: () => drawCharacter(state.player, true) });
+    state.hazards.forEach(hz => drawables.push({ z: hz.z + 0.2, draw: () => drawCharacter({ ...hz, color: '#ff7f8e', face: hz.dir, vehicle: true }, false) }));
+    drawables.sort((a, b) => a.z - b.z);
+    drawables.forEach(d => d.draw());
+    drawObjectiveArrow();
+    drawProgressRing();
+    drawWorldEffects();
+    drawMinimap();
+  }
+
+  function obstacleColor(kind) {
+    switch (kind) {
+      case 'bench': return '#596f88';
+      case 'shelf': return '#6a7588';
+      case 'stall': return '#707b89';
+      case 'pen': return '#76848e';
+      case 'cage': return '#75688b';
+      case 'prepTable': return '#5b7088';
+      case 'scaleUnit': return '#7a7f93';
+      case 'labUnit': return '#4c6d87';
+      case 'barrier': return '#565d6d';
+      case 'planter': return '#6a7f74';
+      case 'awning': return '#7d8da0';
+      case 'median': return '#575f70';
+      case 'fence': return '#203545';
+      default: return '#65798a';
+    }
+  }
+
+  function drawWorldEffects() {
+    if (state.finaleBurst > 0) {
+      state.finaleBurst = Math.max(0, state.finaleBurst - 0.016);
+      const g = ctx.createRadialGradient(W * 0.82, H * 0.2, 10, W * 0.82, H * 0.2, W * 0.42);
+      g.addColorStop(0, 'rgba(255,220,136,0.20)');
+      g.addColorStop(0.5, 'rgba(103,217,205,0.12)');
+      g.addColorStop(1, 'rgba(255,220,136,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (state.player.health < 35) {
+      const g = ctx.createRadialGradient(W*0.5, H*0.5, H*0.22, W*0.5, H*0.5, H*0.65);
+      g.addColorStop(0, 'rgba(255,114,114,0)');
+      g.addColorStop(1, 'rgba(255,114,114,0.24)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (state.rossTrapActive) {
+      ctx.fillStyle = 'rgba(241,185,90,0.08)';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function renderTitleBackdrop() {
+    const time = state.worldElapsed || 0;
+    const silhouetteZones = ['break', 'maincorridor', 'pigbay', 'prep', 'cath', 'carpark'];
+    ctx.globalAlpha = 0.38;
+    silhouetteZones.forEach((id, i) => {
+      const zone = getZone(id);
+      const offset = Math.sin(time * 0.8 + i) * 3;
+      const s0 = worldToScreen(zone.x + offset, zone.z + offset);
+      const s1 = worldToScreen(zone.x + zone.w + offset, zone.z + zone.h + offset);
+      ctx.fillStyle = i % 2 ? 'rgba(103,217,205,0.12)' : 'rgba(255,255,255,0.05)';
+      roundRect(ctx, s0.x, s0.y, s1.x - s0.x, s1.y - s0.y, 18, true, false);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMinimap() {
+    mctx.clearRect(0, 0, minimap.width, minimap.height);
+    mctx.fillStyle = '#07101c';
+    mctx.fillRect(0, 0, 128, 128);
+    const sx = 128 / (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
+    const sz = 128 / (WORLD_BOUNDS.maxZ - WORLD_BOUNDS.minZ);
+    const mx = x => (x - WORLD_BOUNDS.minX) * sx;
+    const mz = z => (z - WORLD_BOUNDS.minZ) * sz;
+    ZONES.forEach(zone => {
+      mctx.fillStyle = zone.floor;
+      mctx.fillRect(mx(zone.x), mz(zone.z), zone.w * sx, zone.h * sz);
+      mctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      mctx.strokeRect(mx(zone.x), mz(zone.z), zone.w * sx, zone.h * sz);
+    });
+    FENCE_SEGMENTS.forEach(seg => {
+      mctx.fillStyle = 'rgba(103,217,205,0.35)';
+      mctx.fillRect(mx(seg.x), mz(seg.z), seg.w * sx, seg.h * sz);
+    });
+    for (const hz of state.hazards) {
+      if (state.phase >= hz.activeFromPhase) {
+        mctx.fillStyle = '#ff7272';
+        mctx.beginPath(); mctx.arc(mx(hz.x), mz(hz.z), 4, 0, Math.PI * 2); mctx.fill();
+      }
+    }
+    const obj = state.currentObjective;
+    let tx = null, tz = null;
+    if (obj) {
+      const target = currentObjectiveTargetPoint();
+      if (target) { tx = target.x; tz = target.z; }
+    }
+    if (tx !== null) {
+      mctx.fillStyle = '#67d9cd';
+      mctx.beginPath(); mctx.arc(mx(tx), mz(tz), 4, 0, Math.PI * 2); mctx.fill();
+    }
+    mctx.fillStyle = '#e8d08a';
+    mctx.beginPath(); mctx.arc(mx(state.player.x), mz(state.player.z), 4, 0, Math.PI * 2); mctx.fill();
+    mctx.strokeStyle = '#fff';
+    mctx.beginPath();
+    mctx.moveTo(mx(state.player.x), mz(state.player.z));
+    mctx.lineTo(mx(state.player.x + Math.cos(state.player.face) * 18), mz(state.player.z + Math.sin(state.player.face) * 18));
+    mctx.stroke();
+  }
+
+  // =========================================================
+  // UI
+  // =========================================================
+  function updateHud(force = false) {
+    const p = state.player;
+    if (!p) return;
+    ui.hero.textContent = p.name;
+    ui.role.textContent = p.role;
+    ui.phaseNum.textContent = String(Math.min(state.phase + 1, 6));
+    ui.phaseTitle.textContent = PHASES[Math.min(state.phase, PHASES.length - 1)].title;
+    ui.shiftClock.textContent = fmtClock(state.worldTimeMinutes);
+    const obj = state.currentObjective;
+    if (obj) {
+      ui.objectiveText.textContent = obj.text;
+      ui.subObjectiveText.textContent = objectiveProgressSubtext(obj);
+    }
+    ui.healthFill.style.width = p.health + '%';
+    ui.healthValue.textContent = Math.round(p.health);
+    ui.staminaFill.style.width = (p.stamina / p.maxStamina * 100).toFixed(0) + '%';
+    ui.staminaValue.textContent = Math.round(p.stamina);
+    ui.stressFill.style.width = p.stress + '%';
+    ui.stressValue.textContent = Math.round(p.stress);
+    ui.angerFill.style.width = state.wayneAnger + '%';
+    ui.angerValue.textContent = Math.round(state.wayneAnger);
+    ui.levelValue.textContent = p.level;
+    ui.xpValue.textContent = p.xp;
+    ui.coinValue.textContent = p.coins;
+    ui.taskValue.textContent = state.completedTasks + '/' + state.totalTasks;
+  }
+
+  function renderSaveLine() {
+    const save = state.save;
+    if (!save.bestRank) saveLine.textContent = 'No saved shift history yet. Time to make one.';
+    else saveLine.textContent = 'Best shift: Rank ' + save.bestRank + ' · Best coins: ' + (save.bestCoins || 0) + ' · Most tasks: ' + (save.bestTasks || 0);
+  }
+
+  function togglePause() {
+    if (state.scene !== 'game') return;
+    state.paused = !state.paused;
+    pauseMenu.classList.toggle('hidden', !state.paused);
+  }
+
+  // =========================================================
+  // Flow control
+  // =========================================================
+  function startGame() {
+    AudioSystem.unlock();
+    resetWorld(state.selectedCharacter);
+    titleScreen.classList.add('hidden');
+    hud.classList.remove('hidden');
+    controls.classList.remove('hidden');
+    minimapWrap.classList.remove('hidden');
+    minimapLegend.classList.remove('hidden');
+    pauseBtn.classList.remove('hidden');
+    pauseMenu.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    failureScreen.classList.add('hidden');
+    levelUpBox.classList.add('hidden');
+    hintPrompt.classList.add('hidden');
+    toastWrap.innerHTML = '';
+    state.toasts.length = 0;
+    state.running = true;
+    state.paused = false;
+    state.scene = 'game';
+    queueDialogue('Sally', 'You are up. Board first, cart second, panic only when professionally necessary.');
+    updateHud(true);
+  }
+
+  function returnToTitle() {
+    state.scene = 'title';
+    state.running = false;
+    state.paused = false;
+    titleScreen.classList.remove('hidden');
+    hud.classList.add('hidden');
+    controls.classList.add('hidden');
+    minimapWrap.classList.add('hidden');
+    minimapLegend.classList.add('hidden');
+    pauseBtn.classList.add('hidden');
+    pauseMenu.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    failureScreen.classList.add('hidden');
+    levelUpBox.classList.add('hidden');
+    dialogueBox.classList.add('hidden');
+    hintPrompt.classList.add('hidden');
+    state.activeDialogue = null;
+  }
+
+  // =========================================================
+  // Buttons and menus
+  // =========================================================
+  document.querySelectorAll('.characterCard').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.characterCard').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.selectedCharacter = card.dataset.character;
+      AudioSystem.click();
+    });
+  });
+
+  document.getElementById('beginBtn').addEventListener('click', () => { AudioSystem.click(); startGame(); });
+  document.getElementById('resetProgressBtn').addEventListener('click', () => {
+    AudioSystem.click();
+    localStorage.removeItem(SAVE_KEY);
+    state.save = {};
+    renderSaveLine();
+    addToast('Saved progress cleared.', 'warn');
+  });
+  dialogueDismiss.addEventListener('click', () => { AudioSystem.click(); dismissDialogue(false); });
+  dialogueAlt.addEventListener('click', () => { AudioSystem.click(); dismissDialogue(true); });
+  pauseBtn.addEventListener('click', () => { AudioSystem.click(); togglePause(); });
+  document.getElementById('resumeBtn').addEventListener('click', () => { AudioSystem.click(); togglePause(); });
+  document.getElementById('restartBtn').addEventListener('click', () => { AudioSystem.click(); startGame(); });
+  document.getElementById('backToTitleBtn').addEventListener('click', () => { AudioSystem.click(); returnToTitle(); });
+  document.getElementById('playAgainBtn').addEventListener('click', () => { AudioSystem.click(); startGame(); });
+  document.getElementById('endToTitleBtn').addEventListener('click', () => { AudioSystem.click(); returnToTitle(); });
+  document.getElementById('retryFailBtn').addEventListener('click', () => { AudioSystem.click(); startGame(); });
+  document.getElementById('failToTitleBtn').addEventListener('click', () => { AudioSystem.click(); returnToTitle(); });
+
+  // =========================================================
+  // Animation loop
+  // =========================================================
+  let last = now();
+  let fpsAccum = 0, fpsFrames = 0;
+  function frame(t) {
+    const dt = Math.min(0.033, (t - last) / 1000 || 0.016);
+    last = t;
+    state.fps = state.fps * 0.9 + 1 / dt * 0.1;
+    state.chatterCooldown = Math.max(0, state.chatterCooldown - dt);
+    if (state.debug) fpsDiag.textContent = 'FPS ' + state.fps.toFixed(0);
+    update(dt);
+    render();
+    if (state.autoTest && !state.testPassed) runAutoTestStep(dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // =========================================================
+  // Mobile browser niceties
+  // =========================================================
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && state.scene === 'game') {
+      state.paused = true;
+      pauseMenu.classList.remove('hidden');
+    }
+  });
+
+  function runAutoTestStep(dt) {
+    if (state.scene === 'title') startGame();
+    if (state.activeDialogue) { dismissDialogue(false); return; }
+    if (state.paused && !levelUpBox.classList.contains('hidden')) return;
+    const p = state.player;
+    if (!p) return;
+    const obj = state.currentObjective;
+    if (!obj) return;
+    let tx = p.x, tz = p.z;
+    let objectiveTarget = null;
+    let nextCar = null;
+    if (obj.target === 'carTask') {
+      nextCar = state.cars.find(c => !c.done);
+      if (nextCar) {
+        if (nextCar.owner === 'Wayne' || nextCar.owner === 'Juan') {
+          const owner = state.npcs.find(n => n.name === nextCar.owner);
+          tx = owner.x; tz = owner.z; objectiveTarget = owner;
+        } else {
+          tx = nextCar.x; tz = nextCar.z; objectiveTarget = nextCar;
+        }
+      }
+    } else if (obj.target === 'rush') {
+      state.finalRushTimer = Math.min(state.finalRushTimer, 1.4);
+      tx = RUSH_POINT.x; tz = RUSH_POINT.z;
+    } else if (obj.target === 'juanCoffee') {
+      const juan = state.npcs.find(n => n.name === 'Juan');
+      if (juan) { tx = juan.x; tz = juan.z; objectiveTarget = juan; }
+    } else {
+      const it = state.interactables.find(i => i.id === obj.target);
+      if (it) { tx = it.x; tz = it.z; objectiveTarget = it; }
+    }
+    p.x = tx;
+    p.z = tz;
+    state.input.joystickActive = false;
+    state.input.moveX = 0;
+    state.input.moveZ = 0;
+    state.input.sprint = false;
+    state.input.use = false;
+    if (obj.target === 'carTask' && nextCar) {
+      if (nextCar.owner === 'Wayne' || nextCar.owner === 'Juan') talkToNpc(state.npcs.find(n => n.name === nextCar.owner));
+      else interactCar(nextCar);
+    } else if (obj.target === 'rush') {
+      state.finalRushTimer = 0;
+    } else if (obj.target === 'juanCoffee') {
+      talkToNpc(state.npcs.find(n => n.name === 'Juan'));
+    } else if (objectiveTarget) {
+      executeInteraction(objectiveTarget);
+    }
+    if (state.scene === 'end') {
+      const diagnostics = [
+        'Auto-test completed.',
+        'Tasks: ' + state.completedTasks + '/' + state.totalTasks,
+        'Coins: ' + state.player.coins,
+        'Rank: ' + computeRank()
+      ];
+      document.body.insertAdjacentHTML('beforeend', '<div id="testResult" style="position:fixed;left:10px;top:10px;background:#07101c;color:#fff;padding:12px;border-radius:12px;z-index:9999;max-width:320px;font:14px system-ui">' + diagnostics.join('<br>') + '</div>');
+      state.testPassed = true;
+    }
+  }
+
+  renderSaveLine();
+
+  window.__vivDebug = {
+    getState: () => state,
+    startGame,
+    returnToTitle,
+    dismissDialogue,
+    executeInteraction,
+    runAutoTestStep
+  };
+
+})();
+</script>
+</body>
+</html>

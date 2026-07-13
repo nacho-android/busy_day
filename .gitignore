@@ -1,0 +1,27 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+tmp/
+.clean-install*/
+screenshots/
+visual-qa/
+*.local
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.agents/
+.codex/
+# Supplied likeness/location references have undocumented publication rights.
+# They remain in the local workspace and are catalogued in docs/ASSET_MANIFEST.md.
+/*.jpeg
+/*.jpg
+/style_ref.png

@@ -1,0 +1,53 @@
+MIT License
+
+Copyright (c) 2026 Busy Day contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Scope and asset notices
+
+1. The MIT licence above applies to the repository's original application
+   source code, configuration, and documentation except where a file or
+   manifest states a different licence.
+
+2. `scripts/generate_audio.py` and the rendered files in
+   `public/assets/audio/` are offered under CC0-1.0 as documented in
+   `docs/AUDIO_MANIFEST.md`. To the extent the generator is also covered by
+   the MIT grant above, recipients may rely on either permission.
+
+3. The supplied reference photographs in the repository root, including
+   files with `.jpeg` and `.jpg` extensions, and `style_ref.png` are excluded
+   from the MIT and CC0 grants. They remain subject to the rights of their
+   respective photographers, depicted people, organisations, and other
+   rights holders. Possession of this repository is not a grant of copyright,
+   privacy, publicity, trademark, or publication rights in those references.
+
+4. Files in `art/generated-masters/` and `public/assets/backgrounds/` are
+   original project-generated derivatives, but some used supplied style,
+   location, or likeness references. They are excluded from the broad MIT
+   asset grant unless and until the necessary source-reference and likeness
+   permissions are confirmed. The project cannot grant rights it does not
+   own. See `docs/ASSET_MANIFEST.md` for per-file provenance and replacement
+   guidance.
+
+5. Phaser and all npm dependencies retain their own licences. Their inclusion
+   in a build does not relicense them under this file. Review the dependency
+   licences before redistribution.
