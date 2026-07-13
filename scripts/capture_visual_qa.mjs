@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,8 +28,8 @@ const issues = [];
 page.on('pageerror', (error) => issues.push(`pageerror: ${error.message}`));
 page.on('console', (message) => { if (message.type() === 'error') issues.push(`console.error: ${message.text()}`); });
 await page.addInitScript(() => {
-  localStorage.clear();
-  localStorage.setItem('busy_day_at_the_viv_v2_save', JSON.stringify({
+  globalThis.localStorage.clear();
+  globalThis.localStorage.setItem('busy_day_at_the_viv_v2_save', JSON.stringify({
     schemaVersion: 2,
     savedAt: new Date(0).toISOString(),
     settings: {
@@ -67,33 +68,33 @@ try {
   await drainDialogue();
   await capture('teaRoom');
 
-  if (!await page.evaluate(() => window.__busyDayTest?.completeCurrentTarget() ?? false)) throw new Error('Could not complete the shift board.');
+  if (!await page.evaluate(() => globalThis.window.__busyDayTest?.completeCurrentTarget() ?? false)) throw new Error('Could not complete the shift board.');
   await drainDialogue();
-  const exitKey = await page.evaluate(() => window.__busyDayTest?.approachExit('tea_to_hall') ?? null);
+  const exitKey = await page.evaluate(() => globalThis.window.__busyDayTest?.approachExit('tea_to_hall') ?? null);
   if (!exitKey) throw new Error('Could not approach the Tea Room exit.');
   await page.waitForTimeout(100);
   await page.keyboard.down(exitKey);
   await page.waitForTimeout(650);
   await page.keyboard.up(exitKey);
-  await page.waitForFunction(() => window.__busyDayTest?.getLocation() === 'mainHall');
+  await page.waitForFunction(() => globalThis.window.__busyDayTest?.getLocation() === 'mainHall');
   await capture('mainHall');
 
   while (true) {
-    const state = await page.evaluate(() => window.__busyDayTest?.getState() ?? null);
+    const state = await page.evaluate(() => globalThis.window.__busyDayTest?.getState() ?? null);
     if (!state || state.finished) break;
     const location = objectiveLocations[state.objectiveIndex];
     if (!location) throw new Error(`No visual route for objective ${state.objectiveIndex}.`);
-    if (!await page.evaluate(() => window.__busyDayTest?.travelToObjective() ?? false)) throw new Error(`Could not travel to ${location}.`);
-    await page.waitForFunction((expected) => window.__busyDayTest?.getLocation() === expected, location);
+    if (!await page.evaluate(() => globalThis.window.__busyDayTest?.travelToObjective() ?? false)) throw new Error(`Could not travel to ${location}.`);
+    await page.waitForFunction((expected) => globalThis.window.__busyDayTest?.getLocation() === expected, location);
     await page.waitForTimeout(120);
     await capture(location);
     const objectiveIndex = state.objectiveIndex;
     for (let target = 0; target < 12; target += 1) {
-      const next = await page.evaluate(() => window.__busyDayTest?.getState() ?? null);
+      const next = await page.evaluate(() => globalThis.window.__busyDayTest?.getState() ?? null);
       if (!next || next.finished || next.objectiveIndex !== objectiveIndex) break;
-      if (!await page.evaluate(() => window.__busyDayTest?.completeCurrentTarget() ?? false)) throw new Error(`Could not complete objective ${objectiveIndex}.`);
+      if (!await page.evaluate(() => globalThis.window.__busyDayTest?.completeCurrentTarget() ?? false)) throw new Error(`Could not complete objective ${objectiveIndex}.`);
     }
-    await drainDialogue((await page.evaluate(() => window.__busyDayTest?.getState()?.finished ?? false)));
+    await drainDialogue((await page.evaluate(() => globalThis.window.__busyDayTest?.getState()?.finished ?? false)));
   }
 
   await page.locator('#ending-screen').waitFor({ state: 'visible' });
@@ -109,7 +110,7 @@ const labelHeight = 32;
 const columns = 3;
 const rows = Math.ceil(captured.length / columns);
 const composites = [];
-const escapeXml = (value) => value.replace(/[<>&'\"]/g, (character) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[character]);
+const escapeXml = (value) => value.replace(/[<>&'"]/g, (character) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[character]);
 for (let index = 0; index < captured.length; index += 1) {
   const item = captured[index];
   const left = (index % columns) * cellWidth;
