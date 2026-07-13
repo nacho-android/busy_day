@@ -56,6 +56,7 @@ REQUIRED_DOCS = {
     "docs/IMPLEMENTATION_CHECKLIST.md",
     "docs/KNOWN_LIMITATIONS.md",
     "docs/RELEASE_RUNBOOK.md",
+    "docs/REFERENCE_INVENTORY.json",
 }
 EXCLUDED_DIRS = {
     ".agents",
@@ -144,20 +145,55 @@ def verify_v1(check: Verification) -> None:
 
 
 def verify_references(check: Verification) -> None:
-    counts = {
-        ".jpeg": len(list(ROOT.glob("*.jpeg"))),
-        ".jpg": len(list(ROOT.glob("*.jpg"))),
-        ".png": int((ROOT / "style_ref.png").exists()),
-    }
+    inventory_path = ROOT / "docs" / "REFERENCE_INVENTORY.json"
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    entries = inventory.get("files", [])
+    valid_entries = [
+        entry for entry in entries if isinstance(entry, dict) and isinstance(entry.get("filename"), str)
+    ]
+    catalog = {entry["filename"]: entry for entry in valid_entries}
+    counts = {extension: 0 for extension in EXPECTED_REFERENCE_COUNTS}
+    for filename in catalog:
+        extension = Path(filename).suffix.lower()
+        if extension in counts:
+            counts[extension] += 1
     check.require(
-        counts == EXPECTED_REFERENCE_COUNTS,
-        "All 43 supplied references remain present",
-        f"Reference counts changed: {counts!r}",
+        isinstance(entries, list)
+        and len(entries) == len(valid_entries) == len(catalog) == sum(EXPECTED_REFERENCE_COUNTS.values())
+        and counts == EXPECTED_REFERENCE_COUNTS,
+        "The private-reference integrity catalog records all 43 supplied files",
+        f"Reference catalog is incomplete or duplicated: {len(entries)} entries, counts {counts!r}",
     )
+
+    malformed = sorted(
+        filename
+        for filename, entry in catalog.items()
+        if not isinstance(entry.get("bytes"), int)
+        or entry["bytes"] <= 0
+        or not re.fullmatch(r"[A-F0-9]{64}", str(entry.get("sha256", "")))
+    )
+    check.require(not malformed, "Reference catalog integrity fields are valid", f"Malformed reference entries: {malformed}")
+
+    asset_manifest = (ROOT / "docs" / "ASSET_MANIFEST.md").read_text(encoding="utf-8")
+    undocumented = sorted(filename for filename in catalog if f"`{filename}`" not in asset_manifest)
+    check.require(not undocumented, "Every catalogued reference is described in the asset manifest", f"Undocumented references: {undocumented}")
+
+    present = {filename for filename in catalog if (ROOT / filename).is_file()}
+    if present:
+        missing = sorted(set(catalog) - present)
+        mismatched = sorted(
+            filename
+            for filename in present
+            if (ROOT / filename).stat().st_size != catalog[filename]["bytes"]
+            or sha256(ROOT / filename) != catalog[filename]["sha256"]
+        )
+        check.require(not missing, "All private references are present when source mode is active", f"Partial reference set: {missing}")
+        check.require(not mismatched, "Private reference sizes and hashes match the catalog", f"Changed references: {mismatched}")
+    else:
+        check.passes.append("Private references are intentionally omitted from release; integrity catalog retained")
+
     runtime_names = {path.name for path in (ROOT / "public").rglob("*") if path.is_file()}
-    source_names = {path.name for path in ROOT.glob("*.jpeg")} | {path.name for path in ROOT.glob("*.jpg")}
-    source_names.add("style_ref.png")
-    leaked = sorted(runtime_names & source_names)
+    leaked = sorted(runtime_names & set(catalog))
     check.require(not leaked, "Raw references are absent from public/", f"Raw references leaked into public/: {leaked}")
 
 
