@@ -102,7 +102,11 @@ test('production bundle starts, moves, persists Continue, loads hashed assets, a
   await expect(page.locator('#continue-button')).toBeVisible();
   await page.locator('#continue-button').click();
   await expect(page.locator('#hud-location')).toHaveText('MAIN HALLWAY', { timeout: 30_000 });
-  expect(loadedResources.some((url) => url.includes('/assets/backgrounds/facility_hub.webp'))).toBe(true);
+  await expect.poll(
+    () => loadedResources.some((url) => url.includes('/assets/backgrounds/facility_hub.webp')),
+    { timeout: 30_000, intervals: [50, 100, 250] },
+  ).toBe(true);
+  await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 30_000 });
 
   expect(failedResources, `Failed production resources:\n${failedResources.join('\n')}`).toEqual([]);
   expect(runtimeIssues, `Unexpected production runtime errors:\n${runtimeIssues.join('\n')}`).toEqual([]);
@@ -144,6 +148,11 @@ test('production lazy loading retries transient artwork failures and preserves C
   await page.locator('#continue-button').click();
 
   await expect(page.locator('#hud-location')).toHaveText('MAIN HALLWAY', { timeout: 40_000 });
-  expect(hallRequests).toBe(3);
+  await expect.poll(() => hallRequests, {
+    timeout: 40_000,
+    intervals: [50, 100, 250, 500],
+  }).toBe(3);
+  await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 40_000 });
+  await expect(page.locator('#hud-location')).toHaveText('MAIN HALLWAY');
   expect(await page.evaluate(() => typeof window.__busyDayTest)).toBe('undefined');
 });
