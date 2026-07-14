@@ -42,7 +42,7 @@ jobs:
     name: Playwright (${{ matrix.browser }})
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +58,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm run test:e2e -- --project=${{ matrix.browser }}
+      - run: npm run test:e2e:preview -- --project=${{ matrix.browser }}
 
       - name: Upload browser diagnostics on failure
         if: failure()
@@ -66,7 +67,9 @@ jobs:
           name: playwright-${{ matrix.browser }}
           path: |
             playwright-report/
+            playwright-preview-report/
             test-results/
+            test-results-preview/
           if-no-files-found: ignore
           retention-days: 7
 

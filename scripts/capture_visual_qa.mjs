@@ -8,11 +8,6 @@ import sharp from 'sharp';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'visual-qa');
 const baseUrl = process.env.BUSY_DAY_URL ?? 'http://127.0.0.1:4174';
-const objectiveLocations = [
-  'teaRoom', 'feedStore', 'pigHousing', 'sheepScales', 'baboonWing',
-  'baboonWing', 'prepRoom', 'prepRoom', 'prepRoom', 'sheepScales',
-  'cathLab', 'cathLab', 'sheepScales', 'carPark', 'coffeeShop',
-];
 const labels = {
   teaRoom: '01 Tea Room', mainHall: '02 Main Hallway', feedStore: '03 Feed Store',
   pigHousing: '04 Pig Housing', sheepScales: '05 Sheep & Scales', baboonWing: '06 Baboon Wing',
@@ -30,7 +25,7 @@ page.on('console', (message) => { if (message.type() === 'error') issues.push(`c
 await page.addInitScript(() => {
   globalThis.localStorage.clear();
   globalThis.localStorage.setItem('busy_day_at_the_viv_v2_save', JSON.stringify({
-    schemaVersion: 2,
+    schemaVersion: 3,
     savedAt: new Date(0).toISOString(),
     settings: {
       musicVolume: 0, sfxVolume: 0, muted: true, typewriter: false, reducedMotion: true,
@@ -82,14 +77,14 @@ try {
   while (true) {
     const state = await page.evaluate(() => globalThis.window.__busyDayTest?.getState() ?? null);
     if (!state || state.finished) break;
-    const location = objectiveLocations[state.objectiveIndex];
-    if (!location) throw new Error(`No visual route for objective ${state.objectiveIndex}.`);
-    if (!await page.evaluate(() => globalThis.window.__busyDayTest?.travelToObjective() ?? false)) throw new Error(`Could not travel to ${location}.`);
+    if (!await page.evaluate(() => globalThis.window.__busyDayTest?.travelToObjective() ?? false)) throw new Error(`Could not travel for objective ${state.objectiveIndex}.`);
+    const location = await page.evaluate(() => globalThis.window.__busyDayTest?.getLocation() ?? null);
+    if (!location) throw new Error(`Objective ${state.objectiveIndex} did not resolve to a location.`);
     await page.waitForFunction((expected) => globalThis.window.__busyDayTest?.getLocation() === expected, location);
     await page.waitForTimeout(120);
     await capture(location);
     const objectiveIndex = state.objectiveIndex;
-    for (let target = 0; target < 12; target += 1) {
+    for (let target = 0; target < 100; target += 1) {
       const next = await page.evaluate(() => globalThis.window.__busyDayTest?.getState() ?? null);
       if (!next || next.finished || next.objectiveIndex !== objectiveIndex) break;
       if (!await page.evaluate(() => globalThis.window.__busyDayTest?.completeCurrentTarget() ?? false)) throw new Error(`Could not complete objective ${objectiveIndex}.`);

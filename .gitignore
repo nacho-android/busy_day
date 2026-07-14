@@ -2,7 +2,9 @@ node_modules/
 dist/
 coverage/
 playwright-report/
+playwright-preview-report/
 test-results/
+test-results-preview/
 .vite/
 *.log
 .env

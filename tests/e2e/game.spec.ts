@@ -1,11 +1,6 @@
 import { LOCATIONS } from '../../src/data/locations';
+import { OBJECTIVES } from '../../src/data/story';
 import { assertNoPageScroll, drainDialogue, expect, openCleanGame, startNewShift, state, test, traverseExit } from './support';
-
-const OBJECTIVE_LOCATIONS = [
-  'teaRoom', 'feedStore', 'pigHousing', 'sheepScales', 'baboonWing',
-  'baboonWing', 'prepRoom', 'prepRoom', 'prepRoom', 'sheepScales',
-  'cathLab', 'cathLab', 'sheepScales', 'carPark', 'coffeeShop',
-] as const;
 
 // The key that crosses an exit can advance the destination scene by one
 // simulation step before Playwright observes the location change.
@@ -67,7 +62,7 @@ test.describe('Busy Day V2 core journey', () => {
     await page.locator('#continue-button').click();
 
     await expect(page.locator('#hud')).toBeVisible();
-    await expect(page.locator('#hud-objective-title')).toHaveText('Collect the feed cart');
+    await expect(page.locator('#hud-objective-title')).toHaveText(OBJECTIVES[1]!.title);
     const restored = await state(page);
     expect(restored?.runId).toBe(beforeReload?.runId);
     expect(restored?.objectiveIndex).toBe(1);
@@ -82,34 +77,35 @@ test.describe('Busy Day V2 core journey', () => {
     await drainDialogue(page);
 
     let completedTargets = 0;
-    for (let objectiveIndex = 0; objectiveIndex < OBJECTIVE_LOCATIONS.length; objectiveIndex += 1) {
-      const expectedLocation = OBJECTIVE_LOCATIONS[objectiveIndex]!;
+    const expectedTargets = OBJECTIVES.reduce((total, objective) => total + objective.targets.length, 0);
+    for (let objectiveIndex = 0; objectiveIndex < OBJECTIVES.length; objectiveIndex += 1) {
+      const expectedLocation = OBJECTIVES[objectiveIndex]!.location;
       await expect.poll(() => page.evaluate(() => window.__busyDayTest?.travelToObjective() ?? false)).toBe(true);
       await expect.poll(() => page.evaluate(() => window.__busyDayTest?.getLocation() ?? null)).toBe(expectedLocation);
 
       while ((await state(page))?.objectiveIndex === objectiveIndex) {
         await expect.poll(() => page.evaluate(() => window.__busyDayTest?.completeCurrentTarget() ?? false)).toBe(true);
         completedTargets += 1;
-        expect(completedTargets).toBeLessThanOrEqual(28);
+        expect(completedTargets).toBeLessThanOrEqual(expectedTargets);
       }
 
-      if (objectiveIndex < OBJECTIVE_LOCATIONS.length - 1 && await page.locator('#dialogue-panel').isVisible()) {
+      if (objectiveIndex < OBJECTIVES.length - 1 && await page.locator('#dialogue-panel').isVisible()) {
         await drainDialogue(page);
       }
     }
 
     const journey = { completedTargets, run: await state(page) };
 
-    expect(journey.completedTargets).toBe(28);
-    expect(journey.run?.completedTargets).toHaveLength(28);
-    expect(journey.run?.completedObjectives).toHaveLength(15);
-    expect(journey.run?.objectiveIndex).toBe(15);
+    expect(journey.completedTargets).toBe(expectedTargets);
+    expect(journey.run?.completedTargets).toHaveLength(expectedTargets);
+    expect(journey.run?.completedObjectives).toHaveLength(OBJECTIVES.length);
+    expect(journey.run?.objectiveIndex).toBe(OBJECTIVES.length);
     expect(journey.run?.finished).toBe(true);
 
     await drainDialogue(page, { untilEnding: true, limit: 120 });
     await expect(page.locator('#ending-screen')).toBeVisible();
     await expect(page.locator('#ending-title')).toContainText('Coffee');
-    await expect(page.locator('#ending-tasks')).toHaveText('15/15');
+    await expect(page.locator('#ending-tasks')).toHaveText(`${OBJECTIVES.length}/${OBJECTIVES.length}`);
     await expect(page.locator('#ending-rank')).toHaveText(/^[SABCD]$/);
     await expect(page.locator('#hud')).toBeHidden();
   });

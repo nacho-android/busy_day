@@ -1,8 +1,12 @@
 import { expect, test as base, type Page } from '@playwright/test';
+import { LOCATIONS } from '../../src/data/locations';
+import { OBJECTIVES } from '../../src/data/story';
+import { SCHEMA_VERSION } from '../../src/state/saveStore';
 import type { BusyDayTestApi, LocationId, RunState } from '../../src/types/game';
 
 const SAVE_KEY = 'busy_day_at_the_viv_v2_save';
 const TEST_BOOT_MARKER = 'busy_day_e2e_bootstrapped';
+const RESTORE_PATCH_KEY = 'busy_day_e2e_restore_patch';
 
 const FAST_SETTINGS = {
   musicVolume: 0,
@@ -41,24 +45,41 @@ declare global {
 
 export async function openCleanGame(page: Page, options: { fast?: boolean } = {}): Promise<void> {
   const fast = options.fast ?? false;
-  await page.addInitScript(({ marker, saveKey, useFastSettings, settings }) => {
-    if (sessionStorage.getItem(marker)) return;
-    localStorage.clear();
-    if (useFastSettings) {
-      localStorage.setItem(saveKey, JSON.stringify({
-        schemaVersion: 2,
-        savedAt: new Date(0).toISOString(),
-        settings,
-        profile: { bestRank: null, bestCoins: 0, completedRuns: 0 },
-        activeRun: null,
-      }));
+  await page.addInitScript(({ marker, restoreKey, saveKey, useFastSettings, settings, schemaVersion }) => {
+    try {
+      const restorePatch = sessionStorage.getItem(restoreKey);
+      if (restorePatch) {
+        const raw = localStorage.getItem(saveKey);
+        const envelope = raw ? JSON.parse(raw) as { activeRun?: Record<string, unknown> | null } : null;
+        if (envelope?.activeRun) {
+          Object.assign(envelope.activeRun, JSON.parse(restorePatch) as Record<string, unknown>);
+          localStorage.setItem(saveKey, JSON.stringify(envelope));
+        }
+        sessionStorage.removeItem(restoreKey);
+      }
+      if (sessionStorage.getItem(marker)) return;
+      localStorage.clear();
+      if (useFastSettings) {
+        localStorage.setItem(saveKey, JSON.stringify({
+          schemaVersion,
+          savedAt: new Date(0).toISOString(),
+          settings,
+          profile: { bestRank: null, bestCoins: 0, completedRuns: 0 },
+          activeRun: null,
+        }));
+      }
+      sessionStorage.setItem(marker, '1');
+    } catch {
+      // Sandboxed error documents can deny storage after a failed navigation.
+      // The real origin will run this initializer again on the next load.
     }
-    sessionStorage.setItem(marker, '1');
   }, {
     marker: TEST_BOOT_MARKER,
+    restoreKey: RESTORE_PATCH_KEY,
     saveKey: SAVE_KEY,
     useFastSettings: fast,
     settings: FAST_SETTINGS,
+    schemaVersion: SCHEMA_VERSION,
   });
 
   await page.goto('/');
@@ -78,9 +99,76 @@ export async function state(page: Page): Promise<RunState | null> {
   return page.evaluate(() => window.__busyDayTest?.getState() ?? null);
 }
 
+interface RestoreRunOptions {
+  spawnId?: string;
+  objectiveIndex?: number;
+  player?: { x: number; y: number };
+  facing?: RunState['facing'];
+}
+
+/**
+ * Reboots through the real save parser with a coherent objective prefix.
+ * This deliberately avoids adding a general-purpose world mutation hook to
+ * the production code: the game reads the prepared envelope on navigation,
+ * sanitises it, and Continue starts the requested authored location.
+ */
+export async function restoreRunAt(page: Page, locationId: LocationId, options: RestoreRunOptions = {}): Promise<RunState> {
+  const location = LOCATIONS[locationId];
+  const spawn = location.spawns.find((candidate) => candidate.id === options.spawnId) ?? location.spawns[0];
+  if (!spawn) throw new Error(`Location ${locationId} has no authored spawn.`);
+
+  const objectiveIndex = Math.max(0, Math.min(options.objectiveIndex ?? OBJECTIVES.length - 1, OBJECTIVES.length - 1));
+  const completed = OBJECTIVES.slice(0, objectiveIndex);
+  const completedTargets = completed.flatMap((objective) => [...objective.targets]);
+  const completedObjectives = completed.map((objective) => objective.id);
+  const flags = [...new Set(completed.flatMap((objective) => [...(objective.grantsFlags ?? [])]))];
+  const xp = completed.reduce((total, objective) => total + objective.reward.xp, 0);
+  const coins = completed.reduce((total, objective) => total + objective.reward.coins, 0);
+  const checkpointObjectiveIndex = completed.reduce(
+    (latest, objective, index) => objective.checkpoint ? index + 1 : latest,
+    0,
+  );
+
+  await page.evaluate(({ restoreKey, runPatch }) => {
+    sessionStorage.setItem(restoreKey, JSON.stringify(runPatch));
+  }, {
+    restoreKey: RESTORE_PATCH_KEY,
+    runPatch: {
+      locationId,
+      spawnId: spawn.id,
+      player: options.player ?? { x: spawn.x, y: spawn.y },
+      facing: options.facing ?? spawn.facing,
+      objectiveIndex,
+      completedTargets,
+      completedObjectives,
+      flags,
+      xp,
+      coins,
+      checkpointObjectiveIndex,
+      failure: null,
+      finished: false,
+    },
+  });
+
+  await page.reload();
+  await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 15_000 });
+  await expect(page.locator('#title-screen')).toBeVisible();
+  await page.waitForFunction(() => Boolean(window.__busyDayTest));
+  await expect(page.locator('#continue-button')).toBeVisible();
+  await page.locator('#continue-button').click();
+  await expect(page.locator('#hud')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__busyDayTest?.getLocation() ?? null)).toBe(locationId);
+  const restored = await state(page);
+  expect(restored).not.toBeNull();
+  return restored!;
+}
+
 export async function traverseExit(page: Page, exitId: string, destination: LocationId): Promise<RunState> {
-  // Let the freshly restarted scene clear its transition cooldown, then use
-  // the real keyboard path through the actual exit rectangle.
+  // Lazy room art can finish after session.locationId changes. Wait for the
+  // destination/origin scene to be fully presented before touching its rig,
+  // then let the freshly created scene clear its transition cooldown.
+  await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 15_000 });
+  await expect(page.locator('#hud')).toBeVisible();
   await page.waitForTimeout(900);
   const key = await page.evaluate((id) => window.__busyDayTest?.approachExit(id) ?? null, exitId);
   expect(key, `Expected ${exitId} to exist in the active location`).not.toBeNull();
