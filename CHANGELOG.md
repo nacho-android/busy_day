@@ -2,7 +2,39 @@
 
 All notable changes to Busy Day at the Viv are documented here. The project uses semantic versioning for the V2 application.
 
-## [2.0.0] — Unreleased
+## [2.1.0] — 2026-07-14
+
+### Added
+
+- Added three V2-only complications—route-control restoration, baboon-wing interlock calibration, and cath-monitor synchronisation—expanding the critical path to 18 objectives and 31 targets.
+- Added schema-three save migration so progress from the deployed 15-objective schema-two route resumes at a coherent new prerequisite without corrupting rewards or checkpoints.
+- Added complete renderer/asset/frame/animation/footprint/portrait/voice metadata, executable vector/sprite-sheet/atlas character modes, authored NPC patrols/reactions, and generated foreground occlusion crops.
+- Added eight AI-rendered retro-noir dialogue portraits for Mel, Josh, Sally, Juan, Alan, Dhanya, Ross, and Wayne; raw reference photographs remain outside the public release.
+- Added a retained Mel/Josh directional character source sheet for later atlas work; it is deliberately not packed, approved, or loaded as a runtime animation atlas.
+- Added reproducible dependency/cycle, route-unlock, reciprocal-exit, collision-reachability, dialogue-identity, and exact runtime-asset validation.
+- Kept exhaustive grid validation in development/release gates instead of blocking production startup, added patrol-segment validation, transient lazy-art retry/title recovery, privacy-safe gamepad enumeration, and safe rejection of future-schema active progress.
+- Added all-18-exit runtime coverage, browser tests for failure/recovery/settings/touch/barriers, a built-bundle preview suite, and an opt-in public-input Mel/Josh journey harness.
+- Added controller focus, accept, back, Start/pause, dialogue, choice, slider, and select navigation across the title and blocking overlays.
+
+### Changed
+
+- Added authored acceleration/deceleration and made Josh’s stress-resistance statistic affect positive stress pressure.
+- Switched large location backplates to on-entry loading with a three-room decoded LRU; the title and Tea Room remain the only up-front background textures.
+- Upgraded dialogue from gradient initials to data-driven rendered portraits for the principal speaking cast while retaining accessible text fallbacks for the wider ensemble.
+
+### Fixed
+
+- Moved Vu to a collision-reachable Feed Store position.
+- Reworked exit-test approach selection around collision-valid points and neutralised carried entry input so named destination facing remains stable.
+- Added the missing pull-request template referenced by the release runbook.
+
+### Validation status
+
+- Focused Chromium hardening runs crossed all 18 authored exit directions and covered barriers, locked routing, Wayne failure/checkpoint recovery, pause/restart/reset, persisted settings, touch hold-use, longest-dialogue containment, synthetic controller UI, and a test-assisted 18-objective/31-target ending. The built-preview Chromium path also passed its focused run. Record the final consolidated and three-engine workflow results separately before release.
+- The opt-in public-input Mel journey reached the visible shift-board prompt but did not complete because shared-host software WebGL stopped delivering reliable update frames during the hold interaction; Josh was not run. This is not a no-shortcut completion claim or an established progression defect.
+- Physical touch devices, hardware controllers, screen readers, manual audio listening, soak/current-phone performance, and likeness/publication-rights review remain unverified.
+
+## [2.0.0] — 2026-07-14
 
 ### Added
 
@@ -65,7 +97,7 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - The static verifier's 107-file / 32.73 MiB intended release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
 - Characters, animals, props, and vehicles are animated runtime vector constructions rather than final sprite sheets/atlases.
 - Pointer/tap-to-move, navigation pathfinding, a physical pushable cart/trolley, and a spatial car-sliding puzzle are not implemented.
-- Complete no-shortcut Mel/Josh runs, all-18-exit traversal, physical-device/gamepad checks, audio listening, soak/current-phone performance, and rights review remain pending.
+- Complete no-shortcut Mel/Josh runs, physical-device/controller checks, audio listening, screen-reader review, soak/current-phone performance, and rights review remain pending. V2.1 adds focused Chromium all-18-exit evidence, but the expanded final CI result is tracked separately from this V2.0 release history.
 - See [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the full impact and workaround list.
 
 ## [1.0.0] — Historical single-file version

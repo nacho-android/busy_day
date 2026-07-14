@@ -8,6 +8,10 @@ The generator source and its rendered WAV outputs are offered under **CC0-1.0** 
 
 All rendered files use the same browser-safe format: **mono, 16-bit linear PCM WAV, 22,050 Hz, uncompressed**. This deliberately lo-fi rate suits the retro-noir direction, keeps decoding inexpensive on mobile, and limits the complete pack to 4.99 MiB. Phaser/Web Audio can load these files directly.
 
+## Validation status
+
+`python scripts/verify_audio.py` is the reproducible static gate for all 26 files. It checks file/header coverage, PCM format, duration/payload, peak and DC bounds, and loop-edge discontinuity; it does not listen to the soundtrack or prove browser/device mixing quality. The current pack passed that gate on 2026-07-14 at 4.99 MiB, while a manual listening pass through title, facility, animal, cath, car-park, failure, and ending sequences remains unrecorded. Do not describe waveform verification as subjective audio approval.
+
 ## Music and ambience
 
 | Filename | Purpose | Duration | Format / rate | Generation method and provenance | Loop notes | Integration / replacement notes |

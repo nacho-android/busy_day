@@ -1,7 +1,7 @@
 # Busy Day at the Viv V2 — Implemented Game Design
 
 **Document status:** implementation-aligned design, 2026-07-14
-**Playable scope:** ten locations · fifteen objectives · two leads · one main ending
+**Playable scope:** ten locations · eighteen objectives · two leads · one main ending
 **Evidence:** current `src/`, `public/assets/`, `index.html`, tests, and the factual V1/reference audits
 
 This document describes the game that is actually implemented. Earlier ideas that did not make the current build are listed as deferred scope, not presented as features.
@@ -33,7 +33,9 @@ The current build combines:
 
 - 11 generated 3D-rendered backplates: the title plus all ten gameplay locations;
 - 11 browser-sized 1280×720 WebP runtime images totaling 1,818,586 bytes (1.734 MiB), with every 1672×941 PNG master retained;
-- runtime vector characters, animals, vehicles, props, markers, and ambient motion;
+- eight generated 384×384 WebP portraits for the principal speaking cast, cropped from one retained 2048×1024 master;
+- one retained Mel/Josh directional character source sheet for possible future atlas production; it is not a packed or runtime-loaded sprite atlas;
+- data-driven animated vector characters plus runtime animals, vehicles, props, markers, patrols, and ambient motion;
 - perspective scale and Y-based depth so actors become larger toward the foreground;
 - generated art used as backplates only, without placing unedited reference photographs in the game.
 
@@ -46,7 +48,7 @@ Reference likenesses, locations, and style were used under the caveats in `ASSET
 | Mel | Rapid multitasker | 220 walk / 330 sprint; 100 stamina; fastest interaction rate; 0.9 trolley carry factor |
 | Josh | Solid procedure support | 196 walk / 292 sprint; 118 stamina; steadier 1.2 trolley carry factor; greater stress resistance |
 
-Both leads use the same story route. The palette-driven paper-doll rig redraws workwear, face, hair, glasses/facial hair, and silhouette for toward/away/side directions and supports idle breathing, walk bob/limb swing, interaction motion, hit reaction, perspective scale, and depth. These are detailed procedural vector animations, not generated sprite sheets.
+Both leads use the same story route. The production vector-paper-doll mode redraws workwear, face, hair, glasses/facial hair, and silhouette for toward/away/side directions and supports idle breathing, walk bob/limb swing, interaction motion, hit reaction, perspective scale, and depth. Renderer mode, images/atlases, frame layout, named animation timing, collision footprint, portrait expressions, and voice metadata are all replaceable data; gameplay logic does not own those details.
 
 ## World map
 
@@ -70,38 +72,41 @@ flowchart LR
 | # | Location | Gameplay/narrative purpose | Visual implementation | Required route |
 | ---: | --- | --- | --- | --- |
 | 1 | Tea Room | Opening dialogue, Sally's board, Juan's promise, optional kettle/early-coffee jokes | Generated tea-room backplate | Shift board |
-| 2 | Main Hallway | Navigation hub, Ross trap, facility map, staff reactions, locked car-park gate | Generated facility-hub backplate | Revisited throughout |
+| 2 | Main Hallway | Navigation hub, route-console reset, Ross trap, facility map, staff reactions, locked car-park gate | Generated facility-hub backplate | Revisited throughout |
 | 3 | Feed Store | Collect feed cart; inspect suspicious bin and enrichment ball | Generated feed-store backplate | Feed cart |
 | 4 | Pig Housing | Feed three pigs individually; meet Luther | Generated pig-housing backplate | Three feeds |
 | 5 | Sheep & Scales | Feed three sheep, later weigh the pig and shear a sheep | Generated livestock-scale backplate | Five task interactions across acts |
-| 6 | Baboon Wing | Feed three baboons and collect three samples; calm-room humour | Generated secured-animal-wing backplate | Six task interactions |
+| 6 | Baboon Wing | Feed three baboons, calibrate the interlock, then collect three samples | Generated secured-animal-wing backplate | Seven task interactions |
 | 7 | Procedure Prep | Pig preparation, anaesthesia support, trolley loading with Alan/Luther | Generated procedure-prep backplate | Three staged interactions |
-| 8 | Cath Lab | Trolley handover and cardiac-support console with cath/engineering teams | Generated cath-lab backplate | Handover and support |
+| 8 | Cath Lab | Trolley handover, monitor synchronisation, and cardiac support with cath/engineering teams | Generated cath-lab backplate | Three staged interactions |
 | 9 | Car Park | Six vehicle actions, Wayne choice, rising Wayne pressure, Thanh hazard | Generated rainy car-park backplate | All six cars |
 | 10 | Coffee Shop | Final Juan conversation, coffee payoff, rank/results | Generated rainy coffee-shop backplate | Coffee ending |
 
 Every exit targets a named spawn in the destination. Main Hall → Car Park requires `procedureComplete`; Procedure Prep → Cath Lab requires `hasTrolley`; Car Park → Coffee Shop requires `carParkClear`.
 
-After the five final backplates were integrated, their collision/exit geometry was realigned to visible fixtures. A radius-22, 5-pixel-grid audit then reached every spawn, target, and exit in Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop; the optional Feed Store enrichment-ball hotspot was moved before the passing result because its first art-aligned coordinate was unreachable. Integrated all-room visual QA and the focused three-engine reciprocal route now supplement that static evidence; movement through all remaining exit directions is still pending.
+After the final backplates were integrated, collision/exit geometry was realigned to visible fixtures. The reproducible grid validator now proves collision-safe approach paths for every spawn, objective, NPC, and exit, and found/fixed Vu’s unreachable Feed Store position. Integrated all-room visual QA supplements that static evidence. Chromium then crossed all 18 authored exit directions with real movement after collision-valid approach setup, asserting named spawn, facing, and no post-release drift; a focused reciprocal route also passes Chromium, Firefox, and WebKit.
 
 ## Story and objective route
 
-The story uses 15 ordered objectives across six acts. Each objective has a destination, target IDs, rewards, hint, optional kit label, granted flags, and checkpoint status.
+The story uses 18 ordered objectives and 31 targets across six acts. Three V2-only complications materially extend V1’s route: the facility route reset, baboon interlock calibration, and cath-monitor synchronisation. Each objective has a destination, target IDs, rewards, hint, optional kit label, granted flags, and checkpoint status.
 
 | Act | Objective | Targets | Important state/result |
 | ---: | --- | ---: | --- |
 | 0 | Check the shift board | 1 | Grants `boardChecked` |
+| 0 | Restore the morning routes | 1 | Requires board; grants `routesRestored` |
 | 0 | Collect the feed cart | 1 | Grants `hasFeedCart`; checkpoint |
 | 1 | Feed each pig | 3 | Individual pen cadence |
 | 1 | Feed each sheep | 3 | Individual pen cadence |
-| 1 | Feed each baboon | 3 | Feed-cart prerequisite |
+| 1 | Feed each baboon | 3 | Feed-cart prerequisite; grants `baboonsFed` |
+| 1 | Calibrate the wing interlock | 1 | Requires feeds; grants `wingSecured` |
 | 1 | Collect three glucose samples | 3 | Grants `hasSamples`; checkpoint |
 | 2 | Complete pig preparation | 1 | Grants `pigPrepared` |
 | 2 | Assist Alan with anaesthesia | 1 | Requires prep; grants `pigReady` |
 | 2 | Load the pig trolley | 1 | Grants `hasTrolley`; checkpoint |
 | 3 | Weigh the pig | 1 | Requires trolley; grants `pigWeighed` |
 | 3 | Deliver the trolley to cath | 1 | Requires weight; grants `pigDelivered` |
-| 3 | Support the cardiac procedure | 1 | Requires handover; grants `procedureComplete`; checkpoint |
+| 3 | Synchronise the monitor bank | 1 | Requires handover; grants `monitorSynced` |
+| 3 | Support the cardiac procedure | 1 | Requires monitor sync; grants `procedureComplete`; checkpoint |
 | 4 | Shear the afternoon sheep | 1 | Requires procedure completion |
 | 4 | Clear the car park | 6 | Grants `carParkClear`; checkpoint |
 | 5 | Meet Juan for coffee | 1 | Grants `coffeeEarned`; completes run/profile |
@@ -117,7 +122,7 @@ Opening and objective-transition dialogues break the story into short beats. NPC
 5. Receive prop animation, sound, toast/dialogue, reward, flag, and objective feedback.
 6. Use a readable exit to continue from the reciprocal entrance.
 
-The objective drawer lists all 15 tasks, marks completed/current items, displays current kit flags, and reveals one authored hint on request.
+The objective drawer lists all 18 tasks, marks completed/current items, displays current kit flags, and reveals one authored hint on request.
 
 ## Movement, collision, perspective, and exits
 
@@ -125,26 +130,27 @@ The objective drawer lists all 15 tasks, marks completed/current items, displays
 - Sprint consumes stamina; normal movement restores it.
 - Dodge moves 74 world units through the same collision resolver and costs stamina.
 - Mel/Josh statistics alter movement and hold duration. A carried trolley applies a lead-specific speed multiplier.
-- A radius-20 circle is kept inside the room's walkable rectangle and outside expanded fixed-obstacle rectangles. All six cars are active obstacles until their interaction completes, then the corresponding prop/collider is removed.
+- Each lead’s authored collision footprint is kept inside the room's walkable rectangle and outside expanded fixed-obstacle rectangles. All six cars are active obstacles until their interaction completes, then the corresponding prop/collider is removed.
+- Authored acceleration/deceleration smooths keyboard, touch, and gamepad direction changes; collision response feeds the actual resolved velocity back into animation.
 - Movement is divided into steps of at most seven world units; X/Y are resolved separately for wall sliding and reduced tunnelling.
 - Character scale interpolates between each room's far/near values; depth follows Y.
 - Exit rectangles trigger only when no interaction is active. Locked exits show a reason.
 - A 750 ms entry cooldown, transition lock, sound, and fade prevent accidental repeated transitions.
 - Reduced Motion converts the fade to an immediate transition.
 
-Pointer/tap destination movement, pathfinding, polygonal nav regions, foreground occlusion layers, separate carried-object collision, and NPC navigation are not part of the current implementation.
+Pointer/tap destination movement, pathfinding, polygonal nav regions, and separate carried-object collision are not part of the current implementation. Mobile uses the consistent virtual joystick instead. Authored foreground crops now re-layer generated-background fixtures over actors, and seven NPCs follow short collision-safe patrols with proximity reactions.
 
 ## Characters and world life
 
 The data set contains visual definitions for Mel, Josh, Sally, Juan, Alan, Ross, Wayne, Thanh, Xing, Anugra, Luther, Tony, Vu, Urja, Dhanya, Poonam, Max, Leila, Erin, Sam, Mitch, James, Eddy, and Pierre. Shinya reuses a current visual palette entry.
 
-NPCs use idle breathing/bobbing and readable nameplates. Pigs, sheep, baboons, coffee steam, markers, and selected props have looping motion. Successful animal interactions layer the species-specific pig/sheep/baboon cue with the task cue. Thanh's vehicle traverses the car-park foreground, reverses at its lane ends, flashes a beacon, sounds a periodic horn, and damages health/stress/Wayne pressure on contact.
+NPCs use idle breathing/bobbing, readable nameplates, data-driven awareness/reactions, and seven short authored patrol routes. Pigs, sheep, baboons, coffee steam, markers, and selected props have looping motion. Successful animal interactions layer the species-specific pig/sheep/baboon cue with the task cue. Thanh's vehicle traverses the car-park foreground, reverses at its lane ends, flashes a beacon, sounds a periodic horn, and damages health/stress/Wayne pressure on contact.
 
 Ross triggers after the player remains close in Main Hall. He raises stress and temporarily blocks movement; Dodge releases the trap. He triggers once per Main Hall scene instance rather than following a persistent schedule.
 
 ## Dialogue and interaction
 
-Dialogue supports speaker, initial portrait treatment, expression state, multiline wrapping, typewriter, reveal-all, advance, queueing, and pointer/touch/button/number-key choices. The Wayne branch either reduces Wayne/stress or raises both while still moving his car, so choice flavour cannot block completion. Gamepad-only dialogue navigation is not implemented.
+Dialogue supports speaker, rendered portrait or accessible initials fallback, expression state, multiline wrapping, typewriter, reveal-all, advance, queueing, and pointer/touch/button/number-key choices. Eight principal speakers use generated retro-noir portraits; the wider ensemble keeps an intentional gradient fallback. The Wayne branch either reduces Wayne/stress or raises both while still moving his car, so choice flavour cannot block completion. Gamepad focus, advancement, choices, accept and back are implemented; a synthetic Chromium path covers the opening conversation, while physical controller/browser validation remains open.
 
 The interaction vocabulary represented in types is Talk, Inspect, Use, Pick up, Open, Operate, Give, Enter, and Exit. Current world targets primarily use Talk, Inspect, Use, Pick up, Operate, and Give; doors/exits are proximity-triggered.
 
@@ -164,7 +170,7 @@ Rank is a deterministic score from story completion, health, stress, Wayne press
 
 ## Saving and settings
 
-V2 uses local storage key `busy_day_at_the_viv_v2_save` and schema version 2. It stores:
+V2 uses local storage key `busy_day_at_the_viv_v2_save` and schema version 3. Schema-two saves are migrated by stable objective IDs across the three inserted complications. It stores:
 
 - active lead, Relaxed Shift, location/spawn/position/facing;
 - objective index, targets, completed objectives, flags, meters, XP, coins, level, checkpoint, failure, and finish state;
@@ -177,13 +183,13 @@ Position is persisted on state changes, page backgrounding, and a throttled 1.2-
 
 ## Desktop, touch, gamepad, and accessibility
 
-Desktop supports WASD/arrows, Shift sprint, E interaction, Space dodge, O objectives, P/Escape pause, M mute, and Enter/Space/E dialogue advance. Touch provides a virtual joystick plus Sprint, Dodge, contextual Use, HUD objective, and pause buttons. The implemented gamepad world path maps left stick and three face buttons; menus/dialogue are not controller-navigable.
+Desktop supports WASD/arrows, Shift sprint, E interaction, Space dodge, O objectives, P/Escape pause, M mute, and Enter/Space/E dialogue advance. Touch provides a virtual joystick plus Sprint, Dodge, contextual Use, HUD objective, and pause buttons. The gamepad world path maps left stick and three face buttons; D-pad/stick focus, accept, back and Start/pause also cover title, dialogue/choices, settings, objectives, pause/confirmation, failure and ending overlays.
 
 The page uses landscape-first FIT scaling, safe-area insets, responsive browser scaling, no-scroll/no-gesture CSS, coarse-pointer layouts, pointer capture/cancel cleanup, and a portrait orientation overlay that pauses the location scene while preserving state. High-DPI output quality remains part of device validation.
 
 Settings include music/SFX/mute, typewriter, reduced motion, high contrast, sound captions, normal/large text, right/left-handed touch, and Relaxed Shift. Important car-park warnings are visible captions/toasts rather than audio-only cues.
 
-Implementation does not substitute for validation: real-device, browser, gamepad, screen-reader, viewport, and longest-text passes remain tracked in the checklist.
+Implementation does not substitute for validation: automated representative viewport, touch, longest-dialogue and synthetic-gamepad coverage exists, while real-device touch, hardware-gamepad, screen-reader and broader browser/device matrices remain tracked in the checklist.
 
 ## Audio design
 
@@ -202,9 +208,9 @@ The pack is deterministic procedural synthesis with no recordings or sample libr
 
 ## Performance design
 
-The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The core preloader loads all 11 generated 1280×720 WebP images, totaling 1,818,586 bytes (1.734 MiB). Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 master remains available outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
+The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The title and Tea Room backplates load up front; later rooms load on entry through the typed runtime manifest and a three-location decoded-background LRU. With the title retained, the normal decoded backplate ceiling is roughly four 1280×720 textures instead of eleven. The complete encoded background set remains 1,818,586 bytes (1.734 MiB) and benefits from browser HTTP caching. Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 scene master remains outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
 
-After optimization, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and the deployed host later passed asset and Continue smoke checks. Physical-device validation remains separate.
+For the deployed V2.0 baseline, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and that deployed host later passed asset and Continue smoke checks. V2.1 requires its own final integrated results; physical-device validation remains separate.
 
 That pre-final-art foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured 47.4 FPS / 18.1 ms p95 for a blank-page baseline and 33.3 FPS / 36.1 ms p95 in the active Tea Room. A prior same-condition sample reported a 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so current-payload and mid-range-phone frame rate, decoded texture/audio memory, long-session growth, transitions, and hosted latency remain unmeasured.
 
@@ -217,13 +223,15 @@ Implemented in source/data:
 - collision, perspective, transition locks, interactions, dialogue, objectives, hazards, failures, recovery, save/settings, touch/orientation, original artwork, and original audio;
 - strict types, lint, unit tests, and production build.
 
-PR #1 merged as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed clean release/audio/type/lint/27-unit/build gates and Playwright 21/21. Pages deployment `5433749633` succeeded for that SHA/ref `main`, and [the hosted build](https://nacho-android.github.io/busy_day/) passed cache-busted asset plus title/New Shift/refresh/Continue smoke checks without captured warning/error logs.
+The deployed V2.0 baseline merged through PR #1 as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed its recorded release/audio/type/lint/27-unit/build gates and Playwright 21/21. Pages deployment `5433749633` succeeded for that SHA/ref `main`, and [the hosted build](https://nacho-android.github.io/busy_day/) passed cache-busted asset plus title/New Shift/refresh/Continue smoke checks without captured warning/error logs. Do not apply those workflow/deployment identifiers to V2.1.
 
 Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 
+V2.1 adds dev-server coverage for all 18 authored exit directions and higher-risk failure, recovery, settings, touch, barrier, dialogue and controller paths, plus a separate built-preview suite that checks hashed assets, production-only boundaries, real keyboard movement, save/refresh/Continue and request/page/console errors. A longer public-input Mel/Josh harness also exists outside default CI. The recorded Mel attempt was stopped after shared-host software-WebGL frame starvation prevented a reliable hold interaction at the visible shift-board prompt; Josh was not run, so neither journey is a completion claim.
+
 Still required for a full completion claim:
 
-- broader no-shortcut functional, public-input, and visual viewport execution;
+- complete no-shortcut public-input Mel and Josh execution in a frame-stable environment;
 - complete manual runs for Mel and Josh without test shortcuts;
 - representative real touch device and gamepad checks;
 - complete audio-listening and soak/current-phone performance review beyond the accepted checkpoint captures;
@@ -235,8 +243,8 @@ Deferred rather than silently claimed:
 - Wrong Century side objective/dinosaur gameplay;
 - pointer-to-walk and navigation pathfinding;
 - physical carried-object bodies and a spatial car puzzle;
-- foreground occlusion layers, sprite atlases, and full portrait sets;
-- NPC schedules/patrols and optional objective chains;
+- approved directional sprite atlases and dedicated per-expression portrait redraws (the current vector renderer and eight neutral portraits remain replaceable data);
+- broader NPC schedules and optional side-objective chains beyond the seven current short patrols and three V2.1 critical-path complications;
 - independent ambience/UI gain buses and compressed audio mirrors.
 
 The definitive status and evidence log is `IMPLEMENTATION_CHECKLIST.md`; genuine user-facing limitations are in `KNOWN_LIMITATIONS.md`.
