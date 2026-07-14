@@ -226,8 +226,7 @@
 - [x] Run the pre-final-art Chromium suite to completion: 7/7 pass in 5.7 minutes on Chromium 149.0.7827.55.
 - [x] Run the pre-final-art Firefox suite to completion: 7/7 pass in 1.6 minutes with zero captured console/page errors.
 - [x] Run the pre-final-art WebKit suite to completion: 7/7 pass in 5.0 minutes (304.6 seconds) with zero captured console/page errors.
-- [x] Record the previous full final-art Actions result exactly: static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7 and failed only the now-fixed stale reciprocal-exit assertion.
-- [ ] Complete the replacement full GitHub Actions rerun; do not infer final-art 21/21 from the focused fix verification.
+- [x] Complete Node 24 final-art PR workflow `29297017450` on commit `bf52920`: all clean-install gates and Playwright 21/21 passed; exact timings are in the verification log.
 - [x] Verify post-transition keyboard movement in the reciprocal-exit test across Chromium, Firefox, and WebKit with a cadence-independent assertion.
 - [ ] Add/execute broader public-input sprint/dodge/hold interaction tests.
 - [x] Execute the Tea Room → Main Hall → Feed Store → Main Hall reciprocal route and assert data-driven destination spawn/location in Chromium, Firefox, and WebKit (3/3 focused runs).
@@ -276,12 +275,12 @@
 - [x] Publish `docs/REFERENCE_INVENTORY.json` while keeping the 43 raw reference files and `style_ref.png` local-only.
 - [x] Record the current local desktop performance sample with explicit device/evidence limits.
 - [x] Record the public repository, published branch, and draft PR details without presenting a superseded commit as current.
-- [x] Record the previous full final-art Actions result and the gated Pages workflow configuration.
-- [ ] Add the replacement full Actions result, merged commit, deployment URL, and hosted smoke evidence after they exist.
+- [x] Record successful final-art workflow `29297017450`/commit `bf52920`; the gated Pages job correctly skipped on the PR.
+- [ ] Add the merged commit, deployment URL, and hosted smoke evidence after they exist.
 
 ## 15. Repository publication
 
-- [x] Verify the intended release scope after exclusions: 107 files / 32.71 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, `style_ref.png`, and ignored visual-QA captures.
+- [x] Verify the intended release scope after exclusions: 107 files / 32.72 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, `style_ref.png`, and ignored visual-QA captures.
 - [x] Scan intended release-file contents for selected high-risk credential/token patterns: zero matching files. This targeted check is not an exhaustive credential scanner.
 - [x] Exclude supplied source references from publication because redistribution rights are undocumented.
 - [x] Create intentional commits without force-pushing unrelated history.
@@ -289,7 +288,7 @@
 - [x] Open draft PR #1 with summary, test evidence, limitations, and rights caveats.
 - [x] Record the draft PR URL without labelling an earlier commit as current.
 - [x] Add a gated Pages Actions deployment for successful non-PR `main` runs with `VITE_BASE_PATH=/busy_day/`.
-- [ ] Complete the replacement full Actions rerun, review/merge the draft PR, run the gated Pages job on `main`, and record hosted smoke evidence.
+- [ ] Review/merge the draft PR, run the gated Pages job on `main`, and record hosted smoke evidence.
 
 ## 16. Non-negotiable release gates
 
@@ -301,10 +300,10 @@
 - [ ] Full story is manually playable opening-to-coffee for both leads without shortcuts or blockers.
 - [ ] Every exit, spawn, barrier, interaction, failure, restart, save/continue, and ending works in runtime browser testing.
 - [ ] Touch, orientation, viewports, accessibility options, and gamepad paths are validated in representative environments.
-- [ ] Final-art Chromium, Firefox, and WebKit suites pass with no captured `console.error` or page errors; the preserved pre-art result is 21/21.
+- [x] Final-art Chromium, Firefox, and WebKit suites pass 21/21 with their `console.error`/page-error failure hooks active: 7/7 in each engine on workflow `29297017450`.
 - [ ] Visual, audio, and performance passes are complete with measured findings.
 - [x] Post-optimization local strict typecheck, lint, 27/27 unit tests, normal build, and `/busy_day/` build succeed.
-- [ ] Repeat the final-art static/unit/build gates from a clean installation.
+- [x] Repeat final-art release/audio/type/lint/27-unit/build gates after clean `npm ci` under Node 24 in workflow `29297017450`.
 - [ ] Final-art clean production bundle passes a local preview smoke; the pre-art snapshot passed.
 - [x] Repository branch is pushed and draft PR #1 is open.
 
@@ -340,9 +339,8 @@
 | 2026-07-14 | Pages-path production build | Pass — `VITE_BASE_PATH=/busy_day/`; generated HTML/CSS asset URLs checked beneath `/busy_day/` |
 | 2026-07-14 | Focused real reciprocal-exit E2E | Pass 3/3 — Chromium, Firefox, and WebKit after data-driven Feed Store spawn and cadence-independent keyboard assertion fixes |
 | 2026-07-14 | Integrated visual QA | Pass — 11 unique checkpoints (all ten rooms plus ending), zero captured console/page errors; contact sheet accepted for HUD, characters/targets, exits, textures, and no blank rooms; outputs ignored/not published |
-| 2026-07-14 | Previous full final-art GitHub Actions | Static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7, failing only the now-fixed stale reciprocal-exit assertion |
-| Pending | Replacement full final-art GitHub Actions | Not complete; final-art 21/21 is not claimed |
+| 2026-07-14 | Final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450), commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920), Node 24 | Pass — clean `npm ci`; release/audio/type/lint; 27/27 unit; build; Chromium 7/7 (4.8m), Firefox 7/7 (29.2s), WebKit 7/7 (1.3m), 21/21 total; Pages correctly skipped on PR |
 | Pending | Complete no-shortcut gameplay, representative-device, soak, current phone performance, and hosted validation | Not yet claimed |
-| 2026-07-14 | Intended release scope | 107 files / 32.71 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved |
+| 2026-07-14 | Intended release scope | 107 files / 32.72 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved |
 | 2026-07-14 | GitHub publication | Public `nacho-android/busy_day`, branch `agent/busy-day-v2`, draft PR #1 open |
 | Pending | GitHub Pages release | Workflow gated to successful non-PR `main` quality/browser jobs and `VITE_BASE_PATH=/busy_day/`; merge, first deployment run, and hosted smoke remain pending |

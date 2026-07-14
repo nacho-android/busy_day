@@ -217,7 +217,7 @@ Implemented in source/data:
 - collision, perspective, transition locks, interactions, dialogue, objectives, hazards, failures, recovery, save/settings, touch/orientation, original artwork, and original audio;
 - strict types, lint, unit tests, and production build.
 
-The pre-final-art three-engine suite passed 21/21, including test-assisted story completion, a real reciprocal route, save/failure/orientation flows, scroll lock, and seven viewports. It remains historical evidence. The previous final-art Actions run passed static/audio/type/lint/unit/build gates but each browser passed 6/7 on one stale Feed Store spawn assertion. Its data-driven, cadence-independent replacement passes the focused route in all engines (3/3); the full rerun is incomplete, so final-art 21/21 is not claimed.
+Final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) passed on commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920) under Node 24: clean `npm ci`; release/audio/type/lint checks; 27/27 unit tests; production build; Chromium 7/7 in 4.8 minutes, Firefox 7/7 in 29.2 seconds, and WebKit 7/7 in 1.3 minutes—21/21 total. The Pages job correctly skipped for the PR event. This validates the automated final-art suite, but remains test-assisted rather than a no-shortcut or device result.
 
 Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 
@@ -227,7 +227,7 @@ Still required before a release claim:
 - complete manual runs for Mel and Josh without test shortcuts;
 - representative real touch device and gamepad checks;
 - complete audio/performance/console/soak review beyond the accepted checkpoint captures;
-- completion of the replacement full GitHub Actions run, PR review/merge, the gated `main` Pages deployment, and hosted smoke evidence.
+- PR review/merge, the gated `main` Pages deployment, and hosted smoke evidence.
 
 Deferred rather than silently claimed:
 

@@ -92,16 +92,13 @@ The following are release gates, not completed claims at this snapshot:
 - page/console/request error monitoring over a full run;
 - manual listening through title, interior, animal, cath, car-park, failure, and ending audio;
 - transition/memory/audio soak testing and representative-device frame-rate, transfer, memory, and decode results;
-- completion of the replacement full GitHub Actions rerun; the prior run's only browser failure was fixed, but final-art 21/21 is not yet established;
 - complete runtime traversal/collision confirmation for all 18 exit directions beyond the focused reciprocal route;
 - verification beneath the eventual published host/subpath;
 - draft PR review/merge and the first gated Pages deployment from `main`.
 
-The earlier six-art snapshot passed clean-install static/unit/build/preview gates and 21/21 Playwright tests. That remains historical, test-assisted evidence rather than a final-art or no-shortcut claim.
-
 Post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and generated URL inspection passed. The real Tea Room → Hall → Feed → Hall route passes in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured every room plus the ending without console/page errors; its contact sheet passed HUD, actor/target, exit, texture, and blank-room review, and `visual-qa/` remains ignored.
 
-The previous full final-art Actions run passed static/audio/type/lint/unit/build gates; every browser passed 6/7 and failed only that now-fixed assertion. The replacement run is incomplete, so final-art 21/21 is not claimed. None of this substitutes for no-shortcut, physical-device, all-exit, soak, current-phone, or hosted evidence.
+Final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) passed on commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920) under Node 24: clean `npm ci`; release/audio/type/lint checks; 27/27 unit tests; production build; Chromium 7/7 (4.8 minutes), Firefox 7/7 (29.2 seconds), and WebKit 7/7 (1.3 minutes), totaling 21/21. The Pages job correctly skipped on the PR. This does not substitute for no-shortcut, physical-device, all-exit, soak, current-phone, rights, merge, deployment, or hosted evidence.
 
 A post-art radius-22, 5-pixel-grid audit did pass all spawns, targets, and exits in the five revised rooms: Feed Store 10,644 reachable cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, and Coffee Shop 13,348. The optional Feed Store `dinosaur_toy` hotspot was moved from its initially unreachable position before that passing audit. The remaining collision gap is runtime/browser confirmation, not static-data reachability.
 
@@ -118,8 +115,8 @@ The 43 supplied images are local-only source references and include people, loca
 - Repository: [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day)
 - Published branch: `agent/busy-day-v2`
 - Pull request: [draft PR #1](https://github.com/nacho-android/busy_day/pull/1)
-- Previous final-art Actions result: static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7 and failed only the now-fixed reciprocal-exit assertion. The replacement full rerun is incomplete.
-- Intended release scope: 107 files / 32.71 MiB after exclusions. The selected high-risk credential/token scan found zero matching intended files. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
+- Final-art PR workflow: [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) succeeded on validated commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920); exact gate/timing evidence is recorded above. Pages correctly skipped on the PR.
+- Intended release scope: 107 files / 32.72 MiB after exclusions. The selected high-risk credential/token scan found zero matching intended files. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
 - Pages: enabled for `main`; the quality workflow's gated deployment builds with `VITE_BASE_PATH=/busy_day/` only after quality and all browser jobs pass on a non-PR `main` run. Merge, deployment execution, and hosted smoke remain pending.
 
-The remaining repository work is the replacement full CI result, PR review/merge, the gated `main` Pages run, and hosted smoke—not initial branch publication or workflow creation.
+The remaining repository work is PR review/merge, the gated `main` Pages run, and hosted smoke—not CI repair, initial branch publication, or workflow creation.

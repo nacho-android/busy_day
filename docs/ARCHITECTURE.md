@@ -136,11 +136,11 @@ Music is requested by location rather than predecoded at boot. One-shots are ins
 
 ## Testing boundaries
 
-Vitest covers collision, world validation, save/state, objectives, failures/checkpoints, transitions, and data-driven completion. Playwright targets Chromium, Firefox, and WebKit. The earlier six-art suite passed 21/21; that is historical rather than final-art evidence.
+Vitest covers collision, world validation, save/state, objectives, failures/checkpoints, transitions, and data-driven completion. Playwright targets Chromium, Firefox, and WebKit.
 
 Post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and Pages-path URL inspection passed. The focused real reciprocal route passes in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured ten rooms plus the ending without console/page errors; the inspected contact sheet passed HUD, actor/target, exit, texture, and blank-room review, while `visual-qa/` remains ignored.
 
-The previous full final-art Actions run passed static/audio/type/lint/unit/build gates; each browser passed 6/7 and failed only the now-fixed reciprocal assertion. The replacement full result is unavailable, so final-art 21/21 is not claimed. A Pages job, gated after quality and all browsers on non-PR `main`, builds with `VITE_BASE_PATH=/busy_day/` and deploys `dist/`; merge, its first run, and hosted smoke remain pending.
+Node 24 final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) passed on commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920): clean install, every release/audio/type/lint/unit/build gate, and Playwright 21/21. Pages correctly skipped on the PR; its `VITE_BASE_PATH=/busy_day/` deployment remains gated to a successful non-PR `main` run, so merge, deployment, and hosted smoke are pending.
 
 A pre-final-art foreground 1366×768 Chromium automation sample on Intel UHD 620/D3D11 measured a 47.4 FPS blank-page baseline with 18.1 ms p95 frame time and 33.3 FPS active Tea Room play with 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so the figures remain diagnostic desktop history rather than current-build or representative-phone guarantees; current phone performance and soak measurements are still required.
 

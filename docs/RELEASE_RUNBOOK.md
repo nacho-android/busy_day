@@ -66,7 +66,7 @@ Inspect every image in `visual-qa/`, including the ending and the assembled cont
 
 The current post-optimization baseline captured 11 unique checkpoints—every room plus the ending—with zero captured console/page errors, and its contact sheet passed visual review for HUD readability, characters/targets, exits, textures, and no blank rooms. Keep `visual-qa/` ignored and out of the published release; regenerate it for review rather than treating the prior captures as permanent artefacts.
 
-The GitHub workflow in `.github/workflows/quality.yml` repeats the static/unit/build gate and runs the seven-test Playwright suite independently in Chromium, Firefox, and WebKit.
+The workflow repeats release/audio/type/lint/unit/build gates and runs seven Playwright tests per engine. Node 24 baseline [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) on [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920) passed clean install, 27/27 unit tests, build, and Playwright 21/21; exact engine timings are in the implementation checklist.
 
 ## 5. Production-preview checks
 
@@ -111,10 +111,10 @@ git push -u origin agent/busy-day-v2
 gh pr create --draft --base main --head agent/busy-day-v2 --title "Build Busy Day V2 retro-noir adventure" --body-file .github/PULL_REQUEST_TEMPLATE.md
 ```
 
-The PR must distinguish the preserved pre-final-art 21/21 result, the previous full final-art 6/7-per-browser result, the focused three-engine fix verification, and the replacement full CI result once available. Link current checks, include approved screenshots without publishing the ignored QA directory, list real-device/manual results, disclose rights gaps, and avoid claiming unpublished validation.
+The PR must link the successful final-art workflow and identify its validated commit. Any later code/asset change requires a fresh result. Include approved screenshots without publishing the ignored QA directory, list real-device/manual results, disclose rights gaps, and avoid presenting CI as no-shortcut, physical-device, soak, rights, merge, deployment, or hosted-smoke evidence.
 
 ## 8. Static hosting and sign-off
 
-GitHub Pages is enabled for `main`. `.github/workflows/quality.yml` deploys only after a successful non-PR `main` run has completed the quality job and all three Playwright browser jobs; its Pages build sets `VITE_BASE_PATH=/busy_day/` and uploads only `dist/`. Do not bypass those gates with a manual publication of an unverified bundle.
+GitHub Pages is enabled for `main`. `.github/workflows/quality.yml` deploys only after a successful non-PR `main` run has completed the quality job and all three Playwright browser jobs; its Pages build sets `VITE_BASE_PATH=/busy_day/` and uploads only `dist/`. The Pages job correctly skipped on successful PR workflow `29297017450`; merge and a successful `main` run are still required. Do not bypass those gates with a manual publication of an unverified bundle.
 
 After merge and the first successful Pages run, verify the exact public `/busy_day/` path, direct refresh, all asset/audio URLs, save/Continue, orientation restoration, and a complete ending on the published URL. Record the deployment URL, branch, commit SHA, CI result, browser/device matrix, performance sample, and any accepted limitation in the checklist and changelog before declaring the release complete. The local Pages-path build and generated-URL inspection have passed, but they are not hosted smoke evidence.
