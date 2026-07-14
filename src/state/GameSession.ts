@@ -159,9 +159,11 @@ export class GameSession {
   adjustMeters(delta: Partial<PlayerMeters>): void {
     const meters = this.run?.meters;
     if (!meters) return;
+    const stressDelta = delta.stress ?? 0;
+    const resistance = CHARACTERS[this.run!.characterId].stats.stressResistance;
     this.updateMeters({
       health: meters.health + (delta.health ?? 0), stamina: meters.stamina + (delta.stamina ?? 0),
-      stress: meters.stress + (delta.stress ?? 0), wayne: meters.wayne + (delta.wayne ?? 0),
+      stress: meters.stress + (stressDelta > 0 ? stressDelta / resistance : stressDelta), wayne: meters.wayne + (delta.wayne ?? 0),
     });
   }
 

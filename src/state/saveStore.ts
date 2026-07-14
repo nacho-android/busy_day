@@ -4,7 +4,17 @@ import { LOCATIONS } from '../data/locations';
 import { OBJECTIVES } from '../data/story';
 
 export const SAVE_KEY = 'busy_day_at_the_viv_v2_save';
-export const SCHEMA_VERSION = 2 as const;
+export const SCHEMA_VERSION = 3 as const;
+
+/**
+ * Objective order shipped by save schema 2. Schema 3 inserts three mandatory
+ * V2 complications, so a numeric objective index alone is no longer stable.
+ */
+const SCHEMA_TWO_OBJECTIVE_IDS = [
+  'check_board', 'collect_cart', 'feed_pigs', 'feed_sheep', 'feed_baboons', 'sample_baboons',
+  'pig_prep', 'anaesthetise_pig', 'load_trolley', 'weigh_pig', 'deliver_cath', 'support_cath',
+  'shear_sheep', 'clear_carpark', 'coffee_finale',
+] as const;
 
 export const DEFAULT_SETTINGS: SettingsState = {
   musicVolume: 0.58,
@@ -31,6 +41,28 @@ function numberIn(value: unknown, fallback: number, minimum: number, maximum: nu
 
 function stringArray(value: unknown): string[] | null {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string') ? [...new Set(value)] : null;
+}
+
+function migrateLegacyRun(value: unknown, sourceSchema: number): unknown {
+  if (sourceSchema >= SCHEMA_VERSION || !isRecord(value)) return value;
+  const rawIndex = typeof value['objectiveIndex'] === 'number' && Number.isInteger(value['objectiveIndex'])
+    ? Math.max(0, Math.min(SCHEMA_TWO_OBJECTIVE_IDS.length, value['objectiveIndex']))
+    : 0;
+  const completed = new Set(stringArray(value['completedObjectives']) ?? []);
+  SCHEMA_TWO_OBJECTIVE_IDS.slice(0, rawIndex).forEach((id) => completed.add(id));
+
+  // A player who had already passed the following task must also have passed
+  // the newly inserted prerequisite; otherwise resume at the new complication.
+  if (completed.has('collect_cart')) completed.add('restore_routes');
+  if (completed.has('sample_baboons')) completed.add('secure_baboon_wing');
+  if (completed.has('support_cath')) completed.add('sync_cath_monitors');
+
+  const migratedIndex = OBJECTIVES.findIndex((objective) => !completed.has(objective.id));
+  return {
+    ...value,
+    objectiveIndex: migratedIndex === -1 ? OBJECTIVES.length : migratedIndex,
+    completedObjectives: [...completed],
+  };
 }
 
 function sanitizeRun(value: unknown): RunState | null {
@@ -62,8 +94,8 @@ function sanitizeRun(value: unknown): RunState | null {
   const completedPrefix = OBJECTIVES.slice(0, objectiveIndex);
   const currentTargets = OBJECTIVES[objectiveIndex]?.targets ?? [];
   const allowedTargets = new Set([...completedPrefix.flatMap((objective) => [...objective.targets]), ...currentTargets]);
-  const coherentTargets = new Set(completedTargets.filter((target) => allowedTargets.has(target)));
-  completedPrefix.forEach((objective) => objective.targets.forEach((target) => coherentTargets.add(target)));
+  const coherentTargets = new Set(completedPrefix.flatMap((objective) => [...objective.targets]));
+  completedTargets.filter((target) => allowedTargets.has(target)).forEach((target) => coherentTargets.add(target));
   const coherentFlags = [...new Set(completedPrefix.flatMap((objective) => [...(objective.grantsFlags ?? [])]))];
   const coherentXp = completedPrefix.reduce((total, objective) => total + objective.reward.xp, 0);
   const coherentCoins = completedPrefix.reduce((total, objective) => total + objective.reward.coins, 0);
@@ -134,6 +166,7 @@ export function parseEnvelope(raw: string | null): SaveEnvelope {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed)) return createEnvelope();
+    const sourceSchema = typeof parsed['schemaVersion'] === 'number' && Number.isInteger(parsed['schemaVersion']) ? parsed['schemaVersion'] : 1;
     const settings = sanitizeSettings(parsed['settings']);
     const profileValue = parsed['profile'];
     const profile: ProfileState = isRecord(profileValue) ? {
@@ -141,7 +174,12 @@ export function parseEnvelope(raw: string | null): SaveEnvelope {
       bestCoins: numberIn(profileValue['bestCoins'], 0, 0, 999_999),
       completedRuns: numberIn(profileValue['completedRuns'], 0, 0, 999_999),
     } : { ...DEFAULT_PROFILE };
-    const activeRun = sanitizeRun(parsed['activeRun']);
+    // A cached older client must never reinterpret and overwrite a newer save
+    // shape. Keep portable preferences/profile, but discard incompatible run
+    // progress until that schema has an explicit migration.
+    const activeRun = sourceSchema > SCHEMA_VERSION
+      ? null
+      : sanitizeRun(migrateLegacyRun(parsed['activeRun'], sourceSchema));
     return createEnvelope(settings, profile, activeRun);
   } catch {
     return createEnvelope();

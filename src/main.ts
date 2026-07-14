@@ -6,6 +6,7 @@ import { LocationScene } from './scenes/LocationScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { TitleScene } from './scenes/TitleScene';
 import { UIScene } from './scenes/UIScene';
+import { LOCATIONS } from './data/locations';
 import { session } from './state/GameSession';
 import type { BusyDayTestApi } from './types/game';
 import { ui } from './ui/GameUI';
@@ -70,8 +71,20 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     teleportToInteraction: (id: string) => activeLocationScene()?.teleportToInteraction?.(id) ?? false,
     completeCurrentTarget: () => activeLocationScene()?.completeCurrentTarget?.() ?? false,
     travelToObjective: () => activeLocationScene()?.travelToObjectiveForTest?.() ?? false,
+    prepareExit: (locationId, exitId) => {
+      const run = session.run;
+      const location = LOCATIONS[locationId];
+      const exit = location.exits.find((candidate) => candidate.id === exitId);
+      const spawn = location.spawns[0];
+      if (!run || !exit || !spawn) return false;
+      if (exit.requiredFlag && !run.flags.includes(exit.requiredFlag)) run.flags.push(exit.requiredFlag);
+      session.transitionTo(locationId, spawn.id);
+      activeLocationScene()?.scene.restart();
+      return true;
+    },
     approachExit: (id: string) => activeLocationScene()?.approachExitForTest?.(id) ?? null,
     setMeters: (partial) => session.updateMeters(partial),
+    showDialogue: (lines) => ui.showDialogue(lines),
   } satisfies BusyDayTestApi);
   window.__busyDayTest = testApi;
 }

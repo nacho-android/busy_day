@@ -10,7 +10,10 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     ui.showLoading();
 
-    const report = validateWorldGraph();
+    // The exhaustive collision-grid audit is intentionally a development and
+    // release-time gate. Running it on every production boot creates a long
+    // main-thread task before the loading screen can paint on slower phones.
+    const report = import.meta.env.DEV ? validateWorldGraph() : { valid: true, errors: [] };
     if (!report.valid) {
       const summary = `World validation failed with ${report.errors.length} error${report.errors.length === 1 ? '' : 's'}.`;
       console.error(summary, report.errors);

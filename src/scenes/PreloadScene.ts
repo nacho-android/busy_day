@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
+import { BACKGROUND_ASSETS } from '../data/assets';
+import { CHARACTER_VISUALS } from '../data/characters';
 import { ui } from '../ui/GameUI';
+import type { CharacterAssetReference } from '../types/game';
 
 const assetUrl = (path: string): string => `${import.meta.env.BASE_URL}assets/${path}`;
 
@@ -13,6 +16,7 @@ function updateLoadingScreen(progress: number, statusText: string): void {
 
 export class PreloadScene extends Phaser.Scene {
   private readonly failedAssets = new Set<string>();
+  private readonly queuedCharacterAssets = new Set<string>();
 
   constructor() {
     super('PreloadScene');
@@ -20,6 +24,7 @@ export class PreloadScene extends Phaser.Scene {
 
   preload(): void {
     this.failedAssets.clear();
+    this.queuedCharacterAssets.clear();
     ui.showLoading();
     updateLoadingScreen(0, 'Switching on the corridor lights\u2026');
 
@@ -43,17 +48,43 @@ export class PreloadScene extends Phaser.Scene {
       this.load.off(Phaser.Loader.Events.FILE_LOAD_ERROR, onLoadError);
     });
 
-    this.load.image('titleArt', assetUrl('backgrounds/title.webp'));
-    this.load.image('facilityHub', assetUrl('backgrounds/facility_hub.webp'));
-    this.load.image('carPark', assetUrl('backgrounds/car_park.webp'));
-    this.load.image('cathLab', assetUrl('backgrounds/cath_lab.webp'));
-    this.load.image('teaRoom', assetUrl('backgrounds/tea_room.webp'));
-    this.load.image('pigHousing', assetUrl('backgrounds/pig_housing.webp'));
-    this.load.image('feedStore', assetUrl('backgrounds/feed-store.webp'));
-    this.load.image('sheepScales', assetUrl('backgrounds/sheep-scales.webp'));
-    this.load.image('baboonWing', assetUrl('backgrounds/baboon-wing.webp'));
-    this.load.image('prepRoom', assetUrl('backgrounds/procedure-prep.webp'));
-    this.load.image('coffeeShop', assetUrl('backgrounds/coffee-shop.webp'));
+    // Load only the title and first room up front. Later rooms are decoded on
+    // entry by LocationScene and retained in a small LRU texture cache.
+    for (const key of ['titleArt', 'teaRoom'] as const) this.load.image(key, assetUrl(BACKGROUND_ASSETS[key]));
+    this.queueCharacterAssets();
+  }
+
+  private queueImage(asset: CharacterAssetReference | undefined): void {
+    if (!asset || this.queuedCharacterAssets.has(asset.key)) return;
+    this.queuedCharacterAssets.add(asset.key);
+    this.load.image(asset.key, assetUrl(asset.path));
+  }
+
+  private queueCharacterAssets(): void {
+    for (const visual of Object.values(CHARACTER_VISUALS)) {
+      if (visual.renderer === 'sprite-sheet') {
+        const asset = visual.assets.image;
+        const layout = visual.frameLayout;
+        if (!asset || !layout) {
+          this.failedAssets.add(`character:${visual.id}`);
+          console.error(`Character ${visual.id} needs an image and frameLayout for sprite-sheet rendering.`);
+        } else if (!this.queuedCharacterAssets.has(asset.key)) {
+          this.queuedCharacterAssets.add(asset.key);
+          this.load.spritesheet(asset.key, assetUrl(asset.path), layout);
+        }
+      } else if (visual.renderer === 'texture-atlas') {
+        const atlas = visual.assets.atlas;
+        if (!atlas) {
+          this.failedAssets.add(`character:${visual.id}`);
+          console.error(`Character ${visual.id} needs an atlas for texture-atlas rendering.`);
+        } else if (!this.queuedCharacterAssets.has(atlas.key)) {
+          this.queuedCharacterAssets.add(atlas.key);
+          this.load.atlas(atlas.key, assetUrl(atlas.path), assetUrl(atlas.dataPath));
+        }
+      }
+      this.queueImage(visual.portrait.asset);
+      Object.values(visual.portrait.expressions).forEach((expression) => this.queueImage(expression?.asset));
+    }
   }
 
   create(): void {

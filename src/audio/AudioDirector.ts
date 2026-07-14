@@ -1,20 +1,10 @@
 import { session } from '../state/GameSession';
+import { MUSIC_ASSETS, SFX_ASSETS, type SfxCue } from '../data/assets';
 import type { MusicCueId } from '../types/game';
 
-const MUSIC_FILES: Record<MusicCueId, string> = {
-  title: 'title_noir.wav', facility: 'facility_pulse.wav', animals: 'animal_wing.wav', cath: 'cath_tension.wav', carpark: 'rain_carpark.wav', finale: 'coffee_finale.wav',
-};
+const assetUrl = (path: string): string => `${import.meta.env.BASE_URL}assets/${path}`;
 
-const SFX_FILES = {
-  focus: 'ui_focus.wav', confirm: 'ui_confirm.wav', back: 'ui_back.wav', use: 'interaction_use.wav', door: 'door_hiss.wav', latch: 'door_latch.wav',
-  feed: 'feed_scoop.wav', sample: 'sample_vial.wav', objective: 'objective_update.wav', success: 'success_sting.wav', failure: 'failure_sting.wav',
-  horn: 'car_horn.wav', pig: 'animal_pig_grunt.wav', sheep: 'animal_sheep_bleat.wav', baboon: 'animal_baboon_call.wav', stepTile: 'footstep_tile_a.wav',
-  stepWet: 'footstep_tile_b.wav', machine: 'machine_beep.wav', coffee: 'coffee_pour.wav', transition: 'transition_whoosh.wav',
-} as const;
-
-const assetUrl = (filename: string): string => `${import.meta.env.BASE_URL}assets/audio/${filename}`;
-
-export type SfxCue = keyof typeof SFX_FILES;
+export type { SfxCue } from '../data/assets';
 
 class AudioDirector {
   private currentMusic: HTMLAudioElement | null = null;
@@ -36,7 +26,7 @@ class AudioDirector {
     }
     if (this.currentMusic?.dataset['cue'] === cue) { this.applyVolumes(); return; }
     const previous = this.currentMusic;
-    const next = new Audio(assetUrl(MUSIC_FILES[cue]));
+    const next = new Audio(assetUrl(MUSIC_ASSETS[cue]));
     next.loop = true;
     next.preload = 'auto';
     next.dataset['cue'] = cue;
@@ -63,7 +53,7 @@ class AudioDirector {
 
   playSfx(cue: SfxCue, gain = 1): void {
     if (!this.unlocked || session.settings.muted || session.settings.sfxVolume <= 0) return;
-    const audio = new Audio(assetUrl(SFX_FILES[cue]));
+    const audio = new Audio(assetUrl(SFX_ASSETS[cue]));
     audio.volume = Math.max(0, Math.min(1, session.settings.sfxVolume * gain));
     void audio.play().catch(() => undefined);
   }

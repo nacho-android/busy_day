@@ -12,6 +12,17 @@ export type LocationId =
 
 export type CharacterId = 'mel' | 'josh';
 export type Direction = 'left' | 'right' | 'toward' | 'away';
+export type DialogueExpression = 'neutral' | 'amused' | 'concerned' | 'annoyed';
+export type CharacterRendererMode = 'vector-paper-doll' | 'sprite-sheet' | 'texture-atlas';
+export type CharacterAnimationName =
+  | 'idle'
+  | 'walkLeft'
+  | 'walkRight'
+  | 'walkToward'
+  | 'walkAway'
+  | 'interaction'
+  | 'contextual'
+  | 'hit';
 export type InteractionVerb = 'Talk' | 'Inspect' | 'Use' | 'Pick up' | 'Open' | 'Operate' | 'Give' | 'Enter' | 'Exit';
 export type FailureKind = 'health' | 'wayne';
 export type Rank = 'S' | 'A' | 'B' | 'C' | 'D';
@@ -64,6 +75,24 @@ export interface NpcPlacement extends Point {
   role: string;
   line: string;
   visualId: string;
+  ambient?: NpcAmbientDefinition;
+}
+
+export interface NpcAmbientDefinition {
+  mode: 'idle' | 'patrol';
+  waypoints?: readonly Point[];
+  speed?: number;
+  pauseMs?: number;
+  awarenessRadius?: number;
+  reaction?: 'wave' | 'inspect' | 'startle';
+}
+
+/** A crop from the scene artwork redrawn above actors for true depth occlusion. */
+export interface ForegroundLayerDefinition extends Rect {
+  id: string;
+  depth: number;
+  alpha?: number;
+  textureKey?: string;
 }
 
 export interface LocationDefinition {
@@ -88,6 +117,7 @@ export interface LocationDefinition {
   obstacles: readonly ObstacleDefinition[];
   interactions: readonly InteractionDefinition[];
   npcs: readonly NpcPlacement[];
+  foregroundLayers?: readonly ForegroundLayerDefinition[];
   music: MusicCueId;
   perspective: { farY: number; nearY: number; farScale: number; nearScale: number };
 }
@@ -109,6 +139,8 @@ export interface ObjectiveDefinition {
 export interface CharacterStats {
   moveSpeed: number;
   sprintSpeed: number;
+  acceleration: number;
+  deceleration: number;
   maxStamina: number;
   interactionRate: number;
   carryFactor: number;
@@ -123,8 +155,51 @@ export interface CharacterDefinition {
   stats: CharacterStats;
 }
 
-export interface CharacterVisualDefinition {
-  id: string;
+export interface CharacterAssetReference {
+  key: string;
+  path: string;
+}
+
+export interface CharacterAtlasReference extends CharacterAssetReference {
+  dataPath: string;
+}
+
+export interface CharacterAssetSet {
+  /** Required when renderer is sprite-sheet. */
+  image?: CharacterAssetReference;
+  /** Required when renderer is texture-atlas. */
+  atlas?: CharacterAtlasReference;
+}
+
+export interface CharacterFrameLayout {
+  frameWidth: number;
+  frameHeight: number;
+  startFrame?: number;
+  endFrame?: number;
+  margin?: number;
+  spacing?: number;
+}
+
+export interface CharacterMotionDefinition {
+  bobPixels: number;
+  legTravelPixels: number;
+  legSwingRadians: number;
+  armSwingRadians: number;
+  torsoSwayRadians: number;
+  headSwayRadians: number;
+  shadowPulse: number;
+}
+
+export interface CharacterAnimationDefinition {
+  /** Numeric sprite-sheet frames, atlas frame names, or logical vector poses. */
+  frames: readonly (number | string)[];
+  frameRate: number;
+  repeat: number;
+  yoyo?: boolean;
+  motion: CharacterMotionDefinition;
+}
+
+export interface CharacterVectorAppearance {
   suit: number;
   suitHighlight: number;
   skin: number;
@@ -133,9 +208,49 @@ export interface CharacterVisualDefinition {
   hairStyle: 'pony' | 'cap' | 'short' | 'bald' | 'grey' | 'long';
   glasses: boolean;
   facialHair: boolean;
+}
+
+export interface CharacterCollisionFootprint {
+  radius: number;
+  bodyWidth: number;
+  bodyHeight: number;
+  originY: number;
+}
+
+export interface CharacterPortraitExpressionDefinition {
+  asset?: CharacterAssetReference;
+  frame?: number | string;
+  cssFilter?: string;
+}
+
+export interface CharacterPortraitDefinition {
+  mode: 'gradient-initials' | 'image' | 'atlas-frame';
+  gradient: readonly [string, string];
+  asset?: CharacterAssetReference;
+  expressions: Readonly<Partial<Record<DialogueExpression, CharacterPortraitExpressionDefinition>>>;
+}
+
+export interface CharacterVoiceDefinition {
+  profile: string;
+  talkSoundKey?: string;
+  interactionSoundKey?: string;
+  volume: number;
+  playbackRate: number;
+  cadenceMs: number;
+}
+
+export interface CharacterVisualDefinition {
+  id: string;
+  renderer: CharacterRendererMode;
+  assets: CharacterAssetSet;
+  frameLayout?: CharacterFrameLayout;
+  vector?: CharacterVectorAppearance;
+  animations: Readonly<Record<CharacterAnimationName, CharacterAnimationDefinition>>;
   displayScale: number;
-  colliderRadius: number;
-  portraitGradient: readonly [string, string];
+  spriteOrigin: Readonly<Point>;
+  footprint: CharacterCollisionFootprint;
+  portrait: CharacterPortraitDefinition;
+  voice: CharacterVoiceDefinition;
 }
 
 export interface PlayerMeters {
@@ -189,7 +304,7 @@ export interface ProfileState {
 }
 
 export interface SaveEnvelope {
-  schemaVersion: 2;
+  schemaVersion: 3;
   savedAt: string;
   settings: SettingsState;
   profile: ProfileState;
@@ -213,7 +328,7 @@ export interface DialogueChoice {
 export interface DialogueLine {
   speaker: string;
   text: string;
-  expression?: 'neutral' | 'amused' | 'concerned' | 'annoyed';
+  expression?: DialogueExpression;
   choices?: readonly DialogueChoice[];
 }
 
@@ -233,8 +348,10 @@ export interface BusyDayTestApi {
   teleportToInteraction(id: string): boolean;
   completeCurrentTarget(): boolean;
   travelToObjective(): boolean;
+  prepareExit(locationId: LocationId, exitId: string): boolean;
   approachExit(id: string): 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | null;
   setMeters(partial: Partial<PlayerMeters>): void;
+  showDialogue(lines: readonly DialogueLine[]): void;
 }
 
 declare global {

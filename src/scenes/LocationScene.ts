@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { audio, type SfxCue } from '../audio/AudioDirector';
+import { BACKGROUND_ASSETS } from '../data/assets';
 import { CHARACTERS } from '../data/characters';
 import { LOCATIONS, findInteraction } from '../data/locations';
 import { FINAL_DIALOGUE, OBJECTIVE_DIALOGUE } from '../data/story';
 import { CharacterRig } from '../entities/CharacterRig';
 import { createInteractionProp } from '../entities/WorldProps';
 import { session } from '../state/GameSession';
-import { circleIntersectsRect, distance, moveCircle } from '../systems/collision';
+import { canOccupy, circleIntersectsRect, distance, moveCircle } from '../systems/collision';
 import type { InputSnapshot, InteractionDefinition, LocationDefinition, NpcPlacement, ObstacleDefinition, Point } from '../types/game';
 import { ui } from '../ui/GameUI';
 import { renderBackdrop } from './BackdropRenderer';
@@ -25,12 +26,26 @@ interface NearbyNpc {
 
 type Nearby = NearbyInteraction | NearbyNpc;
 
+interface NpcRuntime {
+  placement: NpcPlacement;
+  rig: CharacterRig;
+  waypointIndex: number;
+  waitUntil: number;
+  playerWasNear: boolean;
+  nextReactionAt: number;
+}
+
 const ZERO_INPUT: InputSnapshot = { moveX: 0, moveY: 0, sprint: false, interact: false, dodge: false };
+const BACKGROUND_CACHE_LIMIT = 3;
+const BACKGROUND_LOAD_RETRIES = 2;
+const backgroundLru: string[] = [];
+const backgroundLoadFailures = new Map<string, number>();
+const assetUrl = (path: string): string => `${import.meta.env.BASE_URL}assets/${path}`;
 
 export class LocationScene extends Phaser.Scene {
   private player!: CharacterRig;
   private readonly propObjects = new Map<string, Phaser.GameObjects.Container>();
-  private readonly npcObjects = new Map<string, CharacterRig>();
+  private readonly npcObjects = new Map<string, NpcRuntime>();
   private nearby: Nearby | null = null;
   private heldTargetId: string | null = null;
   private heldMs = 0;
@@ -38,6 +53,7 @@ export class LocationScene extends Phaser.Scene {
   private interactionCooldownUntil = 0;
   private transitionCooldownUntil = 0;
   private transitionLocked = false;
+  private entryInputLatched = false;
   private exitsArmed = false;
   private dodgeCooldownUntil = 0;
   private stepAt = 0;
@@ -50,19 +66,24 @@ export class LocationScene extends Phaser.Scene {
   private hazardDirection = 1;
   private hazardHitAt = 0;
   private hornAt = 0;
+  private worldReady = false;
+  private motionVelocity: Point = { x: 0, y: 0 };
 
   constructor() {
     super('LocationScene');
   }
 
   create(): void {
+    this.worldReady = false;
     const run = session.run;
     if (!run) {
       this.scene.start('TitleScene');
       return;
     }
-    this.resetTransientState();
     const location = LOCATIONS[run.locationId];
+    if (!this.ensureLocationBackground(location)) return;
+    this.resetTransientState();
+    this.entryInputLatched = run.spawnId !== 'start';
     renderBackdrop(this, location);
     this.createWorldObjects();
     this.player = new CharacterRig(this, run.player.x, run.player.y, run.characterId);
@@ -74,11 +95,74 @@ export class LocationScene extends Phaser.Scene {
     ui.showHud();
     ui.refresh();
     this.createLocationHazard();
+    this.worldReady = true;
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.propObjects.clear();
       this.npcObjects.clear();
     });
+  }
+
+  private ensureLocationBackground(location: LocationDefinition): boolean {
+    const key = location.backgroundKey;
+    if (!key) return true;
+    if (this.textures.exists(key)) {
+      this.touchBackgroundCache(key);
+      return true;
+    }
+
+    ui.showLoading(0, `Opening ${location.name}\u2026`);
+    let failed = false;
+    const onProgress = (value: number): void => ui.showLoading(value, `Opening ${location.name}\u2026`);
+    const onError = (file: Phaser.Loader.File): void => {
+      failed = true;
+      console.error(`Failed to lazy-load location artwork: ${file.key}`, file.src);
+      ui.showLoading(this.load.progress, `Could not open ${location.name}. Check the asset manifest.`);
+    };
+    const cleanup = (): void => {
+      this.load.off(Phaser.Loader.Events.PROGRESS, onProgress);
+      this.load.off(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
+      this.load.off(Phaser.Loader.Events.COMPLETE, onComplete);
+      this.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
+    };
+    const onShutdown = (): void => cleanup();
+    const onComplete = (): void => {
+      cleanup();
+      if (!failed) {
+        backgroundLoadFailures.delete(key);
+        this.scene.restart();
+        return;
+      }
+
+      const failures = (backgroundLoadFailures.get(key) ?? 0) + 1;
+      backgroundLoadFailures.set(key, failures);
+      if (failures <= BACKGROUND_LOAD_RETRIES) {
+        ui.showLoading(0, `Retrying ${location.name} (${failures}/${BACKGROUND_LOAD_RETRIES})\u2026`);
+        this.time.delayedCall(650, () => this.ensureLocationBackground(location));
+        return;
+      }
+
+      backgroundLoadFailures.delete(key);
+      ui.showLoading(0, `${location.name} is temporarily unavailable. Returning to the title so Continue can retry.`);
+      this.time.delayedCall(1800, () => this.scene.start('TitleScene'));
+    };
+    this.load.on(Phaser.Loader.Events.PROGRESS, onProgress);
+    this.load.once(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
+    this.load.once(Phaser.Loader.Events.COMPLETE, onComplete);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
+    this.load.image(key, assetUrl(BACKGROUND_ASSETS[key]));
+    this.load.start();
+    return false;
+  }
+
+  private touchBackgroundCache(key: string): void {
+    const currentIndex = backgroundLru.indexOf(key);
+    if (currentIndex >= 0) backgroundLru.splice(currentIndex, 1);
+    backgroundLru.push(key);
+    while (backgroundLru.length > BACKGROUND_CACHE_LIMIT) {
+      const expired = backgroundLru.shift();
+      if (expired && expired !== key && this.textures.exists(expired)) this.textures.remove(expired);
+    }
   }
 
   private resetTransientState(): void {
@@ -89,6 +173,7 @@ export class LocationScene extends Phaser.Scene {
     this.interactionCooldownUntil = 0;
     this.transitionCooldownUntil = 0;
     this.transitionLocked = false;
+    this.entryInputLatched = false;
     this.exitsArmed = false;
     this.dodgeCooldownUntil = 0;
     this.stepAt = 0;
@@ -101,9 +186,11 @@ export class LocationScene extends Phaser.Scene {
     this.hazardDirection = 1;
     this.hazardHitAt = 0;
     this.hornAt = 0;
+    this.motionVelocity = { x: 0, y: 0 };
   }
 
   override update(time: number, delta: number): void {
+    if (!this.worldReady) return;
     const run = session.run;
     if (!run || run.failure || run.finished) return;
     const seconds = Math.min(delta, 80) / 1000;
@@ -112,14 +199,29 @@ export class LocationScene extends Phaser.Scene {
 
     const input = this.readInput();
     if (ui.isBlocking || this.transitionLocked) {
+      this.motionVelocity = { x: 0, y: 0 };
       this.player.updateRig(0, 0, seconds, LOCATIONS[run.locationId]);
       ui.setNearby(null, 0);
       return;
     }
 
+    // A crossing key can remain held for one or more frames after the
+    // destination scene starts. Wait for neutral movement before accepting
+    // world input so authored spawn facing and position survive the handoff.
+    if (this.entryInputLatched) {
+      if (Math.abs(input.moveX) <= .05 && Math.abs(input.moveY) <= .05) this.entryInputLatched = false;
+      else {
+        this.motionVelocity = { x: 0, y: 0 };
+        this.player.updateRig(0, 0, seconds, LOCATIONS[run.locationId]);
+        ui.setNearby(null, 0);
+        return;
+      }
+    }
+
     if (this.rossTrappedUntil > time) {
       if (input.dodge) this.releaseRossTrap();
       else {
+        this.motionVelocity = { x: 0, y: 0 };
         this.player.updateRig(0, 0, seconds, LOCATIONS[run.locationId]);
         ui.setNearby({ verb: 'Dodge', label: 'Escape Ross\'s quick question' }, 0);
         return;
@@ -157,7 +259,7 @@ export class LocationScene extends Phaser.Scene {
     ]);
     const obstacles = this.activeObstacles(location);
     const target = candidates.find((point) => {
-      const result = moveCircle(point, { x: 0, y: 0 }, 20, location.bounds, obstacles);
+      const result = moveCircle(point, { x: 0, y: 0 }, this.player.collisionRadius, location.bounds, obstacles);
       return !result.collidedX && !result.collidedY;
     }) ?? found.interaction;
     this.player.setPosition(target.x, target.y);
@@ -192,24 +294,32 @@ export class LocationScene extends Phaser.Scene {
     const exit = location.exits.find((candidate) => candidate.id === id);
     if (!exit) return null;
     const centre = { x: exit.x + exit.width / 2, y: exit.y + exit.height / 2 };
-    let target: Point;
+    const radius = this.player.collisionRadius;
+    const clearance = radius + 6;
+    const samples = [.5, .25, .75, .125, .875];
+    let candidates: Point[];
     let key: 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown';
     if (exit.x <= location.bounds.x + 80) {
-      target = { x: exit.x + exit.width + 26, y: centre.y };
+      candidates = samples.map((sample) => ({ x: exit.x + exit.width + clearance, y: exit.y + exit.height * sample }));
       key = 'ArrowLeft';
     } else if (exit.x + exit.width >= location.bounds.x + location.bounds.width - 80) {
-      target = { x: exit.x - 26, y: centre.y };
+      candidates = samples.map((sample) => ({ x: exit.x - clearance, y: exit.y + exit.height * sample }));
       key = 'ArrowRight';
     } else if (exit.y <= location.bounds.y + 80) {
-      target = { x: centre.x, y: exit.y + exit.height + 26 };
+      candidates = samples.map((sample) => ({ x: exit.x + exit.width * sample, y: exit.y + exit.height + clearance }));
       key = 'ArrowUp';
     } else {
-      target = { x: centre.x, y: exit.y - 26 };
+      candidates = samples.map((sample) => ({ x: exit.x + exit.width * sample, y: exit.y - clearance }));
       key = 'ArrowDown';
     }
-    const position = moveCircle(target, { x: 0, y: 0 }, 20, location.bounds, this.activeObstacles(location));
-    this.player.setPosition(position.x, position.y);
-    session.recordPosition(position.x, position.y, this.player.direction);
+    const obstacles = this.activeObstacles(location);
+    const target = candidates.find((candidate) => canOccupy(candidate, radius, location.bounds, obstacles));
+    if (!target) {
+      console.warn(`No collision-valid test approach exists for exit ${location.id}.${exit.id} around ${centre.x},${centre.y}.`);
+      return null;
+    }
+    this.player.setPosition(target.x, target.y);
+    session.recordPosition(target.x, target.y, this.player.direction);
     this.exitsArmed = false;
     return key;
   }
@@ -227,8 +337,14 @@ export class LocationScene extends Phaser.Scene {
     for (const npc of location.npcs) {
       const rig = new CharacterRig(this, npc.x, npc.y, npc.visualId, npc.name);
       rig.updateRig(0, 0, npc.x * .0001, location);
-      this.npcObjects.set(npc.id, rig);
-      this.tweens.add({ targets: rig, y: npc.y - 2, duration: 1400 + (npc.x % 700), yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      this.npcObjects.set(npc.id, {
+        placement: npc,
+        rig,
+        waypointIndex: npc.ambient?.waypoints && npc.ambient.waypoints.length > 1 ? 1 : 0,
+        waitUntil: this.time.now + (npc.x % 650),
+        playerWasNear: false,
+        nextReactionAt: 0,
+      });
     }
   }
 
@@ -253,24 +369,36 @@ export class LocationScene extends Phaser.Scene {
       const facing = this.player.direction;
       const dodgeX = magnitude > .05 ? x : facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
       const dodgeY = magnitude > .05 ? y : facing === 'away' ? -1 : facing === 'toward' ? 1 : 0;
-      const result = moveCircle({ x: this.player.x, y: this.player.y }, { x: dodgeX * 74, y: dodgeY * 74 }, 20, location.bounds, this.activeObstacles(location));
+      const result = moveCircle({ x: this.player.x, y: this.player.y }, { x: dodgeX * 74, y: dodgeY * 74 }, this.player.collisionRadius, location.bounds, this.activeObstacles(location));
       this.player.setPosition(result.x, result.y);
       session.adjustMeters({ stamina: -14, stress: -3 });
       audio.playSfx('transition', .35);
       this.dodgeCooldownUntil = time + 850;
     }
 
-    const delta = { x: x * speed * seconds, y: y * speed * seconds };
-    const result = moveCircle({ x: this.player.x, y: this.player.y }, delta, 20, location.bounds, this.activeObstacles(location));
+    const targetVelocity = { x: x * speed, y: y * speed };
+    const difference = { x: targetVelocity.x - this.motionVelocity.x, y: targetVelocity.y - this.motionVelocity.y };
+    const differenceLength = Math.hypot(difference.x, difference.y);
+    const maximumChange = (magnitude > .05 ? stats.acceleration : stats.deceleration) * seconds;
+    if (differenceLength <= maximumChange || differenceLength === 0) {
+      this.motionVelocity = targetVelocity;
+    } else {
+      this.motionVelocity.x += difference.x / differenceLength * maximumChange;
+      this.motionVelocity.y += difference.y / differenceLength * maximumChange;
+    }
+
+    const delta = { x: this.motionVelocity.x * seconds, y: this.motionVelocity.y * seconds };
+    const result = moveCircle({ x: this.player.x, y: this.player.y }, delta, this.player.collisionRadius, location.bounds, this.activeObstacles(location));
     const velocityX = seconds > 0 ? (result.x - this.player.x) / seconds : 0;
     const velocityY = seconds > 0 ? (result.y - this.player.y) / seconds : 0;
+    this.motionVelocity = { x: velocityX, y: velocityY };
     this.player.setPosition(result.x, result.y);
     this.player.updateRig(velocityX, velocityY, seconds, location);
     session.recordPosition(result.x, result.y, this.player.direction);
 
     if (canSprint) session.updateMeters({ stamina: run.meters.stamina - 23 * seconds }, false);
     else session.updateMeters({ stamina: run.meters.stamina + 17 * seconds }, false);
-    if (magnitude > .05 && time >= this.stepAt) {
+    if (Math.hypot(velocityX, velocityY) > 12 && time >= this.stepAt) {
       audio.playSfx(location.theme === 'exterior' ? 'stepWet' : 'stepTile', .18);
       this.stepAt = time + (canSprint ? 230 : 340);
     }
@@ -285,7 +413,7 @@ export class LocationScene extends Phaser.Scene {
       if (apart <= interaction.radius && (!best || apart < best.distance)) best = { kind: 'interaction', interaction, distance: apart };
     }
     for (const npc of location.npcs) {
-      const apart = distance(this.player, npc);
+      const apart = distance(this.player, this.npcObjects.get(npc.id)?.rig ?? npc);
       if (apart <= 78 && (!best || apart < best.distance)) best = { kind: 'npc', npc, distance: apart };
     }
     return best;
@@ -322,6 +450,12 @@ export class LocationScene extends Phaser.Scene {
     this.interactionCooldownUntil = time + 520;
     this.player.playInteraction();
     if (nearby.kind === 'npc') {
+      const npcRig = this.npcObjects.get(nearby.npc.id)?.rig;
+      if (npcRig) {
+        npcRig.faceToward(this.player);
+        npcRig.playReaction(nearby.npc.ambient?.reaction ?? 'wave');
+        this.player.faceToward(npcRig);
+      }
       audio.playSfx('confirm', .45);
       ui.showDialogue([{ speaker: nearby.npc.name, text: nearby.npc.line }]);
       return;
@@ -416,7 +550,7 @@ export class LocationScene extends Phaser.Scene {
   private updateExits(time: number): void {
     const run = session.run!;
     const location = LOCATIONS[run.locationId];
-    const exit = location.exits.find((candidate) => circleIntersectsRect(this.player, 21, candidate));
+    const exit = location.exits.find((candidate) => circleIntersectsRect(this.player, this.player.collisionRadius + 1, candidate));
     if (!this.exitsArmed) {
       if (!exit) this.exitsArmed = true;
       return;
@@ -450,9 +584,62 @@ export class LocationScene extends Phaser.Scene {
     this.tweens.add({ targets: beacon, alpha: .2, duration: 260, yoyo: true, repeat: -1 });
   }
 
+  private updateNpcAmbient(seconds: number, time: number, location: LocationDefinition): void {
+    for (const runtime of this.npcObjects.values()) {
+      const { placement, rig } = runtime;
+      const ambient = placement.ambient;
+      const awarenessRadius = ambient?.awarenessRadius ?? 0;
+      const playerNear = awarenessRadius > 0 && distance(this.player, rig) <= awarenessRadius;
+
+      if (playerNear) {
+        rig.faceToward(this.player);
+        if (!runtime.playerWasNear && time >= runtime.nextReactionAt && !ui.isBlocking) {
+          rig.playReaction(ambient?.reaction ?? 'wave');
+          runtime.nextReactionAt = time + 6200 + (placement.x % 1700);
+        }
+      }
+      runtime.playerWasNear = playerNear;
+
+      const waypoints = ambient?.waypoints ?? [];
+      if (ui.isBlocking || playerNear || ambient?.mode !== 'patrol' || waypoints.length < 2 || time < runtime.waitUntil) {
+        rig.updateRig(0, 0, seconds, location);
+        continue;
+      }
+
+      const target = waypoints[runtime.waypointIndex % waypoints.length]!;
+      const dx = target.x - rig.x;
+      const dy = target.y - rig.y;
+      const remaining = Math.hypot(dx, dy);
+      if (remaining <= 5) {
+        rig.setPosition(target.x, target.y);
+        runtime.waypointIndex = (runtime.waypointIndex + 1) % waypoints.length;
+        runtime.waitUntil = time + (ambient.pauseMs ?? 900);
+        rig.updateRig(0, 0, seconds, location);
+        continue;
+      }
+
+      const speed = ambient.speed ?? 34;
+      const stride = Math.min(remaining, speed * seconds);
+      const result = moveCircle(
+        { x: rig.x, y: rig.y },
+        { x: dx / remaining * stride, y: dy / remaining * stride },
+        rig.collisionRadius,
+        location.bounds,
+        this.activeObstacles(location),
+      );
+      const velocityX = seconds > 0 ? (result.x - rig.x) / seconds : 0;
+      const velocityY = seconds > 0 ? (result.y - rig.y) / seconds : 0;
+      rig.setPosition(result.x, result.y);
+      rig.updateRig(velocityX, velocityY, seconds, location);
+    }
+  }
+
   private updateAmbient(seconds: number, time: number): void {
     const run = session.run;
-    if (!run || run.locationId !== 'carPark' || !this.hazard) return;
+    if (!run) return;
+    const location = LOCATIONS[run.locationId];
+    this.updateNpcAmbient(seconds, time, location);
+    if (run.locationId !== 'carPark' || !this.hazard) return;
     this.hazard.x += this.hazardDirection * 112 * seconds;
     if (this.hazard.x > 1150) { this.hazard.x = 1150; this.hazardDirection = -1; this.hazard.scaleX = -1; }
     if (this.hazard.x < 190) { this.hazard.x = 190; this.hazardDirection = 1; this.hazard.scaleX = 1; }
@@ -477,7 +664,7 @@ export class LocationScene extends Phaser.Scene {
 
   private updateRoss(time: number): void {
     if (session.run?.locationId !== 'mainHall' || this.rossTriggered) return;
-    const ross = LOCATIONS.mainHall.npcs.find((npc) => npc.id === 'ross');
+    const ross = this.npcObjects.get('ross')?.rig;
     if (!ross || distance(this.player, ross) > 72) { this.rossTrapAt = 0; return; }
     if (this.rossTrapAt === 0) this.rossTrapAt = time;
     if (time - this.rossTrapAt < 950) return;
