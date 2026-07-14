@@ -1,6 +1,6 @@
 # Busy Day at the Viv V2 — Known Limitations
 
-**Status:** evidence-based V2.1 development snapshot, 2026-07-14
+**Status:** evidence-based V2.1 development snapshot, 2026-07-15
 
 **Purpose:** distinguish implemented behaviour, recorded evidence, and genuine remaining release work. Nothing below should be read as a completed test claim unless the evidence is stated explicitly.
 
@@ -101,14 +101,13 @@ The code includes visible focus styles, keyboard-operable buttons, captions, lar
 
 The deployed V2.0 baseline passed its recorded release/audio/type/lint/27-unit/build gates and Chromium/Firefox/WebKit 7/7 each (21/21) in main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940). The real Tea Room → Main Hall → Feed Store → Main Hall route passed in all three engines. Its integrated QA captured every room plus the ending without console/page errors, and the inspected contact sheet passed HUD, actor/target, exit, texture, and blank-room review.
 
-During V2.1 hardening, a consolidated Chromium run passed 16/16 in 16.5 minutes: all 18 authored exit directions, barriers, locked routing, Wayne failure/checkpoint recovery, pause/restart/reset, persisted settings, touch hold-use, longest-dialogue containment, synthetic controller UI, orientation/viewports, and a test-assisted 18-objective/31-target ending. The built-preview suite passed 2/2, including hashed assets, production-only boundaries, real keyboard movement, save/refresh/Continue, a non-preloaded room, and recovery after two deliberately aborted lazy-art requests. Final V2.1 three-engine CI is still required.
+During V2.1 hardening, a consolidated Chromium run passed 16/16 in 16.5 minutes: all 18 authored exit directions, barriers, locked routing, Wayne failure/checkpoint recovery, pause/restart/reset, persisted settings, touch hold-use, longest-dialogue containment, synthetic controller UI, orientation/viewports, and a test-assisted 18-objective/31-target ending. Node 24 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) then passed the clean static/unit/build gate, 48/48 expanded dev-server tests, and 6/6 built-preview tests across Chromium, Firefox, and WebKit. The preview path covers hashed assets, production-only boundaries, real keyboard movement, save/refresh/Continue, a non-preloaded room, and recovery after two deliberately aborted lazy-art requests.
 
 The opt-in public-input harness uses normal movement, exits, interaction holds, menus, dialogue, save/reload, and checkpoint recovery rather than state mutation. Its recorded Mel attempt reached the visible shift-board prompt but was stopped after shared-host software WebGL stopped supplying reliable update frames during the hold; Josh was not run. This environment-limited attempt neither completes the public-control gate nor establishes a game progression blocker.
 
 Still pending:
 
 - complete no-shortcut public-input Mel and Josh playthroughs in a frame-stable environment;
-- final integrated three-engine execution of the expanded dev-server and built-preview suites;
 - representative physical phone/tablet, laptop, 1080p, and ultrawide review beyond emulated viewports;
 - full-run request/page/console monitoring through public controls;
 - manual listening through title, facility, animal, cath, car-park, failure, and ending cues;
@@ -132,7 +131,7 @@ The 43 supplied images are local-only source references and include people, loca
 - Repository: [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day)
 - Deployed V2.0 baseline: [`54499b368d566f3fa4e7da1af3e7a06ed1942b2f`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f), merged through [PR #1](https://github.com/nacho-android/busy_day/pull/1)
 - Baseline main workflow: [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940), success under Node 24 with its then-current 21/21 Playwright tests
-- Current V2.1 working-tree static scope: `npm run verify:release` passed at 137 intended files / 49.74 MiB after exclusions, with no selected high-risk credential-pattern match. Rerun on the final commit. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
+- Current V2.1 static scope: `npm run verify:release` passed at 141 intended files / 50.27 MiB after exclusions, with no selected high-risk credential-pattern match. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
 - Pages baseline: [production URL](https://nacho-android.github.io/busy_day/), deployment `5433749633`, workflow build type, HTTPS, main-only policy; SHA/ref/state matched `54499b3`/`main`/`success`.
 
-Repository, baseline CI/deployment, and hosted V2.0 smoke are complete. V2.1 still needs its final integrated gates, commit/PR/main workflow, deployment, and hosted smoke; its genuine manual gameplay/device/audio/performance/rights limitations are listed above.
+Repository, baseline CI/deployment, and hosted V2.0 smoke are complete. V2.1's integrated PR gates are green; merge/main workflow, Pages deployment, and hosted smoke remain before publication. Its genuine manual gameplay/device/audio/performance/rights limitations are listed above.

@@ -2,7 +2,7 @@
 
 All notable changes to Busy Day at the Viv are documented here. The project uses semantic versioning for the V2 application.
 
-## [2.1.0] — 2026-07-14
+## [2.1.0] — 2026-07-15
 
 ### Added
 
@@ -33,7 +33,7 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 
 ### Validation status
 
-- Focused Chromium hardening runs crossed all 18 authored exit directions and covered barriers, locked routing, Wayne failure/checkpoint recovery, pause/restart/reset, persisted settings, touch hold-use, longest-dialogue containment, synthetic controller UI, and a test-assisted 18-objective/31-target ending. The built-preview Chromium path also passed its focused run. Record the final consolidated and three-engine workflow results separately before release.
+- Node 24 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) passed the clean release/audio/type/lint/49-unit/build gate, 48/48 dev-server browser tests, and 6/6 built-preview tests: 16+2 in each of Chromium, Firefox, and WebKit. Pages correctly skipped on the PR branch.
 - The opt-in public-input Mel journey reached the visible shift-board prompt but did not complete because shared-host software WebGL stopped delivering reliable update frames during the hold interaction; Josh was not run. This is not a no-shortcut completion claim or an established progression defect.
 - Physical touch devices, hardware controllers, screen readers, manual audio listening, soak/current-phone performance, and likeness/publication-rights review remain unverified.
 
@@ -100,7 +100,7 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - The static verifier's 107-file / 32.73 MiB intended release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
 - Characters, animals, props, and vehicles are animated runtime vector constructions rather than final sprite sheets/atlases.
 - Pointer/tap-to-move, navigation pathfinding, a physical pushable cart/trolley, and a spatial car-sliding puzzle are not implemented.
-- Complete no-shortcut Mel/Josh runs, physical-device/controller checks, audio listening, screen-reader review, soak/current-phone performance, and rights review remain pending. V2.1 adds focused Chromium all-18-exit evidence, but the expanded final CI result is tracked separately from this V2.0 release history.
+- Complete no-shortcut Mel/Josh runs, physical-device/controller checks, audio listening, screen-reader review, soak/current-phone performance, and rights review remain pending. V2.1 adds focused Chromium all-18-exit evidence; its expanded final CI result is recorded in the 2.1.0 section above.
 - See [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the full impact and workaround list.
 
 ## [1.0.0] — Historical single-file version

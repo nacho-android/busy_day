@@ -1,6 +1,6 @@
 # Busy Day at the Viv V2 — Architecture
 
-**Status:** implementation-aligned snapshot, 2026-07-14
+**Status:** implementation-aligned snapshot, 2026-07-15
 **Runtime:** Vite 8 · TypeScript 6 (strict) · Phaser 3.90 · DOM/CSS interface
 
 ## Design priorities
@@ -58,7 +58,7 @@ Scene transitions update `GameSession` first, then restart `LocationScene` at a 
 
 `validateWorldGraph()` checks duplicate spawn/interaction/objective IDs; ordered, acyclic objective/flag dependencies; target rooms; route unlocks at every objective; destination spawns and unique reciprocal exits; dialogue/portrait/effect identities; background/music/character references; collision-safe grid approaches for every spawn, interaction, NPC, and exit; and direct, collision-safe moving-NPC patrol segments. Unit tests inject malformed graphs to prove each class of failure. The grid proof is conservative static geometry validation, not a replay of transient Phaser hazards.
 
-After final-art geometry alignment, a radius-22, 5-pixel-grid audit passed every spawn, target, NPC and exit across the world. The validator found and prompted the move of Vu's unreachable Feed Store position. Integrated all-room visual QA and the focused three-engine reciprocal route supplement this static result. The V2.1 Chromium hardening suite crossed all 18 authored exit directions with real keyboard movement after collision-safe approach setup and asserted destination, named spawn, facing, and neutral-input stability; repeat that suite in the final three-engine workflow before release.
+After final-art geometry alignment, a radius-22, 5-pixel-grid audit passed every spawn, target, NPC and exit across the world. The validator found and prompted the move of Vu's unreachable Feed Store position. Integrated all-room visual QA and the focused three-engine reciprocal route supplement this static result. V2.1 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) repeated the expanded suite in Chromium, Firefox, and WebKit; all 48 dev-server tests passed, including every authored exit direction with real keyboard crossing, named spawn/facing assertions, and neutral-input stability.
 
 ### Story and objectives
 
@@ -101,7 +101,7 @@ Every current location definition has a generated `backgroundKey`. All 11 runtim
 
 Phaser uses automatic renderer selection on Chromium and Firefox. Safari and every iOS browser use the Canvas renderer because Phaser's WebGL capability probe can throw after WebKit reclaims a context under memory pressure; the game uses only Canvas-compatible 2D rendering features. The user-agent policy also recognises iPadOS desktop-site and iOS browser tokens and is unit-tested.
 
-Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop collision/exit geometry was revised with their final backplates to follow visible doors, counters, cages, scales, rails, carts, and other fixtures. Static reachability passes across the whole world. The real Tea Room → Main Hall → Feed Store → Main Hall route passes in Chromium, Firefox, and WebKit using data-driven spawn coordinates. Integrated visual QA also captured every room plus the ending without console/page errors, and the contact sheet passed review. Focused V2.1 Chromium groups subsequently crossed all 18 authored directions; the expanded final three-engine workflow is still required.
+Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop collision/exit geometry was revised with their final backplates to follow visible doors, counters, cages, scales, rails, carts, and other fixtures. Static reachability passes across the whole world. The real Tea Room → Main Hall → Feed Store → Main Hall route passes in Chromium, Firefox, and WebKit using data-driven spawn coordinates. Integrated visual QA also captured every room plus the ending without console/page errors, and the contact sheet passed review. The final V2.1 PR matrix then crossed all 18 authored directions in each of Chromium, Firefox, and WebKit.
 
 ## UI and input ownership
 
@@ -145,7 +145,7 @@ Vitest covers collision, world/asset validation, character visual contracts, sav
 
 For the deployed V2.0 baseline, post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and Pages-path URL inspection passed. Its focused real reciprocal route passed in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured ten rooms plus the ending without console/page errors; the inspected contact sheet passed HUD, actor/target, exit, texture, and blank-room review, while `visual-qa/` remains ignored.
 
-That V2.0 baseline merged to `main` as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed its recorded release/audio/type/lint/27-unit/build gates and Playwright 21/21. Its Pages job deployed `dist/` with `VITE_BASE_PATH=/busy_day/`; deployment `5433749633` matched that SHA/ref `main`/success. The workflow-based, HTTPS, main-only [production host](https://nacho-android.github.io/busy_day/) returned correct cache-busted built assets and passed title/New Shift/refresh/Continue smoke with no captured warning/error logs. V2.1 needs fresh workflow, deployment, and hosted evidence.
+That V2.0 baseline merged to `main` as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed its recorded release/audio/type/lint/27-unit/build gates and Playwright 21/21. Its Pages job deployed `dist/` with `VITE_BASE_PATH=/busy_day/`; deployment `5433749633` matched that SHA/ref `main`/success. The workflow-based, HTTPS, main-only [production host](https://nacho-android.github.io/busy_day/) returned correct cache-busted built assets and passed title/New Shift/refresh/Continue smoke with no captured warning/error logs. V2.1's clean PR workflow is green at 48/48 dev-server and 6/6 preview tests; its main/Pages/hosted evidence follows merge.
 
 A pre-final-art foreground 1366×768 Chromium automation sample on Intel UHD 620/D3D11 measured a 47.4 FPS blank-page baseline with 18.1 ms p95 frame time and 33.3 FPS active Tea Room play with 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so the figures remain diagnostic desktop history rather than current-build or representative-phone guarantees; current phone performance and soak measurements are still required.
 

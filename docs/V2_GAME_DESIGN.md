@@ -1,6 +1,6 @@
 # Busy Day at the Viv V2 — Implemented Game Design
 
-**Document status:** implementation-aligned design, 2026-07-14
+**Document status:** implementation-aligned design, 2026-07-15
 **Playable scope:** ten locations · eighteen objectives · two leads · one main ending
 **Evidence:** current `src/`, `public/assets/`, `index.html`, tests, and the factual V1/reference audits
 
@@ -210,7 +210,7 @@ The pack is deterministic procedural synthesis with no recordings or sample libr
 
 The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The title and Tea Room backplates load up front; later rooms load on entry through the typed runtime manifest and a three-location decoded-background LRU. With the title retained, the normal decoded backplate ceiling is roughly four 1280×720 textures instead of eleven. The complete encoded background set remains 1,818,586 bytes (1.734 MiB) and benefits from browser HTTP caching. Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 scene master remains outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
 
-For the deployed V2.0 baseline, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and that deployed host later passed asset and Continue smoke checks. V2.1 requires its own final integrated results; physical-device validation remains separate.
+For the deployed V2.0 baseline, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and that deployed host later passed asset and Continue smoke checks. V2.1 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) passed clean release/audio/type/lint/49-unit/build gates plus 48/48 dev-server and 6/6 built-preview tests; physical-device validation remains separate.
 
 That pre-final-art foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured 47.4 FPS / 18.1 ms p95 for a blank-page baseline and 33.3 FPS / 36.1 ms p95 in the active Tea Room. A prior same-condition sample reported a 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so current-payload and mid-range-phone frame rate, decoded texture/audio memory, long-session growth, transitions, and hosted latency remain unmeasured.
 
@@ -227,7 +227,7 @@ The deployed V2.0 baseline merged through PR #1 as [`54499b3`](https://github.co
 
 Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 
-V2.1 adds dev-server coverage for all 18 authored exit directions and higher-risk failure, recovery, settings, touch, barrier, dialogue and controller paths, plus a separate built-preview suite that checks hashed assets, production-only boundaries, real keyboard movement, save/refresh/Continue and request/page/console errors. A longer public-input Mel/Josh harness also exists outside default CI. The recorded Mel attempt was stopped after shared-host software-WebGL frame starvation prevented a reliable hold interaction at the visible shift-board prompt; Josh was not run, so neither journey is a completion claim.
+V2.1 adds dev-server coverage for all 18 authored exit directions and higher-risk failure, recovery, settings, touch, barrier, dialogue and controller paths, plus a separate built-preview suite that checks hashed assets, production-only boundaries, real keyboard movement, save/refresh/Continue and request/page/console errors. The final PR matrix passed 16 dev plus two preview tests in each of Chromium, Firefox, and WebKit. A longer public-input Mel/Josh harness also exists outside default CI. The recorded Mel attempt was stopped after shared-host software-WebGL frame starvation prevented a reliable hold interaction at the visible shift-board prompt; Josh was not run, so neither journey is a completion claim.
 
 Still required for a full completion claim:
 

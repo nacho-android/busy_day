@@ -1,6 +1,6 @@
 # Busy Day at the Viv V2 — Implementation Checklist
 
-**Status date:** 2026-07-14
+**Status date:** 2026-07-15
 **Legend:** `[x]` is implemented or verified exactly as written; `[ ]` is incomplete, unverified, or intentionally deferred. A source-code feature is not treated as a browser/device test.
 
 ## 1. Audit and preservation
@@ -95,7 +95,7 @@
 - [x] Locked Main Hall → Car Park, Prep → Cath, and Car Park → Coffee routes explain their required flags.
 - [x] Current world graph has 18 exit definitions forming nine reciprocal route pairs.
 - [x] Traverse all 18 exit directions in focused Chromium runs using real keyboard crossing after collision-safe setup; assert destination location, named spawn, facing, and no released-input drift.
-- [x] Verify every spawn/NPC/target/exit approach remains statically reachable; all rooms render in integrated visual QA. Repeat the expanded exit suite in the final three-engine workflow.
+- [x] Verify every spawn/NPC/target/exit approach remains statically reachable; all rooms render in integrated visual QA; repeat the expanded exit suite successfully in Chromium, Firefox, and WebKit workflow `29348227739`.
 
 ## 6. Movement, collision, animation, and transitions
 
@@ -243,7 +243,7 @@
 - [x] Execute all remaining exit directions in three focused Chromium groups and assert destination, named spawn, facing, and neutral-input stability.
 - [x] Execute health failure/retry and save/reload/Continue in Chromium.
 - [x] Add and execute focused Chromium Wayne failure/retry, pause/restart/reset, settings/audio persistence, touch/dialogue, synthetic-gamepad, representative barrier, and locked-gate tests.
-- [ ] Run the complete expanded dev-server suite in one consolidated invocation and repeat it in Firefox/WebKit CI.
+- [x] Run the complete expanded dev-server suite in one consolidated invocation and repeat it in Chromium, Firefox, and WebKit CI: 16/16 per engine in workflow `29348227739`.
 - [x] Inspect the assembled 11-checkpoint visual-QA contact sheet rather than relying only on assertions; keep `visual-qa/` ignored and unpublished.
 
 ### Manual/quality gates
@@ -273,7 +273,7 @@
 - [x] Run an earlier six-art copied publishable-source clean-directory `npm ci` followed by typecheck, lint, unit, and build; cross-browser E2E was validated separately in the primary working tree.
 - [x] Serve that pre-final-art clean-install `dist/` locally and verify title, New Shift, HUD/Tea Room, one canvas, scroll lock, all 12 initial resources, HTTP responses, and console/page errors.
 - [x] Pass post-optimization local strict typecheck, ESLint, 27/27 unit tests, the normal Vite build, and a `/busy_day/` Pages-path Vite build; inspect the generated HTML/CSS URLs beneath `/busy_day/`.
-- [ ] Repeat the post-optimization gates from a fresh clean install and complete a current production-preview smoke.
+- [x] Repeat the final V2.1 gates from a clean `npm ci` and pass the production-preview suite 2/2 in Chromium, Firefox, and WebKit in workflow `29348227739`.
 - [x] Verify hosted Continue plus built JS/CSS, title WebP, and title WAV paths beneath `/busy_day/`; cache-busted requests returned HTTP 200 with correct types.
 
 ## 14. Documentation and licensing
@@ -293,12 +293,14 @@
 
 ## 15. Repository publication
 
-- [x] Verify the intended release scope after exclusions: 107 files / 32.73 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, `style_ref.png`, and ignored visual-QA captures.
+- [x] Verify the historical V2.0 release scope after exclusions: 107 files / 32.73 MiB.
+- [x] Verify the V2.1 release scope after exclusions: 141 intended files / 50.27 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, `style_ref.png`, and ignored visual-QA captures.
 - [x] Scan intended release-file contents for selected high-risk credential/token patterns: zero matching files. This targeted check is not an exhaustive credential scanner.
 - [x] Exclude supplied source references from publication because redistribution rights are undocumented.
 - [x] Create intentional commits without force-pushing unrelated history.
 - [x] Push branch `agent/busy-day-v2` to `nacho-android/busy_day`.
 - [x] Open and merge PR #1 with summary, test evidence, limitations, and rights caveats.
+- [x] Push `agent/busy-day-v2-hardening`, open PR #2, and pass clean PR workflow `29348227739` on implementation head `61cfdb8`.
 - [x] Record merged `main` SHA `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`.
 - [x] Add a gated Pages Actions deployment for successful non-PR `main` runs with `VITE_BASE_PATH=/busy_day/`.
 - [x] Pass main workflow `29298026940`, deploy Pages as `5433749633`, and complete the hosted HTTP/in-app smoke.
@@ -311,16 +313,18 @@
 - [x] Final original audio pack is generated, integrated, and documented.
 - [ ] Final visual scope is approved and every production asset is manifested/rights-cleared.
 - [ ] Full story is manually playable opening-to-coffee for both leads without shortcuts or blockers.
-- [x] Focused Chromium hardening covers every exit/spawn, representative barriers, Wayne failure, restart/reset, save/continue, touch/dialogue, synthetic controller, and the test-assisted ending; final consolidated three-engine execution remains open below.
+- [x] Expanded hardening covers every exit/spawn, representative barriers, Wayne failure, restart/reset, save/continue, touch/dialogue, synthetic controller, orientation/viewports, and the test-assisted ending in all three CI engines.
 - [ ] Touch, orientation, viewports, accessibility options, and gamepad paths are validated in representative environments.
 - [x] Deployed V2.0 Chromium, Firefox, and WebKit suites passed their then-current 21/21 with error hooks active: 7/7 in each engine on main workflow `29298026940`.
-- [ ] V2.1 expanded dev-server and production-preview suites pass in the final Node 24 three-engine workflow.
+- [x] V2.1 expanded dev-server and production-preview suites pass in Node 24 workflow `29348227739`: 48/48 dev and 6/6 preview.
 - [ ] Visual, audio, and performance passes are complete with measured findings.
 - [x] Post-optimization local strict typecheck, lint, 27/27 unit tests, normal build, and `/busy_day/` build succeed.
 - [x] Repeat final-art release/audio/type/lint/27-unit/build gates after clean `npm ci` under Node 24 in main workflow `29298026940`.
-- [ ] Final-art clean production bundle passes a local preview smoke; the pre-art snapshot passed.
+- [x] Repeat V2.1 release/audio/type/lint/49-unit/build gates after clean `npm ci` under Node 24 in PR workflow `29348227739`.
+- [x] Final-art clean production bundle passes local Chromium/WebKit preview reruns and 2/2 per engine in final three-engine CI.
 - [x] V2.0 PR #1 is merged to `main`, its Pages deployment succeeded, and its production URL passed hosted smoke.
-- [ ] Commit/push V2.1, merge through a reviewed PR, pass its main workflow/Pages deployment, and repeat hosted smoke against the deployed SHA.
+- [x] Commit/push V2.1, open PR #2, and pass its clean Node 24 PR workflow.
+- [ ] Merge PR #2, pass the V2.1 main workflow/Pages deployment, and repeat hosted smoke against the deployed SHA.
 
 ## Verification log
 
@@ -364,11 +368,12 @@
 | 2026-07-14 | V2.1 integrated visual QA | Pass — 11 checkpoints (all ten rooms plus ending), zero captured browser errors; contact sheet and production title/opening generated portrait manually inspected. |
 | 2026-07-14 | Opt-in public-input journey attempt | Incomplete — Mel reached the visible shift-board prompt, then shared-host software WebGL frame starvation prevented a reliable hold update; stopped after 12.2 minutes at objective 1. Josh was not run. No completion or progression-blocker claim. |
 | 2026-07-14 | V2.1 production preview performance, Playwright Chromium 149 / ANGLE SwiftShader, 1366×768 | 693 ms local navigation; 15 resources / 0.73 MiB reported transfer; 12.1 MiB JS heap; title 9.1 FPS / 149.9 ms p95; active Tea Room 4.5 FPS / 250 ms p95. Software-WebGL host evidence only, not phone or hardware-GPU performance. |
-| Pending | Complete no-shortcut Mel/Josh, final three-engine V2.1 CI, physical-device/controller/screen-reader, audio-listening, soak/current-phone performance, and rights review | Not yet claimed |
-| 2026-07-14 | Historical V2.0 intended release scope | 107 files / 32.73 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved. Recalculate for V2.1. |
+| Pending | Complete no-shortcut Mel/Josh, physical-device/controller/screen-reader, audio-listening, soak/current-phone performance, and rights review | Not yet claimed |
+| 2026-07-14 | Historical V2.0 intended release scope | 107 files / 32.73 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved. Current V2.1 scope is recorded below. |
 | 2026-07-15 | V2.1 final pre-commit static/unit/build gates | Pass — typecheck; ESLint; Vitest 49/49 across seven files; V1/reference/art/audio/docs/credential release checks; Pages-path production build at 1,321.14 kB JS / 358.08 kB gzip. |
-| 2026-07-15 | V2.1 staged-tree `npm run verify:release` | Pass — V1 size/hash; 43-reference inventory/integrity/exclusion; 11 backgrounds; eight portraits; 26 WAVs; manifest/docs/links; file-size and selected credential-pattern gates; 141 intended files / 50.26 MiB. |
-| 2026-07-15 | V2.1 cross-engine CI regression rechecks | Pass locally — Firefox full-story 1/1; WebKit full story, phone touch, and gamepad 3/3 sequentially; WebKit exit directions 1–6 plus phone touch 2/2; Chromium and WebKit built previews 2/2 each after tracing and replacing pre-dialogue/retry-count timing samples with completion waits. Final clean GitHub matrix remains pending. |
+| 2026-07-15 | V2.1 staged-tree `npm run verify:release` | Pass — V1 size/hash; 43-reference inventory/integrity/exclusion; 11 backgrounds; eight portraits; 26 WAVs; manifest/docs/links; file-size and selected credential-pattern gates; 141 intended files / 50.27 MiB. |
+| 2026-07-15 | V2.1 cross-engine regression rechecks | Pass locally — Firefox full-story 1/1; WebKit full story, phone touch, and gamepad 3/3 sequentially; WebKit exit directions 1–6 plus phone touch 2/2; Chromium and WebKit built previews 2/2 each after replacing pre-dialogue/retry-count timing samples with completion waits. |
+| 2026-07-15 | V2.1 final PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739), commit [`61cfdb8`](https://github.com/nacho-android/busy_day/commit/61cfdb8df7df211af7ed7d0516865ef596114dd0) | Pass — clean `npm ci`; release/audio/type/lint; 49/49 unit; build; Chromium dev 16/16 + preview 2/2, Firefox 16/16 + 2/2, WebKit 16/16 + 2/2; 48/48 dev and 6/6 preview total; Pages correctly skipped on PR. |
 | 2026-07-14 | Main merge and workflow | PR #1 merged as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`; Node 24 workflow `29298026940` passed release/audio/type/lint/27-unit/build and Chromium/Firefox/WebKit 7/7 each (21/21) |
 | 2026-07-14 | GitHub Pages deployment | Pass — deployment `5433749633`, SHA/ref/state matched merge/`main`/success; workflow build type, HTTPS, main-only policy; https://nacho-android.github.io/busy_day/ |
 | 2026-07-14 | Hosted HTTP and in-app smoke | Pass — cache-busted index and hashed JS/CSS/title WebP/title WAV returned 200/correct types; no raw `/src/main.ts`; title → New Shift → Tea Room → refresh → Continue resumed Tea Room objective; zero captured warning/error logs |
