@@ -208,6 +208,7 @@
 - [x] Execute and pass portrait/landscape state preservation, landscape touch-control visibility, and seven-size viewport/layout/scroll assertions in Chromium.
 - [x] Execute and pass the current viewport/layout/scroll assertions in Firefox.
 - [x] Execute and pass the current viewport/layout/scroll assertions in WebKit.
+- [x] Use the Canvas renderer on Safari/iOS, including iPad desktop-site browser tokens, to avoid a WebKit WebGL context-reclamation startup failure; retain automatic renderer selection elsewhere.
 - [ ] Verify small/large iPhone, Android phone, tablet, laptop, 1080p, and ultrawide visual layouts from captured screenshots.
 - [ ] Test real iPhone/iPad/Android hardware, address-bar resize, high DPI, notches, and rounded corners.
 - [x] Implement gamepad title/menu/dialogue navigation and pass a synthetic Chromium controller path through lead selection, opening dialogue, pause, and resume.
@@ -365,8 +366,9 @@
 | 2026-07-14 | V2.1 production preview performance, Playwright Chromium 149 / ANGLE SwiftShader, 1366×768 | 693 ms local navigation; 15 resources / 0.73 MiB reported transfer; 12.1 MiB JS heap; title 9.1 FPS / 149.9 ms p95; active Tea Room 4.5 FPS / 250 ms p95. Software-WebGL host evidence only, not phone or hardware-GPU performance. |
 | Pending | Complete no-shortcut Mel/Josh, final three-engine V2.1 CI, physical-device/controller/screen-reader, audio-listening, soak/current-phone performance, and rights review | Not yet claimed |
 | 2026-07-14 | Historical V2.0 intended release scope | 107 files / 32.73 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved. Recalculate for V2.1. |
-| 2026-07-14 | V2.1 final pre-commit static/unit/build gates | Pass — typecheck; ESLint; Vitest 46/46 across six files; V1/reference/art/audio/docs/credential release checks; Pages-path production build at 1,320.49 kB JS / 357.85 kB gzip. |
-| 2026-07-14 | V2.1 staged-tree `npm run verify:release` | Pass — V1 size/hash; 43-reference inventory/integrity/exclusion; 11 backgrounds; eight portraits; 26 WAVs; manifest/docs/links; file-size and selected credential-pattern gates; 139 intended files / 50.26 MiB. |
+| 2026-07-15 | V2.1 final pre-commit static/unit/build gates | Pass — typecheck; ESLint; Vitest 49/49 across seven files; V1/reference/art/audio/docs/credential release checks; Pages-path production build at 1,321.14 kB JS / 358.08 kB gzip. |
+| 2026-07-15 | V2.1 staged-tree `npm run verify:release` | Pass — V1 size/hash; 43-reference inventory/integrity/exclusion; 11 backgrounds; eight portraits; 26 WAVs; manifest/docs/links; file-size and selected credential-pattern gates; 141 intended files / 50.26 MiB. |
+| 2026-07-15 | V2.1 cross-engine CI regression rechecks | Pass locally — Firefox full-story 1/1; WebKit full story, phone touch, and gamepad 3/3 sequentially; WebKit exit directions 1–6 plus phone touch 2/2 after Safari/iOS Canvas fallback and readiness/frame polling. Final clean GitHub matrix remains pending. |
 | 2026-07-14 | Main merge and workflow | PR #1 merged as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`; Node 24 workflow `29298026940` passed release/audio/type/lint/27-unit/build and Chromium/Firefox/WebKit 7/7 each (21/21) |
 | 2026-07-14 | GitHub Pages deployment | Pass — deployment `5433749633`, SHA/ref/state matched merge/`main`/success; workflow build type, HTTPS, main-only policy; https://nacho-android.github.io/busy_day/ |
 | 2026-07-14 | Hosted HTTP and in-app smoke | Pass — cache-busted index and hashed JS/CSS/title WebP/title WAV returned 200/correct types; no raw `/src/main.ts`; title → New Shift → Tea Room → refresh → Continue resumed Tea Room objective; zero captured warning/error logs |

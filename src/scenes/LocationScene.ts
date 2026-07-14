@@ -8,7 +8,7 @@ import { CharacterRig } from '../entities/CharacterRig';
 import { createInteractionProp } from '../entities/WorldProps';
 import { session } from '../state/GameSession';
 import { canOccupy, circleIntersectsRect, distance, moveCircle } from '../systems/collision';
-import type { InputSnapshot, InteractionDefinition, LocationDefinition, NpcPlacement, ObstacleDefinition, Point } from '../types/game';
+import type { InputSnapshot, InteractionDefinition, LocationDefinition, LocationId, NpcPlacement, ObstacleDefinition, Point } from '../types/game';
 import { ui } from '../ui/GameUI';
 import { renderBackdrop } from './BackdropRenderer';
 
@@ -247,6 +247,7 @@ export class LocationScene extends Phaser.Scene {
   }
 
   teleportToInteraction(id: string): boolean {
+    if (!this.worldReady) return false;
     const run = session.run;
     const found = findInteraction(id);
     if (!run || !found || found.location.id !== run.locationId) return false;
@@ -268,6 +269,7 @@ export class LocationScene extends Phaser.Scene {
   }
 
   completeCurrentTarget(): boolean {
+    if (!this.worldReady) return false;
     const objective = session.currentObjective;
     const target = objective?.targets.find((candidate) => !session.run?.completedTargets.includes(candidate));
     if (!target) return false;
@@ -277,17 +279,37 @@ export class LocationScene extends Phaser.Scene {
   }
 
   travelToObjectiveForTest(): boolean {
+    if (!this.worldReady) return false;
     const objective = session.currentObjective;
     if (!objective || !session.run) return false;
     if (session.run.locationId === objective.location) return true;
     const spawn = LOCATIONS[objective.location].spawns[0];
     if (!spawn) return false;
+    // Make the transition atomic from the test adapter's perspective. Phaser
+    // schedules restart work after this method returns; without clearing the
+    // readiness latch synchronously, a fast caller can mutate the destination
+    // run through the outgoing scene before lazy artwork has finished loading.
+    this.worldReady = false;
     session.transitionTo(objective.location, spawn.id);
     this.scene.restart();
     return true;
   }
 
+  prepareExitForTest(locationId: LocationId, exitId: string): boolean {
+    if (!this.worldReady || !session.run) return false;
+    const location = LOCATIONS[locationId];
+    const exit = location.exits.find((candidate) => candidate.id === exitId);
+    const spawn = location.spawns[0];
+    if (!exit || !spawn) return false;
+    if (exit.requiredFlag && !session.run.flags.includes(exit.requiredFlag)) session.run.flags.push(exit.requiredFlag);
+    this.worldReady = false;
+    session.transitionTo(locationId, spawn.id);
+    this.scene.restart();
+    return true;
+  }
+
   approachExitForTest(id: string): 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | null {
+    if (!this.worldReady) return null;
     const run = session.run;
     if (!run) return null;
     const location = LOCATIONS[run.locationId];

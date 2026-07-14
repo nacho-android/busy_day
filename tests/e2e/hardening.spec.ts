@@ -54,10 +54,19 @@ async function installFakeGamepad(page: Page): Promise<void> {
 }
 
 async function pulseGamepadButton(page: Page, index: number): Promise<void> {
+  const waitForPollFrames = async (): Promise<void> => page.evaluate(() => new Promise<void>((resolve) => {
+    let remaining = 3;
+    const next = (): void => {
+      remaining -= 1;
+      if (remaining <= 0) resolve();
+      else requestAnimationFrame(next);
+    };
+    requestAnimationFrame(next);
+  }));
   await page.evaluate((buttonIndex) => window.__busyDayPad?.setButton(buttonIndex, true), index);
-  await page.waitForTimeout(100);
+  await waitForPollFrames();
   await page.evaluate((buttonIndex) => window.__busyDayPad?.setButton(buttonIndex, false), index);
-  await page.waitForTimeout(100);
+  await waitForPollFrames();
 }
 
 async function pushFor(page: Page, key: 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown', duration = 700): Promise<void> {
@@ -77,10 +86,10 @@ async function verifyExitRoutes(page: Page, routes: typeof EXIT_ROUTES): Promise
 
   for (const { origin, exit } of routes) {
     await test.step(`${origin}.${exit.id} -> ${exit.destination}.${exit.destinationSpawn}`, async () => {
-      expect(await page.evaluate(
+      await expect.poll(() => page.evaluate(
         ({ locationId, exitId }) => window.__busyDayTest?.prepareExit(locationId, exitId) ?? false,
         { locationId: origin, exitId: exit.id },
-      )).toBe(true);
+      ), { timeout: 15_000, intervals: [50, 100, 250] }).toBe(true);
       await expect.poll(() => page.evaluate(() => window.__busyDayTest?.getLocation() ?? null)).toBe(origin);
       const arrived = await traverseExit(page, exit.id, exit.destination);
       const destinationSpawn = LOCATIONS[exit.destination].spawns.find((spawn) => spawn.id === exit.destinationSpawn);
@@ -309,15 +318,30 @@ test.describe('Busy Day V2 browser hardening', () => {
     await page.mouse.move(centreX, centreY);
     await page.mouse.down();
     await page.mouse.move(centreX + joystickBox!.width * 0.3, centreY, { steps: 4 });
-    await page.waitForTimeout(450);
-    await page.mouse.up();
+    try {
+      await expect.poll(
+        () => state(page).then((run) => run?.player.x ?? beforeDrag),
+        { timeout: 15_000, intervals: [100, 250, 500] },
+      ).toBeGreaterThan(beforeDrag + 8);
+    } finally {
+      await page.mouse.up();
+    }
     const afterDrag = (await state(page))!.player.x;
-    expect(afterDrag).toBeGreaterThan(beforeDrag + 8);
-    await page.waitForTimeout(300);
-    const afterDeceleration = (await state(page))!.player.x;
-    expect(afterDeceleration).toBeGreaterThanOrEqual(afterDrag);
-    await page.waitForTimeout(250);
-    expect(Math.abs((await state(page))!.player.x - afterDeceleration)).toBeLessThanOrEqual(1);
+    const settledX = await page.evaluate(async () => {
+      let previous = window.__busyDayTest?.getState()?.player.x ?? 0;
+      let stableFrames = 0;
+      const deadline = performance.now() + 10_000;
+      while (performance.now() < deadline) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        const current = window.__busyDayTest?.getState()?.player.x ?? previous;
+        stableFrames = Math.abs(current - previous) <= 1 ? stableFrames + 1 : 0;
+        previous = current;
+        if (stableFrames >= 4) return current;
+      }
+      throw new Error('Player did not settle across four consecutive animation frames');
+    });
+    expect((await state(page))!.player.x).toBeCloseTo(settledX, 0);
+    expect((await state(page))!.player.x).toBeGreaterThanOrEqual(afterDrag);
 
     expect(await page.evaluate(() => window.__busyDayTest?.teleportToInteraction('shift_board') ?? false)).toBe(true);
     await expect(page.locator('#interaction-prompt')).toBeVisible();

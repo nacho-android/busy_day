@@ -27,7 +27,7 @@ The detailed V1 evidence is in [`docs/V1_AUDIT.md`](docs/V1_AUDIT.md). The imple
 
 - Node.js 24 or newer (active LTS)
 - npm 10 or newer (the lockfile was produced with npm 11)
-- A current desktop or mobile browser with Canvas/WebGL, Web Audio, ES2022 modules, and local storage
+- A current desktop or mobile browser with Canvas/WebGL, Web Audio, ES2022 modules, and local storage. Chromium/Firefox use automatic renderer selection; Safari and all iOS browsers use Phaser Canvas to avoid WebKit context-reclamation failures.
 
 ## Install and run
 

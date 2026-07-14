@@ -26,6 +26,9 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 
 - Moved Vu to a collision-reachable Feed Store position.
 - Reworked exit-test approach selection around collision-valid points and neutralised carried entry input so named destination facing remains stable.
+- Made lazy scene restarts atomic to prevent a fast interaction from mutating the destination run through the outgoing scene.
+- Selected Phaser Canvas on Safari and iOS browsers so WebKit context reclamation cannot strand startup in its WebGL capability probe.
+- Replaced cadence-sensitive gamepad, touch-inertia, and lazy-exit assertions with rendered-frame/readiness polling.
 - Added the missing pull-request template referenced by the release runbook.
 
 ### Validation status
