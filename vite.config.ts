@@ -9,5 +9,16 @@ export default defineConfig({
   },
   server: {
     strictPort: true,
+    watch: {
+      // Test and visual-QA outputs are written inside the repository. They
+      // must never trigger a full-page HMR reload in an active game journey.
+      ignored: [
+        '**/playwright-report/**',
+        '**/playwright-preview-report/**',
+        '**/test-results/**',
+        '**/test-results-preview/**',
+        '**/visual-qa/**',
+      ],
+    },
   },
 });

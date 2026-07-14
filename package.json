@@ -1,6 +1,6 @@
 {
   "name": "busy-day-at-the-viv-v2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "description": "A retro-noir browser adventure about one professionally chaotic shift at the Viv.",
@@ -17,8 +17,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:preview": "playwright test --config=playwright.preview.config.ts",
+    "test:e2e:public": "playwright test --config=playwright.public.config.ts",
     "verify:release": "python scripts/verify_release.py",
     "qa:visual": "node scripts/capture_visual_qa.mjs",
+    "qa:performance": "node scripts/measure_performance.mjs",
     "assets:optimize": "node scripts/optimize_art.mjs"
   },
   "dependencies": {

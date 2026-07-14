@@ -4,20 +4,21 @@
 
 V2 is a modular Vite, TypeScript, and Phaser 3 project. The original single-file game remains preserved as `Busy_Day_v1.html`.
 
-> **Production status:** PR #1 is merged to `main` at [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed under Node 24, including clean release/audio/type/lint/27-unit/build gates and Playwright 21/21. GitHub Pages deployed successfully at [nacho-android.github.io/busy_day](https://nacho-android.github.io/busy_day/), and the hosted title/New Shift/refresh/Continue smoke passed without captured warnings or errors. No-shortcut Mel/Josh, all-18-exit, physical-device/gamepad, audio-listening, soak/current-phone-performance, and rights-review gates remain open.
+> **Production status:** GitHub Pages currently serves the merged V2.0 baseline from `main` at [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). V2.1 implementation head [`61cfdb8`](https://github.com/nacho-android/busy_day/commit/61cfdb8df7df211af7ed7d0516865ef596114dd0) passed clean PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739): static/unit/build, 48/48 dev-server tests, and 6/6 previews. Pages skipped as designed; V2.1 is not described as deployed until PR #2 merges and its main workflow, Pages deployment, and hosted smoke pass. Public-control Mel/Josh completion, physical-device/controller, audio-listening, screen-reader, soak/current-phone-performance, and rights-review gates remain open.
 
 ![Busy Day V2 title artwork](public/assets/backgrounds/title.webp)
 
 ## What is included
 
 - Ten connected locations: Tea Room, Main Hallway, Feed Store, Pig Housing, Sheep & Scales, Baboon Wing, Procedure Prep, Cath Lab, Car Park, and Coffee Shop.
-- Fifteen sequential objectives preserving V1's main story from Sally's board to Juan's coffee.
+- Eighteen sequential objectives and 31 targets: V1's story spine plus new route-control, baboon-interlock, and cath-monitor complications.
 - Two playable leads with different speed, stamina, carrying, stress, and interaction characteristics.
-- Direct movement, sprinting, dodge, collision, perspective scaling, depth sorting, hold-to-use interactions, locked exits, and faded scene transitions.
+- Smooth accelerated movement, sprinting, dodge, data-defined collision footprints, perspective scaling, depth/foreground occlusion, hold-to-use interactions, locked exits, and faded scene transitions.
 - Branching Wayne dialogue, Ross and Thanh hazards, health/Wayne failure states, checkpoints, restart, and S–D ending ranks.
 - Versioned local save/continue, settings, profile history, and malformed-save recovery.
 - Responsive DOM interface with keyboard, touch, and gamepad input paths; landscape prompt; safe-area support; captions; larger text; high contrast; reduced motion; handedness; and Relaxed Shift.
 - Eleven original generated retro-noir images: one title and a backplate for every gameplay location. All runtime exports are 1280×720 WebP files; their exact combined size is 1,818,586 bytes (1.734 MiB), while all 1672×941 masters remain available for revision.
+- Eight generated retro-noir dialogue portraits for Mel, Josh, Sally, Juan, Alan, Dhanya, Ross, and Wayne, with accessible initials fallbacks for the wider cast.
 - Twenty-six original procedurally synthesized music/SFX files.
 
 The detailed V1 evidence is in [`docs/V1_AUDIT.md`](docs/V1_AUDIT.md). The implementation-aligned design is in [`docs/V2_GAME_DESIGN.md`](docs/V2_GAME_DESIGN.md).
@@ -26,7 +27,7 @@ The detailed V1 evidence is in [`docs/V1_AUDIT.md`](docs/V1_AUDIT.md). The imple
 
 - Node.js 24 or newer (active LTS)
 - npm 10 or newer (the lockfile was produced with npm 11)
-- A current desktop or mobile browser with Canvas/WebGL, Web Audio, ES2022 modules, and local storage
+- A current desktop or mobile browser with Canvas/WebGL, Web Audio, ES2022 modules, and local storage. Chromium/Firefox use automatic renderer selection; Safari and all iOS browsers use Phaser Canvas to avoid WebKit context-reclamation failures.
 
 ## Install and run
 
@@ -50,6 +51,12 @@ To run the historical V1, serve the repository with any static HTTP server and o
 | `npm run test:watch` | Run unit tests in watch mode |
 | `npm run test:e2e` | Run configured Playwright projects for Chromium, Firefox, and WebKit |
 | `npm run test:e2e:chromium` | Run only the Chromium Playwright project |
+| `npm run test:e2e:preview` | Build and test the production bundle through Vite Preview |
+| `npm run test:e2e:public` | Run the opt-in, ordinary-input Mel/Josh public journey harness |
+| `npm run qa:performance` | Sample a production preview on `127.0.0.1:4176`: navigation, frame pacing, transfer, renderer, and Chromium heap |
+| `npm run verify:release` | Check V1 preservation, manifests, runtime assets, release exclusions, links, and selected credential patterns |
+| `python scripts/verify_audio.py` | Validate all generated WAV headers, levels, and loop edges |
+| `npm run qa:visual` | Capture the current visual-QA checkpoint set for human inspection |
 | `npm run build` | Type-check and create the production bundle in `dist/` |
 | `npm run preview` | Serve `dist/` locally through Vite Preview |
 | `npm run assets:optimize` | Regenerate all 11 browser-ready 1280×720 WebP files from the retained PNG masters |
@@ -84,11 +91,11 @@ Use the virtual joystick to move and the **Sprint**, **Dodge**, and contextual *
 
 ### Gamepad
 
-The left stick moves. Buttons 0, 1, and 2 map to world interaction, sprint, and dodge respectively. Exact face-button labels vary by controller/browser. Menus and dialogue still require keyboard, pointer, or touch; complete gamepad-only navigation is not implemented. The world-input path also requires the cross-browser/controller validation recorded in the checklist.
+The left stick moves. Standard buttons 0, 1, and 2 map to world interaction, sprint, and dodge; D-pad/stick directions move menu focus, button 0 accepts, button 1 goes back, and Start pauses. This path covers the title, dialogue and choices, settings, objective drawer, pause/confirmation, failure, and ending overlays. Exact face-button labels vary by controller/browser. A synthetic Chromium gamepad test covers title selection, opening dialogue, pause, and resume, but no physical controller/browser matrix has been recorded.
 
 ## Save, continue, and reset
 
-V2 stores one active run, settings, and profile bests in local storage under `busy_day_at_the_viv_v2_save`. The current envelope is schema version 2 and is separate from V1 data.
+V2 stores one active run, settings, and profile bests in local storage under `busy_day_at_the_viv_v2_save`. The current envelope is schema version 3 and is separate from V1 data. Schema-two progress is migrated by stable objective IDs across the three new V2.1 tasks. A newer, unknown schema keeps portable preferences/profile data but safely drops incompatible active progress instead of silently downgrading it.
 
 - **Continue** appears when an unfinished V2 run is available.
 - Objective completion, scene transitions, settings changes, periodic movement snapshots, and page-backgrounding persist the current run.
@@ -108,15 +115,15 @@ Private browsing or storage restrictions can prevent persistence; gameplay conti
 - The page disables scrolling and gameplay-area touch gestures.
 - Relaxed Shift reduces car impact, Ross duration, and Wayne pressure.
 
-These features are implemented, but the complete viewport, assistive-technology, touch-device, and gamepad matrices remain release gates rather than completed claims.
+These features are implemented and their automated browser checks cover representative viewports and touch/controller paths. That is not a substitute for physical touch devices, hardware controllers, or a screen-reader pass, which remain release gates.
 
 ## Architecture and content editing
 
 The runtime separates authored definitions from game/state code:
 
-- `src/data/locations.ts` — locations, spawns, exits, obstacles, interactions, NPC placement, music, and perspective
+- `src/data/locations.ts` — locations, spawns, exits, obstacles, interactions, NPC placement/patrols, foreground crops, music, and perspective
 - `src/data/story.ts` — objective order, dialogue, rewards, flags, and checkpoints
-- `src/data/characters.ts` — gameplay statistics and independently replaceable visual definitions
+- `src/data/characters.ts` — gameplay statistics plus independently replaceable renderer, asset, animation, footprint, portrait, and voice definitions
 - `src/state/` — save parsing/persistence and the authoritative run-state service
 - `src/scenes/` — Phaser boot, preload, title, location, UI, and ending scenes
 - `src/ui/GameUI.ts` — DOM menus, HUD, dialogue, touch input, settings, and accessibility state
@@ -127,7 +134,9 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for state flow, invariants, a
 
 ## Assets, audio, and rights
 
-- Runtime backplates are in `public/assets/backgrounds/`; all 11 are optimized 1280×720 WebP files totaling 1,818,586 bytes (1.734 MiB). All 11 editable 1672×941 PNG masters remain in `art/generated-masters/`.
+- Runtime backplates are in `public/assets/backgrounds/`; all 11 are optimized 1280×720 WebP files totaling 1,818,586 bytes (1.734 MiB). Only title/Tea Room decode up front; later locations load on entry into a three-room LRU. All 11 editable 1672×941 PNG masters remain in `art/generated-masters/`.
+- Principal dialogue portraits are optimized 384×384 WebPs in `public/assets/portraits/`; the 2048×1024 generated contact-sheet master remains in `art/generated-masters/`.
+- `art/generated-sources/mel_josh_directional_atlas_source.png` is a retained, non-runtime directional character source. It is not declared as a packed or approved animation atlas; current in-world characters deliberately use the data-driven vector renderer.
 - Original audio is in `public/assets/audio/` and can be regenerated deterministically with `scripts/generate_audio.py`.
 - [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) records supplied references, hashes, visual findings, generated-art provenance, and replacement notes.
 - [`docs/REFERENCE_INVENTORY.json`](docs/REFERENCE_INVENTORY.json) is the machine-readable catalogue of the 43 local-only supplied references.
@@ -139,7 +148,7 @@ The supplied photographs and `style_ref.png` are source references, not runtime 
 
 - Story premise, characters, jokes, and the original playable implementation come from the supplied `Busy_Day_v1.html`; the factual lineage is recorded in the V1 audit.
 - V2 is built with Phaser, Vite, TypeScript, Vitest, Playwright, ESLint, and Sharp. Those projects retain their own licences.
-- The 11 rendered masters were created for this project with OpenAI image generation. The first six use the prompts/references recorded in the asset manifest; four final-room prompts followed visual inspection of the existing project masters, and the Coffee Shop explicitly referenced the Tea Room and facility-hub masters. Runtime files are generated derivatives, not raw reference photographs.
+- The scene and portrait masters were created for this project with OpenAI image generation using the references recorded in the asset manifest. Runtime files are generated derivatives, not raw reference photographs.
 - Music and sound effects were composed as deterministic mathematical synthesis by `scripts/generate_audio.py`; no recordings, commercial soundtrack, or sample library is used.
 - The creators and publication permissions of the supplied reference photographs are not established by the workspace. The project does not invent attribution or imply consent where it has not been documented.
 
@@ -154,13 +163,13 @@ npm run build
 npm run preview
 ```
 
-Deploy the contents of `dist/` to a static host. Vite uses a relative base by default; audio uses `import.meta.env.BASE_URL`, and Vite rewrites processed CSS image URLs. For this repository's GitHub Pages path, build with `VITE_BASE_PATH=/busy_day/`. Both the normal build and that Pages-path build passed locally after optimization, and the generated HTML/CSS asset URLs were checked beneath `/busy_day/`.
+Deploy the contents of `dist/` to a static host. Vite uses a relative base by default; audio uses `import.meta.env.BASE_URL`, and Vite rewrites processed CSS image URLs. For this repository's GitHub Pages path, build with `VITE_BASE_PATH=/busy_day/`. Both build forms passed locally for V2.1, and PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) repeated the production build after a clean `npm ci`.
 
-Main workflow `29298026940` passed Chromium, Firefox, and WebKit at 7/7 each (21/21 total). Cache-busted hosted checks returned HTTP 200 with correct types for the built index, hashed JavaScript/CSS, title WebP, and title WAV; the index did not expose raw `/src/main.ts`. In-app browser smoke loaded the title, entered Tea Room via New Shift, exposed Continue after refresh, and resumed the Tea Room objective with zero captured warning/error logs. Remaining non-CI limits are in [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
+V2.1 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) passed its clean static/unit/build gate and 48/48 dev-server plus 6/6 built-preview browser tests: 16+2 in each of Chromium, Firefox, and WebKit. Pages correctly skipped on the PR branch. The currently deployed V2.0 baseline remains separately backed by main workflow `29298026940`, cache-busted hosted asset checks, and title → New Shift → refresh → Continue smoke with zero captured warning/error logs; V2.1 deployment evidence is recorded only after merge. Remaining non-CI limits are in [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
 
 Do not deploy `node_modules/`, browser/test reports, local `.env` files, reference photographs without confirmed rights, or browser/session data.
 
-The public project is [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day). [PR #1](https://github.com/nacho-android/busy_day/pull/1) merged to `main` as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`. Pages deployment `5433749633` reports that SHA, ref `main`, and state `success`. Pages uses workflow build type, HTTPS, and a main-only deployment policy; the workflow builds with `VITE_BASE_PATH=/busy_day/`. The static release verifier reports 107 intended files / 32.73 MiB after exclusions, excludes the private references, and preserves the V1 hash.
+The public project is [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day). [PR #1](https://github.com/nacho-android/busy_day/pull/1) merged the deployed V2.0 baseline to `main` as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`; Pages deployment `5433749633` reports that SHA, ref `main`, and state `success`. Pages uses workflow build type, HTTPS, and a main-only deployment policy; the workflow builds with `VITE_BASE_PATH=/busy_day/`. The V2.1 release verifier passes at 141 intended files / 50.27 MiB after exclusions, all 43 private references excluded, the V1 hash preserved, and no selected high-risk credential-pattern match.
 
 ## Documentation
 

@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
 import { getVisual } from '../data/characters';
-import type { Direction, LocationDefinition } from '../types/game';
+import type {
+  CharacterAnimationName,
+  CharacterVectorAppearance,
+  CharacterVisualDefinition,
+  Direction,
+  LocationDefinition,
+  Point,
+} from '../types/game';
 
 const INK = 0x091019;
 const BOOT = 0x111923;
@@ -19,9 +26,11 @@ function shiftColour(colour: number, amount: number): number {
  */
 export class CharacterRig extends Phaser.GameObjects.Container {
   readonly visualId: string;
+  readonly visual: CharacterVisualDefinition;
   direction: Direction = 'toward';
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly bodyLayer: Phaser.GameObjects.Container;
+  private readonly sprite: Phaser.GameObjects.Sprite | null;
   private readonly torso: Phaser.GameObjects.Graphics;
   private readonly head: Phaser.GameObjects.Graphics;
   private readonly leftLeg: Phaser.GameObjects.Graphics;
@@ -35,6 +44,22 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   private interacting = false;
   private baseScale = 1;
   private renderedDirection: Direction = 'toward';
+  private activeAnimation: CharacterAnimationName = 'idle';
+
+  get collisionRadius(): number {
+    return this.visual.footprint.radius;
+  }
+
+  private get vector(): CharacterVectorAppearance {
+    if (!this.visual.vector) throw new Error(`Character ${this.visualId} has no vector appearance for ${this.visual.renderer}.`);
+    return this.visual.vector;
+  }
+
+  private get textureKey(): string | null {
+    if (this.visual.renderer === 'sprite-sheet') return this.visual.assets.image?.key ?? null;
+    if (this.visual.renderer === 'texture-atlas') return this.visual.assets.atlas?.key ?? null;
+    return null;
+  }
 
   constructor(scene: Phaser.Scene, x: number, y: number, visualId: string, label?: string) {
     const visual = getVisual(visualId);
@@ -49,8 +74,20 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     const head = scene.add.graphics();
     const featureLayer = scene.add.graphics();
     const bodyLayer = scene.add.container(0, 0, [leftArm, leftLeg, rightLeg, torso, accent, rightArm, head, featureLayer]);
+    const textureKey = visual.renderer === 'sprite-sheet' ? visual.assets.image?.key : visual.assets.atlas?.key;
+    const sprite = visual.renderer === 'vector-paper-doll'
+      ? null
+      : textureKey && scene.textures.exists(textureKey)
+        ? scene.add.sprite(0, visual.footprint.originY, textureKey).setOrigin(visual.spriteOrigin.x, visual.spriteOrigin.y)
+        : null;
+
+    if (visual.renderer !== 'vector-paper-doll' && !sprite) {
+      throw new Error(`Character ${visualId} renderer ${visual.renderer} is missing its loaded texture.`);
+    }
+    bodyLayer.setVisible(visual.renderer === 'vector-paper-doll');
 
     const children: Phaser.GameObjects.GameObject[] = [shadow, bodyLayer];
+    if (sprite) children.push(sprite);
     if (label) {
       const nameplate = scene.add.text(0, -96, label, {
         fontFamily: 'Inter, Segoe UI, sans-serif',
@@ -66,8 +103,10 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     super(scene, x, y, children);
     scene.add.existing(this);
     this.visualId = visualId;
+    this.visual = visual;
     this.shadow = shadow;
     this.bodyLayer = bodyLayer;
+    this.sprite = sprite;
     this.torso = torso;
     this.head = head;
     this.leftLeg = leftLeg;
@@ -78,8 +117,43 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     this.featureLayer = featureLayer;
     this.baseScale = visual.displayScale;
     this.redrawArtwork();
+    this.registerSpriteAnimations();
+    this.playAnimation('idle', true);
     this.resetPartPositions();
-    this.setSize(48, 88);
+    this.setSize(visual.footprint.bodyWidth, visual.footprint.bodyHeight);
+  }
+
+  private animationKey(name: CharacterAnimationName): string {
+    return `busy-day-character-${this.visualId}-${name}`;
+  }
+
+  private registerSpriteAnimations(): void {
+    const textureKey = this.textureKey;
+    if (!this.sprite || !textureKey) return;
+    for (const name of Object.keys(this.visual.animations) as CharacterAnimationName[]) {
+      const key = this.animationKey(name);
+      if (this.scene.anims.exists(key)) continue;
+      const definition = this.visual.animations[name];
+      this.scene.anims.create({
+        key,
+        frames: definition.frames.map((frame) => ({ key: textureKey, frame })),
+        frameRate: definition.frameRate,
+        repeat: definition.repeat,
+        yoyo: definition.yoyo ?? false,
+      });
+    }
+  }
+
+  private playAnimation(name: CharacterAnimationName, restart = false): void {
+    if (!restart && this.activeAnimation === name) return;
+    this.activeAnimation = name;
+    this.sprite?.play(this.animationKey(name), !restart);
+  }
+
+  faceToward(point: Point): void {
+    const dx = point.x - this.x;
+    const dy = point.y - this.y;
+    this.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'away' : 'toward');
   }
 
   private resetPartPositions(): void {
@@ -98,7 +172,8 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private redrawArtwork(): void {
-    const visual = getVisual(this.visualId);
+    if (this.visual.renderer !== 'vector-paper-doll') return;
+    const visual = this.vector;
     const sideOn = this.direction === 'left' || this.direction === 'right';
     const away = this.direction === 'away';
     this.drawLeg(this.leftLeg, visual.suit, visual.suitHighlight, false, sideOn);
@@ -161,7 +236,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private drawTorso(sideOn: boolean, away: boolean): void {
-    const visual = getVisual(this.visualId);
+    const visual = this.vector;
     const halfShoulder = sideOn ? 13 : 18;
     const halfWaist = sideOn ? 11 : 14;
     const outline = [
@@ -193,7 +268,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private drawAccents(sideOn: boolean, away: boolean): void {
-    const visual = getVisual(this.visualId);
+    const visual = this.vector;
     const graphics = this.accent.clear();
     if (away) {
       graphics.lineStyle(2, visual.accent, .76).lineBetween(-13, -13, 13, -13);
@@ -220,7 +295,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private drawHead(sideOn: boolean, away: boolean): void {
-    const visual = getVisual(this.visualId);
+    const visual = this.vector;
     const graphics = this.head.clear();
     graphics.fillStyle(shiftColour(visual.skin, -30), 1).fillRoundedRect(-5, 10, 10, 14, 3);
     graphics.lineStyle(1.5, INK, .7).strokeRoundedRect(-5, 10, 10, 14, 3);
@@ -241,7 +316,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private drawFeatures(sideOn: boolean, away: boolean): void {
-    const visual = getVisual(this.visualId);
+    const visual = this.vector;
     const graphics = this.featureLayer.clear();
     this.drawHair(graphics, sideOn, away);
     if (away) {
@@ -282,7 +357,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private drawHair(graphics: Phaser.GameObjects.Graphics, sideOn: boolean, away: boolean): void {
-    const visual = getVisual(this.visualId);
+    const visual = this.vector;
     const hairLight = shiftColour(visual.hair, 26);
     graphics.fillStyle(visual.hair, 1);
 
@@ -326,33 +401,43 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     if (this.moving) {
       if (Math.abs(vx) > Math.abs(vy)) this.direction = vx < 0 ? 'left' : 'right';
       else this.direction = vy < 0 ? 'away' : 'toward';
-      this.phase += deltaSeconds * Math.min(16, 5 + speed * .045);
-    } else {
-      this.phase += deltaSeconds * 1.7;
     }
+
+    const animationName: CharacterAnimationName = this.moving
+      ? this.direction === 'left' ? 'walkLeft'
+        : this.direction === 'right' ? 'walkRight'
+          : this.direction === 'away' ? 'walkAway' : 'walkToward'
+      : 'idle';
+    const animation = this.visual.animations[animationName];
+    const cycleFrames = Math.max(1, animation.frames.length);
+    const speedFactor = this.moving ? Phaser.Math.Clamp(speed / 210, .72, 1.45) : 1;
+    this.phase += deltaSeconds * animation.frameRate * speedFactor * Phaser.Math.PI2 / cycleFrames;
+    if (!this.interacting) this.playAnimation(animationName);
 
     if (this.direction !== this.renderedDirection) {
       this.renderedDirection = this.direction;
       this.redrawArtwork();
     }
 
-    const walk = this.moving ? Math.sin(this.phase) : 0;
-    const bob = this.moving ? Math.abs(Math.cos(this.phase)) * 2.5 : Math.sin(this.phase) * .65;
+    const motion = animation.motion;
+    const wave = Math.sin(this.phase);
+    const walk = this.moving ? wave : 0;
+    const bob = this.moving ? Math.abs(Math.cos(this.phase)) * motion.bobPixels : wave * motion.bobPixels;
     const sideOn = this.direction === 'left' || this.direction === 'right';
     this.torso.y = -35 - bob;
-    this.torso.rotation = this.moving ? walk * .012 : Math.sin(this.phase * .5) * .006;
+    this.torso.rotation = (this.moving ? walk : Math.sin(this.phase * .5)) * motion.torsoSwayRadians;
     this.head.y = -68 - bob;
-    this.head.rotation = this.moving ? -walk * .018 : Math.sin(this.phase * .42) * .012;
+    this.head.rotation = (this.moving ? -walk : Math.sin(this.phase * .42)) * motion.headSwayRadians;
     this.featureLayer.y = -68 - bob;
     this.featureLayer.rotation = this.head.rotation;
     this.accent.y = -35 - bob;
     this.accent.rotation = this.torso.rotation;
-    this.leftLeg.y = -12 + walk * 4.5;
-    this.rightLeg.y = -12 - walk * 4.5;
-    this.leftLeg.rotation = walk * .06;
-    this.rightLeg.rotation = -walk * .06;
+    this.leftLeg.y = -12 + walk * motion.legTravelPixels;
+    this.rightLeg.y = -12 - walk * motion.legTravelPixels;
+    this.leftLeg.rotation = walk * motion.legSwingRadians;
+    this.rightLeg.rotation = -walk * motion.legSwingRadians;
     if (!this.interacting) {
-      const idleSway = this.moving ? walk * .27 : Math.sin(this.phase * .55) * .025;
+      const idleSway = (this.moving ? walk : Math.sin(this.phase * .55)) * motion.armSwingRadians;
       this.leftArm.rotation = idleSway;
       this.rightArm.rotation = -idleSway;
     }
@@ -360,7 +445,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     this.rightArm.y = -52 - bob;
     this.shadow.scaleX = this.moving ? 1.08 : 1;
     this.shadow.scaleY = sideOn ? .86 : 1;
-    this.shadow.alpha = .36 + Math.sin(this.phase * .5) * .035;
+    this.shadow.alpha = .36 + Math.sin(this.phase * .5) * motion.shadowPulse;
 
     const perspective = location.perspective;
     const t = Phaser.Math.Clamp((this.y - perspective.farY) / (perspective.nearY - perspective.farY), 0, 1);
@@ -370,34 +455,68 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   playInteraction(): void {
+    const animation = this.visual.animations.interaction;
+    const stepMs = Math.max(60, 1000 / animation.frameRate);
     this.interacting = true;
+    this.playAnimation('interaction', true);
     this.scene.tweens.killTweensOf([this.leftArm, this.rightArm, this.accent]);
     this.scene.tweens.add({
       targets: this.rightArm,
-      rotation: { from: -.28, to: -1.02 },
-      yoyo: true,
-      repeat: 1,
-      duration: 135,
+      rotation: { from: -animation.motion.armSwingRadians * .28, to: -animation.motion.armSwingRadians },
+      yoyo: animation.yoyo ?? true,
+      repeat: Math.max(0, animation.repeat),
+      duration: stepMs,
       ease: 'Sine.InOut',
       onComplete: () => {
         this.interacting = false;
         this.rightArm.setRotation(0);
       },
     });
-    this.scene.tweens.add({ targets: this.accent, alpha: { from: .5, to: 1 }, yoyo: true, repeat: 2, duration: 90 });
+    this.scene.tweens.add({ targets: this.accent, alpha: { from: .5, to: 1 }, yoyo: true, repeat: 2, duration: stepMs * .7 });
+    if (this.sprite) {
+      const totalMs = Math.max(stepMs, animation.frames.length / animation.frameRate * 1000 * (Math.max(0, animation.repeat) + 1));
+      this.scene.time.delayedCall(totalMs, () => { this.interacting = false; });
+    }
+  }
+
+  playReaction(style: 'wave' | 'inspect' | 'startle' = 'wave'): void {
+    if (this.interacting) return;
+    const animation = this.visual.animations.contextual;
+    const stepMs = Math.max(75, 1000 / animation.frameRate);
+    const reach = animation.motion.armSwingRadians * (style === 'startle' ? .72 : style === 'inspect' ? .38 : 1);
+    this.interacting = true;
+    this.playAnimation('contextual', true);
+    this.scene.tweens.killTweensOf([this.leftArm, this.rightArm, this.head]);
+    this.scene.tweens.add({
+      targets: style === 'startle' ? [this.leftArm, this.rightArm] : this.rightArm,
+      rotation: style === 'inspect' ? -.38 : -reach,
+      yoyo: true,
+      repeat: 1,
+      duration: stepMs,
+      ease: 'Sine.InOut',
+      onComplete: () => {
+        this.interacting = false;
+        this.leftArm.setRotation(0);
+        this.rightArm.setRotation(0);
+      },
+    });
   }
 
   playHit(): void {
+    const animation = this.visual.animations.hit;
+    const stepMs = Math.max(55, 1000 / animation.frameRate);
+    this.interacting = true;
+    this.playAnimation('hit', true);
     this.scene.tweens.killTweensOf(this);
     this.scene.tweens.add({
       targets: this,
       angle: { from: -6, to: 6 },
       x: this.x - 12,
       yoyo: true,
-      duration: 90,
-      repeat: 2,
+      duration: stepMs,
+      repeat: Math.max(0, animation.repeat),
       ease: 'Sine.InOut',
-      onComplete: () => this.setAngle(0),
+      onComplete: () => { this.interacting = false; this.setAngle(0); },
     });
   }
 }

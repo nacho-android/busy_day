@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { audio } from '../audio/AudioDirector';
-import { CHARACTERS } from '../data/characters';
+import { CHARACTERS, getVisual, getVisualForSpeaker } from '../data/characters';
 import { LOCATIONS } from '../data/locations';
 import { OBJECTIVES, OPENING_DIALOGUE, objectiveProgress } from '../data/story';
 import { session } from '../state/GameSession';
@@ -13,6 +13,8 @@ import type {
 } from '../types/game';
 
 export type ToastTone = 'info' | 'success' | 'warn' | 'danger';
+
+const assetUrl = (path: string): string => `${import.meta.env.BASE_URL}assets/${path}`;
 
 export interface NearbyPrompt {
   verb: string;
@@ -73,6 +75,7 @@ export class GameUI {
   private touchDodgeQueued = false;
   private keyboardDodgeQueued = false;
   private gamepadDodgeWasDown = false;
+  private gamepadUiButtons = { up: false, down: false, left: false, right: false, accept: false, back: false, start: false };
   private joystickPointer: number | null = null;
   private captionTimer = 0;
   private typewriterTimer = 0;
@@ -185,6 +188,95 @@ export class GameUI {
     this.applySettings();
     this.updateCharacterPicker();
     this.updateOrientation();
+    window.requestAnimationFrame(() => this.pollGamepadUi());
+  }
+
+  private connectedGamepad(): Gamepad | null {
+    let gamepad: Gamepad | null = null;
+    try {
+      gamepad = [...(navigator.getGamepads?.() ?? [])].find((candidate) => candidate?.connected) ?? null;
+    } catch { /* Some privacy modes expose the API but deny enumeration. */ }
+    return gamepad;
+  }
+
+  private pollGamepadUi(): void {
+    const gamepad = this.connectedGamepad();
+    const next = {
+      up: Boolean(gamepad?.buttons[12]?.pressed) || (gamepad?.axes[1] ?? 0) < -.62,
+      down: Boolean(gamepad?.buttons[13]?.pressed) || (gamepad?.axes[1] ?? 0) > .62,
+      left: Boolean(gamepad?.buttons[14]?.pressed) || (gamepad?.axes[0] ?? 0) < -.62,
+      right: Boolean(gamepad?.buttons[15]?.pressed) || (gamepad?.axes[0] ?? 0) > .62,
+      accept: Boolean(gamepad?.buttons[0]?.pressed),
+      back: Boolean(gamepad?.buttons[1]?.pressed),
+      start: Boolean(gamepad?.buttons[9]?.pressed),
+    };
+    const pressed = (key: keyof typeof next): boolean => next[key] && !this.gamepadUiButtons[key];
+    const container = this.gamepadUiContainer();
+    if (container) {
+      if (pressed('up')) this.moveGamepadFocus(container, -1);
+      if (pressed('down')) this.moveGamepadFocus(container, 1);
+      if (pressed('left')) this.adjustGamepadControl(container, -1);
+      if (pressed('right')) this.adjustGamepadControl(container, 1);
+      if (pressed('accept')) this.activateGamepadControl(container);
+      if (pressed('back')) this.gamepadBack();
+    } else if (pressed('start') && this.gameActive) {
+      this.openPause();
+    }
+    this.gamepadUiButtons = next;
+    window.requestAnimationFrame(() => this.pollGamepadUi());
+  }
+
+  private gamepadUiContainer(): HTMLElement | null {
+    const ordered = [this.el.confirm, this.el.dialogue, this.el.settings, this.el.objectivePanel, this.el.pauseMenu, this.el.failure, this.el.ending, this.el.title];
+    return ordered.find((element) => !element.classList.contains('hidden') && element.getAttribute('aria-hidden') !== 'true') ?? null;
+  }
+
+  private gamepadControls(container: HTMLElement): HTMLElement[] {
+    return [...container.querySelectorAll<HTMLElement>('button, input, select')].filter((element) => {
+      if (element.closest('.hidden') || element.hasAttribute('disabled')) return false;
+      return element instanceof HTMLButtonElement || element instanceof HTMLInputElement || element instanceof HTMLSelectElement;
+    });
+  }
+
+  private moveGamepadFocus(container: HTMLElement, direction: -1 | 1): void {
+    const controls = this.gamepadControls(container);
+    if (controls.length === 0) return;
+    const current = controls.indexOf(document.activeElement as HTMLElement);
+    const next = current < 0 ? (direction > 0 ? 0 : controls.length - 1) : (current + direction + controls.length) % controls.length;
+    controls[next]?.focus();
+    audio.playSfx('focus', .35);
+  }
+
+  private adjustGamepadControl(container: HTMLElement, direction: -1 | 1): void {
+    const active = document.activeElement;
+    if (active instanceof HTMLInputElement && active.type === 'range') {
+      if (direction > 0) active.stepUp(); else active.stepDown();
+      active.dispatchEvent(new Event('input', { bubbles: true }));
+      audio.playSfx('focus', .28);
+      return;
+    }
+    if (active instanceof HTMLSelectElement) {
+      active.selectedIndex = Math.max(0, Math.min(active.options.length - 1, active.selectedIndex + direction));
+      active.dispatchEvent(new Event('change', { bubbles: true }));
+      audio.playSfx('focus', .28);
+      return;
+    }
+    this.moveGamepadFocus(container, direction);
+  }
+
+  private activateGamepadControl(container: HTMLElement): void {
+    audio.unlock();
+    const controls = this.gamepadControls(container);
+    const active = document.activeElement;
+    const target = active instanceof HTMLElement && controls.includes(active) ? active : controls[0];
+    if (target instanceof HTMLButtonElement || target instanceof HTMLInputElement) target.click();
+  }
+
+  private gamepadBack(): void {
+    if (!this.el.confirm.classList.contains('hidden')) this.closeConfirmation(false);
+    else if (!this.el.settings.classList.contains('hidden')) this.closeSettings();
+    else if (!this.el.objectivePanel.classList.contains('hidden')) this.closeObjectives();
+    else if (this.blockReasons.has('menu')) this.closePause();
   }
 
   get isBlocking(): boolean {
@@ -285,7 +377,7 @@ export class GameUI {
   }
 
   consumeInput(): InputSnapshot {
-    const gamepad = [...(navigator.getGamepads?.() ?? [])].find((candidate) => candidate?.connected) ?? null;
+    const gamepad = this.connectedGamepad();
     const deadzone = (value: number): number => Math.abs(value) < 0.18 ? 0 : value;
     const padX = deadzone(gamepad?.axes[0] ?? 0);
     const padY = deadzone(gamepad?.axes[1] ?? 0);
@@ -538,9 +630,21 @@ export class GameUI {
 
   private updateCharacterPicker(): void {
     for (const card of this.el.characterCards) {
-      const selected = card.dataset['character'] === this.selectedCharacter;
+      const id = card.dataset['character'];
+      const selected = id === this.selectedCharacter;
       card.classList.toggle('selected', selected);
       card.setAttribute('aria-pressed', String(selected));
+      if (id === 'mel' || id === 'josh') {
+        const portrait = card.querySelector<HTMLElement>('.portrait');
+        const asset = getVisual(id).portrait.asset;
+        if (portrait && asset) {
+          portrait.textContent = '';
+          portrait.style.backgroundImage = `url("${assetUrl(asset.path)}")`;
+          portrait.style.backgroundPosition = 'center';
+          portrait.style.backgroundSize = 'cover';
+          portrait.setAttribute('aria-hidden', 'true');
+        }
+      }
     }
   }
 
@@ -754,8 +858,21 @@ export class GameUI {
     }
     this.stopTypewriter();
     this.el.dialogueSpeaker.textContent = line.speaker;
-    this.el.dialoguePortrait.textContent = line.speaker.trim().charAt(0).toUpperCase() || '?';
-    this.el.dialoguePortrait.dataset['expression'] = line.expression ?? 'neutral';
+    const expression = line.expression ?? 'neutral';
+    const visual = getVisualForSpeaker(line.speaker);
+    const portraitExpression = visual?.portrait.expressions[expression];
+    const portraitAsset = portraitExpression?.asset ?? visual?.portrait.asset;
+    this.el.dialoguePortrait.textContent = portraitAsset ? '' : line.speaker.trim().charAt(0).toUpperCase() || '?';
+    this.el.dialoguePortrait.dataset['expression'] = expression;
+    this.el.dialoguePortrait.dataset['voiceProfile'] = visual?.voice.profile ?? 'unassigned';
+    this.el.dialoguePortrait.style.backgroundImage = portraitAsset
+      ? `url("${assetUrl(portraitAsset.path)}")`
+      : visual
+        ? `linear-gradient(145deg, ${visual.portrait.gradient[0]}, ${visual.portrait.gradient[1]})`
+        : '';
+    this.el.dialoguePortrait.style.backgroundSize = portraitAsset ? 'cover' : '';
+    this.el.dialoguePortrait.style.backgroundPosition = portraitAsset ? 'center' : '';
+    this.el.dialoguePortrait.style.filter = portraitExpression?.cssFilter ?? '';
     this.el.dialoguePortrait.setAttribute('aria-label', `${line.speaker} portrait`);
     this.el.dialogueChoices.replaceChildren();
     this.el.dialogueAdvance.disabled = false;

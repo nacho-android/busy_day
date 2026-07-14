@@ -7,14 +7,16 @@ import { PreloadScene } from './scenes/PreloadScene';
 import { TitleScene } from './scenes/TitleScene';
 import { UIScene } from './scenes/UIScene';
 import { session } from './state/GameSession';
-import type { BusyDayTestApi } from './types/game';
+import type { BusyDayTestApi, LocationId } from './types/game';
 import { ui } from './ui/GameUI';
+import { shouldUseCanvasRenderer } from './utils/rendererPreference';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
+const rendererType = shouldUseCanvasRenderer(navigator.userAgent) ? Phaser.CANVAS : Phaser.AUTO;
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+  type: rendererType,
   parent: 'game',
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
@@ -53,6 +55,7 @@ type TestableLocationScene = Phaser.Scene & {
   teleportToInteraction?: (id: string) => boolean;
   completeCurrentTarget?: () => boolean;
   travelToObjectiveForTest?: () => boolean;
+  prepareExitForTest?: (locationId: LocationId, exitId: string) => boolean;
   approachExitForTest?: (id: string) => 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | null;
 };
 
@@ -70,8 +73,10 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     teleportToInteraction: (id: string) => activeLocationScene()?.teleportToInteraction?.(id) ?? false,
     completeCurrentTarget: () => activeLocationScene()?.completeCurrentTarget?.() ?? false,
     travelToObjective: () => activeLocationScene()?.travelToObjectiveForTest?.() ?? false,
+    prepareExit: (locationId, exitId) => activeLocationScene()?.prepareExitForTest?.(locationId, exitId) ?? false,
     approachExit: (id: string) => activeLocationScene()?.approachExitForTest?.(id) ?? null,
     setMeters: (partial) => session.updateMeters(partial),
+    showDialogue: (lines) => ui.showDialogue(lines),
   } satisfies BusyDayTestApi);
   window.__busyDayTest = testApi;
 }

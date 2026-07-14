@@ -1,9 +1,22 @@
-import type { LocationDefinition, LocationId, NpcPlacement } from '../types/game';
+import type { LocationDefinition, LocationId, NpcAmbientDefinition, NpcPlacement, Point } from '../types/game';
 
 const PERSPECTIVE = { farY: 120, nearY: 650, farScale: 0.78, nearScale: 1.15 } as const;
 const BOUNDS = { x: 55, y: 105, width: 1170, height: 565 } as const;
 
-const npc = (id: string, name: string, role: string, x: number, y: number, line: string, visualId = id): NpcPlacement => ({ id, name, role, x, y, line, visualId });
+const idle = (reaction: NpcAmbientDefinition['reaction'] = 'wave'): NpcAmbientDefinition => ({ mode: 'idle', awarenessRadius: 104, reaction });
+const patrol = (waypoints: readonly Point[], reaction: NpcAmbientDefinition['reaction'] = 'wave', speed = 34): NpcAmbientDefinition => ({
+  mode: 'patrol', waypoints, speed, pauseMs: 1100, awarenessRadius: 112, reaction,
+});
+const npc = (
+  id: string,
+  name: string,
+  role: string,
+  x: number,
+  y: number,
+  line: string,
+  visualId = id,
+  ambient: NpcAmbientDefinition = idle(),
+): NpcPlacement => ({ id, name, role, x, y, line, visualId, ambient });
 
 export const LOCATIONS: Record<LocationId, LocationDefinition> = {
   teaRoom: {
@@ -26,7 +39,7 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'early_coffee', label: 'Coffee machine', verb: 'Use', x: 320, y: 250, radius: 76, optionalLine: 'The machine displays: REWARD LOCKED UNTIL MORALE IMPROVES.', prop: 'coffee' },
     ],
     npcs: [
-      npc('sally', 'Sally', 'Cardiologist', 820, 510, 'Morning. The board is already optimistic. Grab the cart and outrun reality.'),
+      npc('sally', 'Sally', 'Cardiologist', 820, 510, 'Morning. The board is already optimistic. Grab the cart and outrun reality.', 'sally', patrol([{ x: 820, y: 510 }, { x: 1030, y: 510 }])),
       npc('james', 'James', 'PI', 560, 520, 'Leadership update: I am observing with concern and excellent posture.'),
       npc('eddy', 'Eddy', 'PI', 670, 520, 'A smooth afternoon would be nice. Purely as a novelty.'),
       npc('pierre', 'Pierre', 'PI', 770, 520, 'The facility runs on precision, improvisation, and thinly veiled panic.'),
@@ -57,12 +70,13 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'hall_cabinet', x: 930, y: 135, width: 190, height: 95 },
     ],
     interactions: [
+      { id: 'route_console', label: 'Route-control console', verb: 'Operate', x: 640, y: 245, radius: 82, holdMs: 900, requiresFlag: 'boardChecked', missingFlagLine: 'Read Sally’s board before rewriting the building’s idea of where anything lives.', prop: 'machine' },
       { id: 'hall_map', label: 'Facility map', verb: 'Inspect', x: 640, y: 205, radius: 78, optionalLine: 'The YOU ARE HERE arrow has been moved twice and is now expressing uncertainty.', prop: 'board' },
       { id: 'hay_cart', label: 'Hay obstruction', verb: 'Inspect', x: 820, y: 430, radius: 82, optionalLine: 'A mobile haystack is blocking exactly the amount of corridor required by policy.', prop: 'cart' },
     ],
     npcs: [
       npc('ross', 'Ross', 'Welfare', 620, 370, 'Quick question. Have you considered the full philosophical meaning of corridor etiquette?'),
-      npc('dhanya', 'Dhanya', 'Researcher', 260, 375, 'Please tell me the car park situation is a rumour.'),
+      npc('dhanya', 'Dhanya', 'Researcher', 260, 375, 'Please tell me the car park situation is a rumour.', 'dhanya', patrol([{ x: 260, y: 375 }, { x: 340, y: 375 }], 'inspect', 29)),
       npc('poonam', 'Poonam', 'Researcher', 360, 365, 'I just need to leave on time. Which means I absolutely will not.'),
       npc('max', 'Max', 'Researcher', 960, 350, 'I was promised a normal day. I can only assume that was theoretical.'),
       npc('leila', 'Leila', 'Researcher', 1040, 340, 'Everyone is walking faster, which is somehow making the corridor slower.'),
@@ -82,11 +96,12 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'right_cages', x: 1060, y: 330, width: 165, height: 290 },
     ],
     interactions: [
-      { id: 'feed_cart', label: 'Feed cart', verb: 'Pick up', x: 680, y: 370, radius: 95, holdMs: 850, prop: 'cart' },
+      { id: 'feed_cart', label: 'Feed cart', verb: 'Pick up', x: 680, y: 370, radius: 95, holdMs: 850, requiresFlag: 'routesRestored', missingFlagLine: 'The route console still has the feed-store release on administrative lockdown.', prop: 'cart' },
       { id: 'mystery_bin', label: 'Unlabelled feed bin', verb: 'Inspect', x: 940, y: 430, radius: 78, optionalLine: 'The label says OMNIVORE, then appears to have lost confidence halfway through the spelling.', prop: 'misc' },
       { id: 'dinosaur_toy', label: 'Nubbed blue enrichment ball', verb: 'Inspect', x: 1010, y: 430, radius: 70, optionalLine: 'This toy seems wildly over-engineered for every animal on today’s official list.', prop: 'misc' },
     ],
-    npcs: [npc('vu', 'Vu', 'Engineer', 1030, 280, 'One cable is essential. Four cables are suspicious.')],
+    npcs: [npc('vu', 'Vu', 'Engineer', 970, 500, 'One cable is essential. Four cables are suspicious.', 'vu', patrol([{ x: 970, y: 500 }, { x: 850, y: 500 }], 'inspect', 27))],
+    foregroundLayers: [{ id: 'feed-cage-foreground', x: 1060, y: 330, width: 165, height: 290, depth: 835 }],
   },
 
   pigHousing: {
@@ -105,7 +120,11 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'pig_feed_3', label: 'Pig pen three', verb: 'Give', x: 950, y: 390, radius: 82, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'Feed cart first. Pig diplomacy is materially based.', prop: 'animal' },
       { id: 'industrial_fan', label: 'Heroic industrial fan', verb: 'Inspect', x: 650, y: 460, radius: 88, optionalLine: 'The fan turns at one speed: retrospective safety concern.', prop: 'machine' },
     ],
-    npcs: [npc('luther', 'Luther', 'Vet', 930, 470, 'This would all be easier if nobody needed anything at exactly the same minute.')],
+    npcs: [npc('luther', 'Luther', 'Vet', 930, 470, 'This would all be easier if nobody needed anything at exactly the same minute.', 'luther', patrol([{ x: 930, y: 470 }, { x: 850, y: 520 }], 'inspect', 28))],
+    foregroundLayers: [
+      { id: 'pig-left-pens-foreground', x: 55, y: 150, width: 255, height: 470, depth: 835 },
+      { id: 'pig-right-south-foreground', x: 1005, y: 440, width: 160, height: 180, depth: 840 },
+    ],
   },
 
   sheepScales: {
@@ -128,6 +147,10 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'scale_readout', label: 'Scale readout', verb: 'Inspect', x: 500, y: 315, radius: 70, optionalLine: 'The display currently reads: PATIENCE, LOW.', prop: 'machine' },
     ],
     npcs: [npc('shinya', 'Shinya', 'Researcher', 960, 590, 'I calibrated the scale. Emotionally, I am choosing confidence.', 'max')],
+    foregroundLayers: [
+      { id: 'sheep-left-rail-foreground', x: 55, y: 355, width: 210, height: 315, depth: 835 },
+      { id: 'sheep-right-rail-foreground', x: 1030, y: 460, width: 195, height: 210, depth: 845 },
+    ],
   },
 
   baboonWing: {
@@ -143,13 +166,13 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'baboon_feed_1', label: 'Baboon station one', verb: 'Give', x: 250, y: 385, radius: 80, holdMs: 950, requiresFlag: 'hasFeedCart', missingFlagLine: 'The baboon has noticed the absence of food and the presence of audacity.', prop: 'animal' },
       { id: 'baboon_feed_2', label: 'Baboon station two', verb: 'Give', x: 640, y: 385, radius: 80, holdMs: 950, requiresFlag: 'hasFeedCart', missingFlagLine: 'Return with the cart. Calmly.', prop: 'animal' },
       { id: 'baboon_feed_3', label: 'Baboon station three', verb: 'Give', x: 1030, y: 385, radius: 80, holdMs: 950, requiresFlag: 'hasFeedCart', missingFlagLine: 'No feed, no sample, no applause.', prop: 'animal' },
-      { id: 'baboon_sample_1', label: 'Sample point one', verb: 'Use', x: 300, y: 470, radius: 75, holdMs: 1200, prop: 'animal' },
-      { id: 'baboon_sample_2', label: 'Sample point two', verb: 'Use', x: 640, y: 470, radius: 75, holdMs: 1200, prop: 'animal' },
-      { id: 'baboon_sample_3', label: 'Sample point three', verb: 'Use', x: 980, y: 470, radius: 75, holdMs: 1200, prop: 'animal' },
-      { id: 'security_panel', label: 'Security panel', verb: 'Inspect', x: 990, y: 530, radius: 90, optionalLine: 'ACCESS: AUTHORISED. DIGNITY: SITUATIONAL.', prop: 'machine' },
+      { id: 'baboon_sample_1', label: 'Sample point one', verb: 'Use', x: 300, y: 470, radius: 75, holdMs: 1200, requiresFlag: 'wingSecured', missingFlagLine: 'Calibrate the security interlock before opening a sample point.', prop: 'animal' },
+      { id: 'baboon_sample_2', label: 'Sample point two', verb: 'Use', x: 640, y: 470, radius: 75, holdMs: 1200, requiresFlag: 'wingSecured', missingFlagLine: 'The sample hatch is waiting for a green interlock.', prop: 'animal' },
+      { id: 'baboon_sample_3', label: 'Sample point three', verb: 'Use', x: 980, y: 470, radius: 75, holdMs: 1200, requiresFlag: 'wingSecured', missingFlagLine: 'Secure the wing before completing the final sample.', prop: 'animal' },
+      { id: 'security_panel', label: 'Security interlock', verb: 'Operate', x: 990, y: 530, radius: 90, holdMs: 1050, requiresFlag: 'baboonsFed', missingFlagLine: 'The interlock refuses calibration while the feeding stations are still active.', prop: 'machine' },
     ],
     npcs: [
-      npc('dhanya_baboon', 'Dhanya', 'Researcher', 180, 560, 'Three separate samples. Stay calm or the room becomes theatrical.', 'dhanya'),
+      npc('dhanya_baboon', 'Dhanya', 'Researcher', 180, 560, 'Three separate samples. Stay calm or the room becomes theatrical.', 'dhanya', patrol([{ x: 180, y: 560 }, { x: 360, y: 560 }], 'startle', 26)),
       npc('anugra', 'Anugra', 'Cardiologist', 920, 580, 'Everything is fine until transport stalls. Then everyone discovers urgency.'),
     ],
   },
@@ -173,8 +196,12 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'spill_kit', label: 'PC-Definitely-Not-Two spill cabinet', verb: 'Inspect', x: 960, y: 370, radius: 75, optionalLine: 'The cabinet is labelled for every emergency except the one currently happening.', prop: 'misc' },
     ],
     npcs: [
-      npc('alan', 'Alan', 'Vet', 470, 430, 'Prep first, then stay with me for the anaesthetic. Calm hands.'),
+      npc('alan', 'Alan', 'Vet', 470, 430, 'Prep first, then stay with me for the anaesthetic. Calm hands.', 'alan', patrol([{ x: 470, y: 430 }, { x: 630, y: 440 }], 'inspect', 26)),
       npc('luther_prep', 'Luther', 'Vet', 720, 460, 'I have checked the checklist against the other checklist.', 'luther'),
+    ],
+    foregroundLayers: [
+      { id: 'prep-left-table-foreground', x: 55, y: 500, width: 180, height: 170, depth: 835 },
+      { id: 'prep-right-trolley-foreground', x: 1060, y: 460, width: 165, height: 210, depth: 845 },
     ],
   },
 
@@ -188,17 +215,18 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
     ],
     interactions: [
       { id: 'cath_handover', label: 'Cath-lab handover', verb: 'Use', x: 320, y: 450, radius: 95, holdMs: 900, requiresFlag: 'pigWeighed', missingFlagLine: 'The team needs the recorded weight before accepting the trolley.', prop: 'trolley' },
-      { id: 'cath_support', label: 'Cardiac support console', verb: 'Operate', x: 970, y: 345, radius: 105, holdMs: 1600, requiresFlag: 'pigDelivered', missingFlagLine: 'Complete the trolley handover before operating support.', prop: 'machine' },
-      { id: 'heart_monitor', label: 'Monitor bank', verb: 'Inspect', x: 920, y: 315, radius: 72, optionalLine: 'The monitor is displaying a waveform and a tiny icon that appears to be judging the cable management.', prop: 'machine' },
+      { id: 'cath_support', label: 'Cardiac support console', verb: 'Operate', x: 970, y: 345, radius: 105, holdMs: 1600, requiresFlag: 'monitorSynced', missingFlagLine: 'Synchronise the monitor bank before operating procedure support.', prop: 'machine' },
+      { id: 'heart_monitor', label: 'Monitor bank', verb: 'Operate', x: 920, y: 315, radius: 82, holdMs: 1100, requiresFlag: 'pigDelivered', missingFlagLine: 'The monitor can only synchronise after the trolley handover.', prop: 'machine' },
     ],
     npcs: [
-      npc('juan', 'Juan', 'Cardiologist', 340, 520, 'Cath is ready. The rest of the world apparently is not.'),
+      npc('juan', 'Juan', 'Cardiologist', 340, 520, 'Cath is ready. The rest of the world apparently is not.', 'juan', patrol([{ x: 340, y: 520 }, { x: 470, y: 535 }], 'wave', 30)),
       npc('xing', 'Xing', 'Cardiologist', 440, 530, 'I need timing, not drama. Drama remains the backup plan.'),
       npc('sam', 'Sam', 'Physiologist', 780, 520, 'Measurements are ready. The rest of the world apparently is not.'),
       npc('mitch', 'Mitch', 'Physiologist', 860, 545, 'I can help. I can also worry productively, if useful.'),
       npc('tony', 'Tony', 'Engineer', 1080, 430, 'If the monitor flickers again, pretend it is intentional until I get there.'),
       npc('urja', 'Urja', 'Engineer', 1130, 520, 'Engineering update: the thing works, unless observed directly.'),
     ],
+    foregroundLayers: [{ id: 'cath-cart-foreground', x: 860, y: 480, width: 230, height: 120, depth: 840 }],
   },
 
   carPark: {
@@ -246,6 +274,10 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'coffee_steam', label: 'Heroic coffee steam', verb: 'Inspect', x: 780, y: 415, radius: 70, optionalLine: 'For once, the dramatic haze is helping.', prop: 'coffee' },
     ],
     npcs: [npc('juan_final', 'Juan', 'Coffee benefactor', 900, 495, 'You made it. Coffee. No debate.', 'juan')],
+    foregroundLayers: [
+      { id: 'coffee-window-bar-foreground', x: 55, y: 290, width: 300, height: 220, depth: 835 },
+      { id: 'coffee-right-cabinet-foreground', x: 1120, y: 350, width: 105, height: 250, depth: 840 },
+    ],
   },
 };
 

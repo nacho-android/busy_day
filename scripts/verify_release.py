@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 V1_HASH = "A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85"
 V1_BYTES = 168_208
 EXPECTED_REFERENCE_COUNTS = {".jpeg": 38, ".jpg": 4, ".png": 1}
-EXPECTED_MASTERS = {
+EXPECTED_BACKGROUND_MASTERS = {
     "title_master.png",
     "facility_hub_master.png",
     "feed_store_master.png",
@@ -30,6 +30,10 @@ EXPECTED_MASTERS = {
     "car_park_master.png",
     "coffee_shop_master.png",
     "tea_room_master.png",
+}
+EXPECTED_MASTER_DIMENSIONS = {
+    **{name: (1672, 941) for name in EXPECTED_BACKGROUND_MASTERS},
+    "dialogue_portraits_master.png": (2048, 1024),
 }
 EXPECTED_RUNTIME_BACKGROUNDS = {
     "title.webp",
@@ -43,6 +47,16 @@ EXPECTED_RUNTIME_BACKGROUNDS = {
     "car_park.webp",
     "coffee-shop.webp",
     "tea_room.webp",
+}
+EXPECTED_RUNTIME_PORTRAITS = {
+    "mel.webp",
+    "josh.webp",
+    "sally.webp",
+    "juan.webp",
+    "alan.webp",
+    "dhanya.webp",
+    "ross.webp",
+    "wayne.webp",
 }
 REQUIRED_DOCS = {
     "README.md",
@@ -245,31 +259,58 @@ def verify_package(check: Verification) -> None:
 def verify_art(check: Verification) -> None:
     master_dir = ROOT / "art" / "generated-masters"
     background_dir = ROOT / "public" / "assets" / "backgrounds"
+    portrait_dir = ROOT / "public" / "assets" / "portraits"
     masters = {path.name for path in master_dir.glob("*") if path.is_file()}
     backgrounds = {path.name for path in background_dir.glob("*") if path.is_file()}
-    check.require(masters == EXPECTED_MASTERS, "All 11 generated masters exist", f"Master set differs: {sorted(masters)}")
+    portraits = {path.name for path in portrait_dir.glob("*") if path.is_file()}
+    check.require(
+        masters == set(EXPECTED_MASTER_DIMENSIONS),
+        "All generated environment and portrait masters exist",
+        f"Master set differs: {sorted(masters)}",
+    )
     check.require(
         backgrounds == EXPECTED_RUNTIME_BACKGROUNDS,
         "All 11 runtime backgrounds exist",
         f"Runtime background set differs: {sorted(backgrounds)}",
     )
+    check.require(
+        portraits == EXPECTED_RUNTIME_PORTRAITS,
+        "All eight runtime dialogue portraits exist",
+        f"Runtime portrait set differs: {sorted(portraits)}",
+    )
     wrong_dimensions: list[str] = []
-    for name in sorted(EXPECTED_MASTERS):
+    for name, expected in sorted(EXPECTED_MASTER_DIMENSIONS.items()):
         path = master_dir / name
-        if path.exists() and png_dimensions(path) != (1672, 941):
+        if path.exists() and png_dimensions(path) != expected:
             wrong_dimensions.append(f"{name}={png_dimensions(path)}")
     for name in sorted(EXPECTED_RUNTIME_BACKGROUNDS):
         path = background_dir / name
         if path.exists() and webp_dimensions(path) != (1280, 720):
             wrong_dimensions.append(f"{name}={webp_dimensions(path)}")
+    for name in sorted(EXPECTED_RUNTIME_PORTRAITS):
+        path = portrait_dir / name
+        if path.exists() and webp_dimensions(path) != (384, 384):
+            wrong_dimensions.append(f"{name}={webp_dimensions(path)}")
     check.require(not wrong_dimensions, "Generated image dimensions match the manifest", f"Wrong image dimensions: {wrong_dimensions}")
 
-    preload = (ROOT / "src" / "scenes" / "PreloadScene.ts").read_text(encoding="utf-8")
-    loaded = set(re.findall(r"assetUrl\('backgrounds/([^']+)'\)", preload))
+    asset_catalog = (ROOT / "src" / "data" / "assets.ts").read_text(encoding="utf-8")
+    catalogued_backgrounds = set(re.findall(r"'backgrounds/([^']+)'", asset_catalog))
+    catalogued_portraits = set(re.findall(r"'portraits/([^']+)'", asset_catalog))
     check.require(
-        loaded == EXPECTED_RUNTIME_BACKGROUNDS,
-        "The preloader references exactly the 11 runtime backgrounds",
-        f"Preloader background set differs: {sorted(loaded)}",
+        catalogued_backgrounds == EXPECTED_RUNTIME_BACKGROUNDS,
+        "The data asset catalog references exactly the 11 runtime backgrounds",
+        f"Background catalog differs: {sorted(catalogued_backgrounds)}",
+    )
+    check.require(
+        catalogued_portraits == EXPECTED_RUNTIME_PORTRAITS,
+        "The data asset catalog references exactly the eight runtime portraits",
+        f"Portrait catalog differs: {sorted(catalogued_portraits)}",
+    )
+    preload = (ROOT / "src" / "scenes" / "PreloadScene.ts").read_text(encoding="utf-8")
+    check.require(
+        "BACKGROUND_ASSETS" in preload and "CHARACTER_VISUALS" in preload,
+        "The preloader resolves backgrounds and character portraits through data catalogs",
+        "PreloadScene no longer imports both BACKGROUND_ASSETS and CHARACTER_VISUALS",
     )
 
 

@@ -85,6 +85,20 @@ function addThemeDecor(scene: Phaser.Scene, location: LocationDefinition): void 
   }
 }
 
+function addForegroundLayers(scene: Phaser.Scene, location: LocationDefinition): void {
+  if (!location.backgroundKey) return;
+  for (const layer of location.foregroundLayers ?? []) {
+    const textureKey = layer.textureKey ?? location.backgroundKey;
+    scene.add.image(layer.x, layer.y, textureKey)
+      .setName(`foreground:${layer.id}`)
+      .setOrigin(0, 0)
+      .setCrop(layer.x, layer.y, layer.width, layer.height)
+      .setTint(0xdcdcdc)
+      .setAlpha(layer.alpha ?? 1)
+      .setDepth(layer.depth);
+  }
+}
+
 export function renderBackdrop(scene: Phaser.Scene, location: LocationDefinition): void {
   if (location.backgroundKey) {
     scene.add.image(640, 360, location.backgroundKey).setDisplaySize(1280, 720).setDepth(0);
@@ -93,6 +107,7 @@ export function renderBackdrop(scene: Phaser.Scene, location: LocationDefinition
     scene.add.image(640, 360, buildProceduralTexture(scene, location)).setDepth(0);
   }
   addThemeDecor(scene, location);
+  addForegroundLayers(scene, location);
   scene.add.text(78, 127, location.name.toUpperCase(), { fontFamily: 'Chakra Petch, Segoe UI, sans-serif', fontSize: '20px', color: '#d9f5f0', letterSpacing: 2, stroke: '#06101a', strokeThickness: 5 }).setDepth(20);
   scene.add.text(80, 154, location.subtitle, { fontFamily: 'Inter, Segoe UI, sans-serif', fontSize: '11px', color: '#9eb0bb', stroke: '#06101a', strokeThickness: 4 }).setDepth(20);
   for (const exit of location.exits) {

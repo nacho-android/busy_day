@@ -68,8 +68,10 @@ describe('GameSession', () => {
     expect(completeObjective(session).objectiveCompleted).toBe(true);
     expect(session.hasFlag('boardChecked')).toBe(true);
     expect(completeObjective(session).objectiveCompleted).toBe(true);
+    expect(session.hasFlag('routesRestored')).toBe(true);
+    expect(completeObjective(session).objectiveCompleted).toBe(true);
     expect(session.hasFlag('hasFeedCart')).toBe(true);
-    expect(session.run?.checkpointObjectiveIndex).toBe(2);
+    expect(session.run?.checkpointObjectiveIndex).toBe(3);
 
     session.transitionTo('pigHousing', 'fromHall');
     expect(session.interact('pig_feed_1').objectiveCompleted).toBe(false);
@@ -77,9 +79,9 @@ describe('GameSession', () => {
     const finalPig = session.interact('pig_feed_3');
 
     expect(finalPig).toMatchObject({ success: true, objectiveCompleted: true, gameCompleted: false });
-    expect(session.run?.completedObjectives).toEqual(['check_board', 'collect_cart', 'feed_pigs']);
-    expect(session.run?.xp).toBe(46);
-    expect(session.run?.coins).toBe(22);
+    expect(session.run?.completedObjectives).toEqual(['check_board', 'restore_routes', 'collect_cart', 'feed_pigs']);
+    expect(session.run?.xp).toBe(60);
+    expect(session.run?.coins).toBe(29);
     expect(session.run?.level).toBe(2);
     expect(session.currentObjective?.id).toBe('feed_sheep');
   });
@@ -122,9 +124,25 @@ describe('GameSession', () => {
     expect(wayneRun.run?.failure).toBe('wayne');
   });
 
+  it('applies each lead’s authored stress resistance to pressure, not recovery', () => {
+    const mel = new GameSession();
+    mel.newGame('mel');
+    mel.adjustMeters({ stress: 11.3 });
+    expect(mel.run?.meters.stress).toBeCloseTo(11.3);
+
+    storage.clear();
+    const josh = new GameSession();
+    josh.newGame('josh');
+    josh.adjustMeters({ stress: 11.3 });
+    expect(josh.run?.meters.stress).toBeCloseTo(10);
+    josh.adjustMeters({ stress: -4 });
+    expect(josh.run?.meters.stress).toBeCloseTo(6);
+  });
+
   it('routes Continue on a failed run through a safe checkpoint recovery', () => {
     const session = new GameSession();
     session.newGame('mel');
+    completeObjective(session);
     completeObjective(session);
     completeObjective(session);
     session.updateMeters({ health: 0, stress: 88, wayne: 92 });
@@ -133,7 +151,7 @@ describe('GameSession', () => {
 
     expect(continued).toMatchObject({
       failure: null,
-      objectiveIndex: 2,
+      objectiveIndex: 3,
       locationId: 'mainHall',
       meters: { health: 100, stress: 30, wayne: 55 },
     });
@@ -144,13 +162,14 @@ describe('GameSession', () => {
     session.newGame('josh');
     completeObjective(session);
     completeObjective(session);
+    completeObjective(session);
     session.updateMeters({ health: 12, stamina: 4, stress: 82, wayne: 91 });
     session.fail('health');
 
     const retried = session.retryCheckpoint();
 
     expect(retried).toMatchObject({
-      objectiveIndex: 2,
+      objectiveIndex: 3,
       locationId: 'mainHall',
       spawnId: 'fromTea',
       player: { x: 120, y: 270 },
@@ -215,22 +234,23 @@ describe('GameSession', () => {
     completeObjective(session);
     completeObjective(session);
     completeObjective(session);
+    completeObjective(session);
     session.interact('sheep_feed_1');
-    expect(session.run).toMatchObject({ objectiveIndex: 3, xp: 46, coins: 22 });
+    expect(session.run).toMatchObject({ objectiveIndex: 4, xp: 60, coins: 29 });
 
     session.fail('health');
     const retried = session.retryCheckpoint();
 
     expect(retried).toMatchObject({
-      objectiveIndex: 2,
-      completedObjectives: ['check_board', 'collect_cart'],
-      completedTargets: ['shift_board', 'feed_cart'],
-      flags: ['boardChecked', 'hasFeedCart'],
-      xp: 26,
-      coins: 13,
+      objectiveIndex: 3,
+      completedObjectives: ['check_board', 'restore_routes', 'collect_cart'],
+      completedTargets: ['shift_board', 'route_console', 'feed_cart'],
+      flags: ['boardChecked', 'routesRestored', 'hasFeedCart'],
+      xp: 40,
+      coins: 20,
     });
     expect(completeObjective(session).objectiveCompleted).toBe(true);
-    expect(session.run?.completedObjectives).toEqual(['check_board', 'collect_cart', 'feed_pigs']);
-    expect(session.run?.xp).toBe(46);
+    expect(session.run?.completedObjectives).toEqual(['check_board', 'restore_routes', 'collect_cart', 'feed_pigs']);
+    expect(session.run?.xp).toBe(60);
   });
 });

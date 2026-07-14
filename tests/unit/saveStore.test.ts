@@ -87,19 +87,72 @@ describe('save storage and migration', () => {
     });
   });
 
-  it('normalises a legacy-shaped envelope into schema version two', () => {
+  it('normalises a legacy-shaped envelope into the current schema', () => {
     const migrated = parseEnvelope(JSON.stringify({
       schemaVersion: 1,
       settings: { musicVolume: 0.25, textSize: 'large' },
       profile: { bestRank: 'A', bestCoins: -10, completedRuns: 3 },
     }));
 
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
     expect(migrated.settings.musicVolume).toBe(0.25);
     expect(migrated.settings.textSize).toBe('large');
     expect(migrated.settings.sfxVolume).toBe(DEFAULT_SETTINGS.sfxVolume);
     expect(migrated.profile).toEqual({ bestRank: 'A', bestCoins: 0, completedRuns: 3 });
     expect(migrated.activeRun).toBeNull();
+  });
+
+  it('preserves portable preferences but rejects active progress from a future schema', () => {
+    const recovered = parseEnvelope(JSON.stringify({
+      schemaVersion: SCHEMA_VERSION + 1,
+      settings: { ...DEFAULT_SETTINGS, muted: true, textSize: 'large' },
+      profile: { bestRank: 'B', bestCoins: 27, completedRuns: 2 },
+      activeRun: sampleRun(),
+    }));
+
+    expect(recovered.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(recovered.settings).toMatchObject({ muted: true, textSize: 'large' });
+    expect(recovered.profile).toEqual({ bestRank: 'B', bestCoins: 27, completedRuns: 2 });
+    expect(recovered.activeRun).toBeNull();
+  });
+
+  it('migrates schema-two objective indices across inserted V2 complications', () => {
+    const waitingForOldFeedPigs = sampleRun();
+    waitingForOldFeedPigs.objectiveIndex = 2;
+    waitingForOldFeedPigs.completedObjectives = ['check_board', 'collect_cart'];
+    waitingForOldFeedPigs.completedTargets = ['shift_board', 'feed_cart'];
+
+    const migrated = parseEnvelope(JSON.stringify({
+      schemaVersion: 2,
+      settings: DEFAULT_SETTINGS,
+      profile: DEFAULT_PROFILE,
+      activeRun: waitingForOldFeedPigs,
+    }));
+
+    expect(migrated.activeRun).toMatchObject({
+      objectiveIndex: 3,
+      completedObjectives: ['check_board', 'restore_routes', 'collect_cart'],
+      completedTargets: ['shift_board', 'route_console', 'feed_cart'],
+      flags: ['boardChecked', 'routesRestored', 'hasFeedCart'],
+    });
+  });
+
+  it('resumes a schema-two save at a newly inserted prerequisite when appropriate', () => {
+    const waitingForOldCart = sampleRun();
+    waitingForOldCart.objectiveIndex = 1;
+    waitingForOldCart.completedObjectives = ['check_board'];
+    waitingForOldCart.completedTargets = ['shift_board'];
+
+    const migrated = parseEnvelope(JSON.stringify({
+      schemaVersion: 2,
+      settings: DEFAULT_SETTINGS,
+      profile: DEFAULT_PROFILE,
+      activeRun: waitingForOldCart,
+    })).activeRun;
+
+    expect(migrated?.objectiveIndex).toBe(1);
+    expect(OBJECTIVES[migrated?.objectiveIndex ?? -1]?.id).toBe('restore_routes');
+    expect(migrated?.completedObjectives).toEqual(['check_board']);
   });
 
   it('deep-clones active progress when creating an envelope', () => {
@@ -157,10 +210,10 @@ describe('save storage and migration', () => {
 
     expect(recovered).toMatchObject({
       meters: { stamina: CHARACTERS.josh.stats.maxStamina },
-      checkpointObjectiveIndex: 2,
-      completedObjectives: ['check_board', 'collect_cart'],
-      completedTargets: ['shift_board', 'feed_cart'],
-      flags: ['boardChecked', 'hasFeedCart'],
+      checkpointObjectiveIndex: 0,
+      completedObjectives: ['check_board', 'restore_routes'],
+      completedTargets: ['shift_board', 'route_console'],
+      flags: ['boardChecked', 'routesRestored'],
       xp: 26,
       coins: 13,
     });
