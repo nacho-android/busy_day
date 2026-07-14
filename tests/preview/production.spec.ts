@@ -1,4 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function dismissOpeningDialogue(page: Page): Promise<void> {
+  const panel = page.locator('#dialogue-panel');
+  const advance = page.locator('#dialogue-advance');
+  // Starting a location is asynchronous. Wait for the queued opening exchange
+  // instead of sampling visibility once in the gap after New Shift resolves.
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  for (let attempt = 0; attempt < 20 && await panel.isVisible(); attempt += 1) {
+    await advance.click();
+  }
+  await expect(panel).toBeHidden();
+}
 
 test('production bundle starts, moves, persists Continue, loads hashed assets, and omits test hooks', async ({ page }) => {
   test.slow();
@@ -31,11 +43,7 @@ test('production bundle starts, moves, persists Continue, loads hashed assets, a
   await page.locator('#new-game-button').click();
   await expect(page.locator('#hud')).toBeVisible();
   await expect(page.locator('#hud-location')).toHaveText('TEA ROOM');
-  await expect(page.locator('#dialogue-panel')).toBeVisible();
-  for (let attempt = 0; attempt < 8 && await page.locator('#dialogue-panel').isVisible(); attempt += 1) {
-    await page.locator('#dialogue-advance').click();
-  }
-  await expect(page.locator('#dialogue-panel')).toBeHidden();
+  await dismissOpeningDialogue(page);
 
   const holdKey = async (key: 'ArrowDown', duration: number): Promise<void> => {
     await page.keyboard.down(key);
@@ -112,10 +120,7 @@ test('production lazy loading retries transient artwork failures and preserves C
   await page.goto('/');
   await expect(page.locator('#title-screen')).toBeVisible();
   await page.locator('#new-game-button').click();
-  for (let attempt = 0; attempt < 8 && await page.locator('#dialogue-panel').isVisible(); attempt += 1) {
-    await page.locator('#dialogue-advance').click();
-  }
-  await expect(page.locator('#dialogue-panel')).toBeHidden();
+  await dismissOpeningDialogue(page);
 
   await page.addInitScript(() => {
     if (sessionStorage.getItem('busy-day-preview-retry-hall') !== '1') return;
