@@ -34,14 +34,14 @@ EXPECTED_MASTERS = {
 EXPECTED_RUNTIME_BACKGROUNDS = {
     "title.webp",
     "facility_hub.webp",
-    "feed-store.png",
+    "feed-store.webp",
     "pig_housing.webp",
-    "sheep-scales.png",
-    "baboon-wing.png",
-    "procedure-prep.png",
+    "sheep-scales.webp",
+    "baboon-wing.webp",
+    "procedure-prep.webp",
     "cath_lab.webp",
     "car_park.webp",
-    "coffee-shop.png",
+    "coffee-shop.webp",
     "tea_room.webp",
 }
 REQUIRED_DOCS = {
@@ -110,6 +110,28 @@ def png_dimensions(path: Path) -> tuple[int, int]:
     if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
         raise ValueError(f"{path} is not a PNG with an IHDR header")
     return struct.unpack(">II", header[16:24])
+
+
+def webp_dimensions(path: Path) -> tuple[int, int]:
+    data = path.read_bytes()
+    if len(data) < 30 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        raise ValueError(f"{path} is not a WebP RIFF container")
+    chunk = data[12:16]
+    if chunk == b"VP8X":
+        return (1 + int.from_bytes(data[24:27], "little"), 1 + int.from_bytes(data[27:30], "little"))
+    if chunk == b"VP8 ":
+        if data[23:26] != b"\x9d\x01\x2a":
+            raise ValueError(f"{path} has an invalid VP8 frame header")
+        return (
+            int.from_bytes(data[26:28], "little") & 0x3FFF,
+            int.from_bytes(data[28:30], "little") & 0x3FFF,
+        )
+    if chunk == b"VP8L":
+        if data[20] != 0x2F:
+            raise ValueError(f"{path} has an invalid VP8L signature")
+        bits = int.from_bytes(data[21:25], "little")
+        return (1 + (bits & 0x3FFF), 1 + ((bits >> 14) & 0x3FFF))
+    raise ValueError(f"{path} uses an unsupported WebP chunk {chunk!r}")
 
 
 def release_files() -> list[Path]:
@@ -236,11 +258,11 @@ def verify_art(check: Verification) -> None:
         path = master_dir / name
         if path.exists() and png_dimensions(path) != (1672, 941):
             wrong_dimensions.append(f"{name}={png_dimensions(path)}")
-    for name in sorted(item for item in EXPECTED_RUNTIME_BACKGROUNDS if item.endswith(".png")):
+    for name in sorted(EXPECTED_RUNTIME_BACKGROUNDS):
         path = background_dir / name
-        if path.exists() and png_dimensions(path) != (1672, 941):
-            wrong_dimensions.append(f"{name}={png_dimensions(path)}")
-    check.require(not wrong_dimensions, "Generated PNG dimensions match the manifest", f"Wrong PNG dimensions: {wrong_dimensions}")
+        if path.exists() and webp_dimensions(path) != (1280, 720):
+            wrong_dimensions.append(f"{name}={webp_dimensions(path)}")
+    check.require(not wrong_dimensions, "Generated image dimensions match the manifest", f"Wrong image dimensions: {wrong_dimensions}")
 
     preload = (ROOT / "src" / "scenes" / "PreloadScene.ts").read_text(encoding="utf-8")
     loaded = set(re.findall(r"assetUrl\('backgrounds/([^']+)'\)", preload))

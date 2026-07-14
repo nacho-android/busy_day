@@ -4,7 +4,7 @@
 
 V2 is a modular Vite, TypeScript, and Phaser 3 project. The original single-file game remains preserved as `Busy_Day_v1.html`.
 
-> **Development status:** all ten gameplay locations now have integrated generated backplates. The earlier six-art snapshot passed clean-install typecheck, lint, 27 unit tests, production build/preview, and 21/21 Playwright tests across Chromium, Firefox, and WebKit. The five final room backplates were then integrated and visually inspected, but their post-art browser/visual rerun was refused by the platform execution quota. Those five runtime files also remain full-size PNGs pending WebP optimisation. Complete no-shortcut playthroughs, representative-device validation, hosted-path validation, and publication are tracked in [`docs/IMPLEMENTATION_CHECKLIST.md`](docs/IMPLEMENTATION_CHECKLIST.md).
+> **Development status:** all ten rooms use optimized generated WebP backplates. Post-optimization local typecheck, lint, 27/27 unit tests, normal/Pages-path builds, focused reciprocal-exit E2E in all three engines (3/3), and all-room visual QA passed. The previous full final-art Actions run passed non-browser gates but each browser passed 6/7 because of the same now-fixed E2E assertion; its replacement rerun is incomplete, so final-art 21/21 is not claimed. No-shortcut, device, soak, phone-performance, rights, merge, and hosted gates remain in [`docs/IMPLEMENTATION_CHECKLIST.md`](docs/IMPLEMENTATION_CHECKLIST.md).
 
 ![Busy Day V2 title artwork](public/assets/backgrounds/title.webp)
 
@@ -17,14 +17,14 @@ V2 is a modular Vite, TypeScript, and Phaser 3 project. The original single-file
 - Branching Wayne dialogue, Ross and Thanh hazards, health/Wayne failure states, checkpoints, restart, and S–D ending ranks.
 - Versioned local save/continue, settings, profile history, and malformed-save recovery.
 - Responsive DOM interface with keyboard, touch, and gamepad input paths; landscape prompt; safe-area support; captions; larger text; high contrast; reduced motion; handedness; and Relaxed Shift.
-- Eleven original generated retro-noir images: one title and a backplate for every gameplay location. The first six runtime assets are browser-sized WebP; the five final rooms currently use full-size PNG copies pending optimisation.
+- Eleven original generated retro-noir images: one title and a backplate for every gameplay location. All runtime exports are 1280×720 WebP files; their exact combined size is 1,818,586 bytes (1.734 MiB), while all 1672×941 masters remain available for revision.
 - Twenty-six original procedurally synthesized music/SFX files.
 
 The detailed V1 evidence is in [`docs/V1_AUDIT.md`](docs/V1_AUDIT.md). The implementation-aligned design is in [`docs/V2_GAME_DESIGN.md`](docs/V2_GAME_DESIGN.md).
 
 ## Requirements
 
-- Node.js 20.20 or newer
+- Node.js 24 or newer (active LTS)
 - npm 10 or newer (the lockfile was produced with npm 11)
 - A current desktop or mobile browser with Canvas/WebGL, Web Audio, ES2022 modules, and local storage
 
@@ -52,7 +52,7 @@ To run the historical V1, serve the repository with any static HTTP server and o
 | `npm run test:e2e:chromium` | Run only the Chromium Playwright project |
 | `npm run build` | Type-check and create the production bundle in `dist/` |
 | `npm run preview` | Serve `dist/` locally through Vite Preview |
-| `npm run assets:optimize` | Export all 11 PNG masters to 1280×720 WebP files; the five final rooms still require runtime-path switching and integrated validation afterward |
+| `npm run assets:optimize` | Regenerate all 11 browser-ready 1280×720 WebP files from the retained PNG masters |
 
 Playwright browser binaries are not installed by `npm ci`. Before the first E2E run, install the required local browser runtimes:
 
@@ -127,12 +127,13 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for state flow, invariants, a
 
 ## Assets, audio, and rights
 
-- Runtime backplates are in `public/assets/backgrounds/`; all 11 editable generated masters are in `art/generated-masters/`. Six runtime files are optimized WebP, while the five final-room PNG copies still require browser-size WebP conversion and revalidation.
+- Runtime backplates are in `public/assets/backgrounds/`; all 11 are optimized 1280×720 WebP files totaling 1,818,586 bytes (1.734 MiB). All 11 editable 1672×941 PNG masters remain in `art/generated-masters/`.
 - Original audio is in `public/assets/audio/` and can be regenerated deterministically with `scripts/generate_audio.py`.
 - [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) records supplied references, hashes, visual findings, generated-art provenance, and replacement notes.
+- [`docs/REFERENCE_INVENTORY.json`](docs/REFERENCE_INVENTORY.json) is the machine-readable catalogue of the 43 local-only supplied references.
 - [`docs/AUDIO_MANIFEST.md`](docs/AUDIO_MANIFEST.md) records the method, format, duration, loop behaviour, and licence of every audio file.
 
-The supplied photographs and `style_ref.png` are source references, not runtime assets and not automatically licensed for redistribution. Some generated artwork is likeness-derived. Confirm consent and publication rights or replace affected art before a public release. The repository [`LICENSE`](LICENSE) explains the different code, audio, generated-art, and reference-image scopes.
+The supplied photographs and `style_ref.png` are source references, not runtime assets and not automatically licensed for redistribution. They remain only in the local workspace and are intentionally excluded from the published GitHub repository; the manifests retain their catalogue and hashes. Some generated artwork is likeness-derived. Confirm consent and publication rights or replace affected art before a public release. The repository [`LICENSE`](LICENSE) explains the different code, audio, generated-art, and reference-image scopes.
 
 ## Credits and generation notes
 
@@ -153,23 +154,25 @@ npm run build
 npm run preview
 ```
 
-Deploy the contents of `dist/` to a static host. Vite is configured with a relative application base, audio uses `import.meta.env.BASE_URL`, and Vite rewrites processed CSS image URLs, so the built application is designed to work at an origin root or static subpath. Verify the exact final host path with `npm run preview` or an equivalent static server before release.
+Deploy the contents of `dist/` to a static host. Vite uses a relative base by default; audio uses `import.meta.env.BASE_URL`, and Vite rewrites processed CSS image URLs. For this repository's GitHub Pages path, build with `VITE_BASE_PATH=/busy_day/`. Both the normal build and that Pages-path build passed locally after optimization, and the generated HTML/CSS asset URLs were checked beneath `/busy_day/`.
 
-Before the five final room images were integrated, the clean-install bundle passed a local Chromium preview smoke at `127.0.0.1:4180`: title, New Shift, HUD, Tea Room, canvas count, scroll lock, all 12 initial resources, HTTP responses, and console/page errors were checked. This pre-final-art result is local desktop automation, not evidence for the current 11-image payload, a public host, or a physical phone; measured desktop findings and the required rerun are recorded in [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
+The focused reciprocal test passes in Chromium, Firefox, and WebKit after replacing a stale hard-coded Feed Store spawn with data-driven coordinates and making the key assertion cadence-independent. Integrated visual QA captured every room plus the ending without console/page errors; its contact sheet passed HUD, character/target, exit, texture, and blank-room review. `visual-qa/` remains ignored. Full CI rerun, hosted smoke, physical-device, and current-phone evidence are still pending; see [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
 
 Do not deploy `node_modules/`, browser/test reports, local `.env` files, reference photographs without confirmed rights, or browser/session data.
 
-Remote publication is currently blocked in this workspace: the GitHub publish workflow requires local `git` plus an authenticated `gh`, neither command is available, and `.git` contains no usable local history. No branch, commit, push, or pull request is claimed. A release-scope scan identified 102 intended files / 43.34 MiB after exclusions, found no intended file containing the checked high-risk credential/token patterns, excluded all 43 raw references plus `style_ref.png`, and revalidated the preserved V1 hash recorded in the audit. This targeted scan is not a substitute for the final staged-diff and platform secret scan after Git is installed.
+The public project is [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day), branch `agent/busy-day-v2`, with [draft PR #1](https://github.com/nacho-android/busy_day/pull/1) open. The static release verifier reports 107 intended files / 32.71 MiB after exclusions, finds no intended file containing the checked high-risk credential/token patterns, excludes all 43 raw references plus `style_ref.png`, and preserves the V1 hash recorded in the audit. GitHub Pages has been enabled for `main`; `.github/workflows/quality.yml` contains a gated Pages deployment that builds with `VITE_BASE_PATH=/busy_day/` after quality and all three browser jobs pass. It still requires PR merge, a successful `main` run, and hosted smoke validation.
 
 ## Documentation
 
 - [`docs/V1_AUDIT.md`](docs/V1_AUDIT.md) — factual V1 review and preservation hash
 - [`docs/V2_GAME_DESIGN.md`](docs/V2_GAME_DESIGN.md) — implemented V2 design and scope decisions
 - [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) — image catalogue and art provenance
+- [`docs/REFERENCE_INVENTORY.json`](docs/REFERENCE_INVENTORY.json) — machine-readable inventory of excluded local reference files
 - [`docs/AUDIO_MANIFEST.md`](docs/AUDIO_MANIFEST.md) — audio catalogue and provenance
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — runtime and data architecture
 - [`docs/IMPLEMENTATION_CHECKLIST.md`](docs/IMPLEMENTATION_CHECKLIST.md) — evidence-based completion/release gates
 - [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) — genuine remaining limitations and user impact
+- [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) — clean-checkout, validation, publication, and Pages sign-off procedure
 - [`CHANGELOG.md`](CHANGELOG.md) — release history
 
 ## Contributing

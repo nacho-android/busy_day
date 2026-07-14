@@ -33,7 +33,7 @@ flowchart LR
 The registered scene order is:
 
 1. `BootScene` runs `validateWorldGraph()`. Invalid spawns, exits, objective targets, or duplicate IDs stop startup with a readable error.
-2. `PreloadScene` shows DOM loading progress and eagerly loads 11 generated images: six browser-sized WebP files for the title, Tea Room, facility hub, Pig Housing, car park, and cath lab, plus five source-sized PNG files for Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop. A required-image failure stops scene startup.
+2. `PreloadScene` shows DOM loading progress and eagerly loads all 11 generated 1280×720 WebP backgrounds. A required-image failure stops scene startup.
 3. `TitleScene` renders the generated title backplate and hands menus to `GameUI`.
 4. `LocationScene` renders any current location from `RunState`, including backdrop, obstacles, interactions, NPCs, character, collision, movement, hazards, exits, and music.
 5. `UIScene` refreshes the DOM HUD at 10 Hz while the location scene is active.
@@ -58,7 +58,7 @@ Scene transitions update `GameSession` first, then restart `LocationScene` at a 
 
 `validateWorldGraph()` checks duplicate spawn/interaction/objective IDs, spawn bounds and collision occupancy, exit destinations, destination spawns, reciprocal routes, existence of objective locations, and existence of objective interaction IDs. It does not automatically prove that an objective target is in its declared room, that prerequisite flags are ordered, or that whole-room paths are reachable. A separate story audit confirmed all 15 objectives target the declared room and every required flag is granted earlier.
 
-After final-art geometry alignment, a radius-22, 5-pixel-grid audit passed every spawn, target, and exit in the five revised rooms. Reachable components were Feed Store 10,644 cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, and Coffee Shop 13,348. The Feed Store's optional `dinosaur_toy` hotspot was moved before the passing result because its previous position was unreachable. This is a static geometry result, not the still-pending browser movement/visual rerun.
+After final-art geometry alignment, a radius-22, 5-pixel-grid audit passed every spawn, target, and exit in the five revised rooms. Reachable components were Feed Store 10,644 cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, and Coffee Shop 13,348. The Feed Store's optional `dinosaur_toy` hotspot was moved before the passing result because its previous position was unreachable. Integrated all-room visual QA and the focused three-engine reciprocal route now supplement this static result; movement through every remaining exit direction is still pending.
 
 ### Story and objectives
 
@@ -97,9 +97,9 @@ Parsing treats browser data as untrusted. It clamps numeric values, verifies lea
 
 This is direct-input movement, not pathfinding. The implementation has no navmesh, A*, pointer-to-walk, polygon collision, or carried-object footprint. The pig trolley state applies the selected lead's carrying speed factor; it does not attach a separate physical body to the player.
 
-Every current location definition has a generated `backgroundKey`. Six runtime images are 1280×720 WebP files; the five final-room backplates are currently 1672×941 PNG files displayed at 1280×720. `BackdropRenderer` retains deterministic procedural drawing as a fallback for a definition without a background key, but that fallback is not the production presentation for the ten current locations. Interactions, animals, cars, props, NPCs, and the player remain runtime Phaser objects. Perspective scale interpolates from location far/near values, and object depth is based primarily on Y. Dedicated foreground occlusion images are not implemented.
+Every current location definition has a generated `backgroundKey`. All 11 runtime backgrounds are 1280×720 WebP files totaling 1,818,586 bytes (1.734 MiB); all 1672×941 PNG masters remain outside the runtime path. `BackdropRenderer` retains deterministic procedural drawing as a fallback for a definition without a background key, but that fallback is not the production presentation for the ten current locations. Interactions, animals, cars, props, NPCs, and the player remain runtime Phaser objects. Perspective scale interpolates from location far/near values, and object depth is based primarily on Y. Dedicated foreground occlusion images are not implemented.
 
-Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop collision/exit geometry was revised with their final backplates to follow visible doors, counters, cages, scales, rails, carts, and other fixtures. That data/art alignment was authored and the five images were visually inspected, but the final integrated browser collision/visual rerun remains pending.
+Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop collision/exit geometry was revised with their final backplates to follow visible doors, counters, cages, scales, rails, carts, and other fixtures. Static reachability passed for all five. The real Tea Room → Main Hall → Feed Store → Main Hall route now passes in Chromium, Firefox, and WebKit using data-driven spawn coordinates. Integrated visual QA also captured every room plus the ending without console/page errors, and the contact sheet passed review; complete movement traversal of all 18 exit directions remains pending.
 
 ## UI and input ownership
 
@@ -126,21 +126,23 @@ Music is requested by location rather than predecoded at boot. One-shots are ins
 ## Asset pipeline
 
 - Generated PNG masters: `art/generated-masters/`
-- Runtime WebP and PNG backplates: `public/assets/backgrounds/`
+- Runtime WebP backplates: `public/assets/backgrounds/`
 - Deterministic audio generator: `scripts/generate_audio.py`
 - Audio verifier: `scripts/verify_audio.py`
 - WebP export: `scripts/optimize_art.mjs`
 - Per-file provenance: `docs/ASSET_MANIFEST.md` and `docs/AUDIO_MANIFEST.md`
 
-`scripts/optimize_art.mjs` maps all 11 masters to centre-cropped 1280×720 WebP outputs at quality 88 / effort 5. The original six exports exist. The five final-room conversions could not be run because the platform execution quota refused further elevated Node commands, so their production definitions still load byte-identical 1672×941 PNG copies. Those five files add 12,006,717 bytes (11.450 MiB) to the eager image set. Replacing any generated room that changes doors, fixtures, or obstacle silhouettes also requires updating the corresponding `LocationDefinition` geometry.
+`scripts/optimize_art.mjs` maps all 11 retained 1672×941 masters to centre-cropped 1280×720 WebP outputs at quality 88 / effort 5. The five retired runtime PNG copies totaled 12,006,717 bytes; their WebP replacements total 826,446 bytes, saving 11,180,271 bytes. The complete 11-background runtime set is 1,818,586 bytes (1.734 MiB). Replacing any generated room requires regenerating its WebP, and a composition that changes doors, fixtures, or obstacle silhouettes also requires updating the corresponding `LocationDefinition` geometry.
 
 ## Testing boundaries
 
-Vitest runs in Node and covers collision, world validation, save parsing/persistence, objective progression, failure/checkpoint rollback, transitions, and data-driven completion. Playwright is configured for Chromium, Firefox, and WebKit with a Vite development server at port 4174. Before the five final backplates and matching geometry were integrated, the seven-test suite passed in all three engines (21/21 total), covering title/Josh/New Shift/typewriter dialogue, save/Continue, a room-correct test-assisted full story, three real reciprocal transition directions with post-restart keyboard movement, health failure/retry, portrait/landscape state preservation with landscape touch controls, scroll lock, and seven landscape sizes. A final-art integrated visual/cross-browser rerun remains required; attempts to run the elevated Node/Playwright commands were refused by the platform execution quota rather than producing a test result.
+Vitest covers collision, world validation, save/state, objectives, failures/checkpoints, transitions, and data-driven completion. Playwright targets Chromium, Firefox, and WebKit. The earlier six-art suite passed 21/21; that is historical rather than final-art evidence.
 
-A copied publishable source tree from the earlier six-art snapshot passed `npm ci`, typecheck, lint, all 27 unit tests, and `npm run build`. Its `dist/` passed a local Chromium preview smoke at `127.0.0.1:4180`, including title/New Shift/HUD/Tea Room, one canvas, scroll position 0/0, 12 initial resources, no bad HTTP responses, and no captured console/page errors. This evidence predates the five final PNGs and cannot verify the current eager image payload, a published static-host subpath, or a physical mobile device.
+Post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and Pages-path URL inspection passed. The focused real reciprocal route passes in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured ten rooms plus the ending without console/page errors; the inspected contact sheet passed HUD, actor/target, exit, texture, and blank-room review, while `visual-qa/` remains ignored.
 
-A pre-final-art foreground 1366×768 Chromium automation sample on Intel UHD 620/D3D11 measured a 47.4 FPS blank-page baseline with 18.1 ms p95 frame time and 33.3 FPS active Tea Room play with 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The five new PNGs make those transfer/performance figures non-representative of the current payload. They remain diagnostic desktop history, not current-build or representative-phone guarantees.
+The previous full final-art Actions run passed static/audio/type/lint/unit/build gates; each browser passed 6/7 and failed only the now-fixed reciprocal assertion. The replacement full result is unavailable, so final-art 21/21 is not claimed. A Pages job, gated after quality and all browsers on non-PR `main`, builds with `VITE_BASE_PATH=/busy_day/` and deploys `dist/`; merge, its first run, and hosted smoke remain pending.
+
+A pre-final-art foreground 1366×768 Chromium automation sample on Intel UHD 620/D3D11 measured a 47.4 FPS blank-page baseline with 18.1 ms p95 frame time and 33.3 FPS active Tea Room play with 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so the figures remain diagnostic desktop history rather than current-build or representative-phone guarantees; current phone performance and soak measurements are still required.
 
 The validator and unit suite establish data integrity but do not replace a real no-shortcut playthrough. Runtime exit approach, visual layering, touch ergonomics, audio lifecycle, and performance require browser/manual evidence.
 

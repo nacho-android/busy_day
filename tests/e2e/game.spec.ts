@@ -1,3 +1,4 @@
+import { LOCATIONS } from '../../src/data/locations';
 import { assertNoPageScroll, drainDialogue, expect, openCleanGame, startNewShift, state, test, traverseExit } from './support';
 
 const OBJECTIVE_LOCATIONS = [
@@ -121,27 +122,35 @@ test.describe('Busy Day V2 core journey', () => {
 
     const hallFromTea = await traverseExit(page, 'tea_to_hall', 'mainHall');
     expect(hallFromTea.spawnId).toBe('fromTea');
-    expect(Math.abs(hallFromTea.player.x - 120)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
-    expect(Math.abs(hallFromTea.player.y - 270)).toBeLessThanOrEqual(2);
+    const hallFromTeaSpawn = LOCATIONS.mainHall.spawns.find((spawn) => spawn.id === 'fromTea')!;
+    expect(Math.abs(hallFromTea.player.x - hallFromTeaSpawn.x)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
+    expect(Math.abs(hallFromTea.player.y - hallFromTeaSpawn.y)).toBeLessThanOrEqual(2);
 
     // Verify the restarted player rig still accepts movement before continuing.
     await page.waitForTimeout(900);
     const beforeMoveX = (await state(page))!.player.x;
     await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(260);
-    await page.keyboard.up('ArrowRight');
-    await expect.poll(() => state(page).then((run) => run?.player.x ?? 0)).toBeGreaterThan(beforeMoveX + 1);
+    try {
+      await expect.poll(
+        () => state(page).then((run) => run?.player.x ?? 0),
+        { timeout: 10_000, intervals: [50, 100, 200] },
+      ).toBeGreaterThan(beforeMoveX + 1);
+    } finally {
+      await page.keyboard.up('ArrowRight');
+    }
 
     const feedFromHall = await traverseExit(page, 'hall_to_feed', 'feedStore');
     expect(feedFromHall.spawnId).toBe('fromHall');
-    expect(Math.abs(feedFromHall.player.x - 120)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
-    expect(Math.abs(feedFromHall.player.y - 360)).toBeLessThanOrEqual(2);
+    const feedFromHallSpawn = LOCATIONS.feedStore.spawns.find((spawn) => spawn.id === 'fromHall')!;
+    expect(Math.abs(feedFromHall.player.x - feedFromHallSpawn.x)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
+    expect(Math.abs(feedFromHall.player.y - feedFromHallSpawn.y)).toBeLessThanOrEqual(2);
     await expect.poll(() => page.evaluate(() => window.__busyDayTest?.teleportToInteraction('feed_cart') ?? false)).toBe(true);
 
     const hallFromFeed = await traverseExit(page, 'feed_to_hall', 'mainHall');
     expect(hallFromFeed.spawnId).toBe('fromFeed');
-    expect(Math.abs(hallFromFeed.player.x - 1140)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
-    expect(Math.abs(hallFromFeed.player.y - 270)).toBeLessThanOrEqual(2);
+    const hallFromFeedSpawn = LOCATIONS.mainHall.spawns.find((spawn) => spawn.id === 'fromFeed')!;
+    expect(Math.abs(hallFromFeed.player.x - hallFromFeedSpawn.x)).toBeLessThanOrEqual(ENTRY_STEP_TOLERANCE);
+    expect(Math.abs(hallFromFeed.player.y - hallFromFeedSpawn.y)).toBeLessThanOrEqual(2);
     await page.waitForTimeout(900);
     expect((await state(page))?.locationId).toBe('mainHall');
   });

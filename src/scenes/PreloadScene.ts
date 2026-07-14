@@ -49,11 +49,11 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('cathLab', assetUrl('backgrounds/cath_lab.webp'));
     this.load.image('teaRoom', assetUrl('backgrounds/tea_room.webp'));
     this.load.image('pigHousing', assetUrl('backgrounds/pig_housing.webp'));
-    this.load.image('feedStore', assetUrl('backgrounds/feed-store.png'));
-    this.load.image('sheepScales', assetUrl('backgrounds/sheep-scales.png'));
-    this.load.image('baboonWing', assetUrl('backgrounds/baboon-wing.png'));
-    this.load.image('prepRoom', assetUrl('backgrounds/procedure-prep.png'));
-    this.load.image('coffeeShop', assetUrl('backgrounds/coffee-shop.png'));
+    this.load.image('feedStore', assetUrl('backgrounds/feed-store.webp'));
+    this.load.image('sheepScales', assetUrl('backgrounds/sheep-scales.webp'));
+    this.load.image('baboonWing', assetUrl('backgrounds/baboon-wing.webp'));
+    this.load.image('prepRoom', assetUrl('backgrounds/procedure-prep.webp'));
+    this.load.image('coffeeShop', assetUrl('backgrounds/coffee-shop.webp'));
   }
 
   create(): void {

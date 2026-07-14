@@ -32,7 +32,7 @@ The shared aesthetic is an original retro-noir animal facility: high three-quart
 The current build combines:
 
 - 11 generated 3D-rendered backplates: the title plus all ten gameplay locations;
-- six browser-sized WebP runtime images and five final-room 1672×941 PNG runtime copies pending WebP optimisation;
+- 11 browser-sized 1280×720 WebP runtime images totaling 1,818,586 bytes (1.734 MiB), with every 1672×941 PNG master retained;
 - runtime vector characters, animals, vehicles, props, markers, and ambient motion;
 - perspective scale and Y-based depth so actors become larger toward the foreground;
 - generated art used as backplates only, without placing unedited reference photographs in the game.
@@ -82,7 +82,7 @@ flowchart LR
 
 Every exit targets a named spawn in the destination. Main Hall → Car Park requires `procedureComplete`; Procedure Prep → Cath Lab requires `hasTrolley`; Car Park → Coffee Shop requires `carParkClear`.
 
-After the five final backplates were integrated, their collision/exit geometry was realigned to visible fixtures. A radius-22, 5-pixel-grid audit then reached every spawn, target, and exit in Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop; the optional Feed Store enrichment-ball hotspot was moved before the passing result because its first art-aligned coordinate was unreachable. Browser movement/visual confirmation remains separate and pending.
+After the five final backplates were integrated, their collision/exit geometry was realigned to visible fixtures. A radius-22, 5-pixel-grid audit then reached every spawn, target, and exit in Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop; the optional Feed Store enrichment-ball hotspot was moved before the passing result because its first art-aligned coordinate was unreachable. Integrated all-room visual QA and the focused three-engine reciprocal route now supplement that static evidence; movement through all remaining exit directions is still pending.
 
 ## Story and objective route
 
@@ -202,11 +202,11 @@ The pack is deterministic procedural synthesis with no recordings or sample libr
 
 ## Performance design
 
-The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The core preloader currently loads all 11 generated images: six 1280×720 WebP files and five byte-identical 1672×941 PNG master copies totaling 12,006,717 bytes (11.450 MiB) by themselves. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
+The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The core preloader loads all 11 generated 1280×720 WebP images, totaling 1,818,586 bytes (1.734 MiB). Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 master remains available outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
 
-In the earlier six-art snapshot, a copied publishable source tree passed `npm ci`, post-hardening strict typecheck, ESLint, 27 unit tests across four files, and the production build. That build emitted 10.53 kB HTML, 17.78 kB CSS (5.05 kB gzip), and 1,303.01 kB JavaScript (352.27 kB gzip). Its local production preview passed title/New Shift/HUD/Tea Room, resource/HTTP, canvas, scroll, and console/page-error checks. Those build/preview findings predate the five final PNG assets.
+After optimization, local strict typecheck, ESLint, 27 unit tests across four files, the normal Vite production build, and a `VITE_BASE_PATH=/busy_day/` Pages-path build passed. The generated HTML/CSS asset URLs were inspected beneath `/busy_day/`. The earlier copied clean-install snapshot and production preview remain useful historical evidence, but do not replace a current hosted smoke or physical-device run.
 
-That pre-final-art foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured 47.4 FPS / 18.1 ms p95 for a blank-page baseline and 33.3 FPS / 36.1 ms p95 in the active Tea Room. A prior same-condition sample reported a 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The five PNGs make the navigation/transfer sample non-representative of the latest payload. Current-payload and mid-range-phone frame rate, decoded texture/audio memory, long-session growth, transitions, and hosted latency remain unmeasured.
+That pre-final-art foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured 47.4 FPS / 18.1 ms p95 for a blank-page baseline and 33.3 FPS / 36.1 ms p95 in the active Tea Room. A prior same-condition sample reported a 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so current-payload and mid-range-phone frame rate, decoded texture/audio memory, long-session growth, transitions, and hosted latency remain unmeasured.
 
 ## Implemented acceptance and deferred scope
 
@@ -217,25 +217,17 @@ Implemented in source/data:
 - collision, perspective, transition locks, interactions, dialogue, objectives, hazards, failures, recovery, save/settings, touch/orientation, original artwork, and original audio;
 - strict types, lint, unit tests, and production build.
 
-Verified in browser automation before the five final backplates were integrated:
+The pre-final-art three-engine suite passed 21/21, including test-assisted story completion, a real reciprocal route, save/failure/orientation flows, scroll lock, and seven viewports. It remains historical evidence. The previous final-art Actions run passed static/audio/type/lint/unit/build gates but each browser passed 6/7 on one stale Feed Store spawn assertion. Its data-driven, cadence-independent replacement passes the focused route in all engines (3/3); the full rerun is incomplete, so final-art 21/21 is not claimed.
 
-- Playwright Chromium 149.0.7827.55: 7/7 tests pass in 5.7 minutes with no captured console/page errors;
-- Playwright Firefox: 7/7 tests pass in 1.6 minutes with no captured console/page errors;
-- Playwright WebKit: 7/7 tests pass in 5.0 minutes (304.6 seconds) with no captured console/page errors;
-- room-correct test-assisted completion of all 28 targets/15 objectives and ending;
-- real Tea Room → Main Hall → Feed Store → Main Hall transitions/spawns and post-restart movement;
-- save/reload/Continue, health failure/retry, portrait/landscape state preservation with landscape touch controls, scroll lock, and seven landscape sizes.
-
-The preserved result is 21/21 tests across three engines. It is pre-final-art evidence: the five new room images and realigned geometry were subsequently integrated and visually inspected, but elevated Node/Playwright reruns were refused by the platform execution quota.
+Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 
 Still required before a release claim:
 
 - broader no-shortcut functional, public-input, and visual viewport execution;
 - complete manual runs for Mel and Josh without test shortcuts;
 - representative real touch device and gamepad checks;
-- full visual/audio/performance/console/soak review;
-- browser-size WebP exports for the five final rooms and a post-art integrated build/visual/cross-browser rerun;
-- published deployment-path and publication evidence.
+- complete audio/performance/console/soak review beyond the accepted checkpoint captures;
+- completion of the replacement full GitHub Actions run, PR review/merge, the gated `main` Pages deployment, and hosted smoke evidence.
 
 Deferred rather than silently claimed:
 
@@ -243,7 +235,7 @@ Deferred rather than silently claimed:
 - Wrong Century side objective/dinosaur gameplay;
 - pointer-to-walk and navigation pathfinding;
 - physical carried-object bodies and a spatial car puzzle;
-- foreground occlusion layers, sprite atlases, full portrait sets, and browser-optimised exports for the five final backplates;
+- foreground occlusion layers, sprite atlases, and full portrait sets;
 - NPC schedules/patrols and optional objective chains;
 - independent ambience/UI gain buses and compressed audio mirrors.
 

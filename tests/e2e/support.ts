@@ -96,6 +96,9 @@ export async function traverseExit(page: Page, exitId: string, destination: Loca
     await page.keyboard.up(key!);
   }
 
+  // Observe at least a few destination frames after releasing the crossing
+  // direction so carried input cannot hide behind the location-state change.
+  await page.waitForTimeout(100);
   const arrived = await state(page);
   expect(arrived).not.toBeNull();
   expect(arrived!.locationId).toBe(destination);

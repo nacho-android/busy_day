@@ -9,10 +9,10 @@
 - [x] Create `docs/V1_AUDIT.md` from the actual V1 file.
 - [x] Record V1 baseline: 168,208 bytes, 4,315 lines, SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
 - [x] Recheck that hash during the 2026-07-14 documentation pass; it still matches.
-- [ ] Recheck the V1 hash immediately before final commit/push.
+- [x] Recheck the V1 hash before the current published branch/PR; it remained unchanged.
 - [x] Count and inspect the actual supplied image set: 43 files (38 `.jpeg`, 4 `.jpg`, 1 `.png`; 15.23 MiB).
 - [x] Catalogue every reference with filename, dimensions, size, hash, visible subject/location/prop, uncertainty, privacy/brand concerns, and proposed use in `docs/ASSET_MANIFEST.md`.
-- [x] Preserve supplied references at the repository root without deleting or replacing them.
+- [x] Preserve supplied references in the local workspace root without deleting or replacing them; exclude them from the published repository and catalogue them in `docs/REFERENCE_INVENTORY.json`.
 - [x] Create the initial design and keep this checklist evidence-based.
 
 ## 2. Repository and project foundation
@@ -27,8 +27,8 @@
 - [x] Add `.gitignore` coverage for dependencies, builds, coverage, Playwright output, Vite cache, environment files, logs, local files, and screenshots.
 - [x] Add development, typecheck, lint, unit, E2E, build, preview, and art-export scripts.
 - [x] Organise `src/`, `public/assets/`, `art/`, `scripts/`, `tests/`, and `docs/`.
-- [ ] Add a CI workflow or make an explicit repository-level decision not to use CI.
-- [ ] Establish final branch/commit history and repository remote without overwriting unrelated history.
+- [x] Add GitHub Actions quality/browser jobs plus a gated Pages deployment for successful non-PR `main` runs using `VITE_BASE_PATH=/busy_day/`.
+- [x] Establish repository remote and branch `agent/busy-day-v2` without overwriting unrelated history.
 
 ## 3. Architecture and data integrity
 
@@ -80,22 +80,22 @@
 
 | Location | Purpose present | Reciprocal route data valid | Final generated backplate | Post-final-art runtime browser pass |
 | --- | :---: | :---: | :---: | :---: |
-| Tea Room | [x] | [x] | [x] | [ ] rerun pending |
-| Main Hallway | [x] | [x] | [x] | [ ] rerun pending |
-| Feed Store | [x] | [x] | [x] | [ ] rerun pending |
-| Pig Housing | [x] | [x] | [x] | [ ] rerun pending |
-| Sheep & Scales | [x] | [x] | [x] | [ ] rerun pending |
-| Baboon Wing | [x] | [x] | [x] | [ ] rerun pending |
-| Procedure Prep | [x] | [x] | [x] | [ ] rerun pending |
-| Cath Lab | [x] | [x] | [x] | [ ] rerun pending |
-| Car Park | [x] | [x] | [x] | [ ] rerun pending |
-| Coffee Shop | [x] | [x] | [x] | [ ] rerun pending |
+| Tea Room | [x] | [x] | [x] | [x] visual QA |
+| Main Hallway | [x] | [x] | [x] | [x] visual QA |
+| Feed Store | [x] | [x] | [x] | [x] visual QA + route |
+| Pig Housing | [x] | [x] | [x] | [x] visual QA |
+| Sheep & Scales | [x] | [x] | [x] | [x] visual QA |
+| Baboon Wing | [x] | [x] | [x] | [x] visual QA |
+| Procedure Prep | [x] | [x] | [x] | [x] visual QA |
+| Cath Lab | [x] | [x] | [x] | [x] visual QA |
+| Car Park | [x] | [x] | [x] | [x] visual QA |
+| Coffee Shop | [x] | [x] | [x] | [x] visual QA |
 
 - [x] All ten locations contain required, narrative, or optional interactions; none exists only to inflate screen count.
 - [x] Locked Main Hall → Car Park, Prep → Cath, and Car Park → Coffee routes explain their required flags.
 - [x] Current world graph has 18 exit definitions forming nine reciprocal route pairs.
 - [ ] Traverse all 18 exit directions at runtime and assert destination position/facing.
-- [x] Verify every target/exit approach remains statically reachable around the five revised final-art room geometries; runtime browser confirmation remains pending.
+- [x] Verify every target/exit approach remains statically reachable around the five revised final-art room geometries; all rooms render in integrated visual QA, while complete movement traversal of all exits remains pending.
 
 ## 6. Movement, collision, animation, and transitions
 
@@ -140,16 +140,16 @@
 
 ## 8. Artwork and visual production
 
-- [x] Retain 11 generated PNG masters in `art/generated-masters/`.
-- [x] Retain the original six 1280×720 WebP runtime images at quality 88 / effort 5.
-- [x] Add byte-identical 1672×941 PNG runtime copies for Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop.
+- [x] Retain all 11 generated 1672×941 PNG masters in `art/generated-masters/`.
+- [x] Export all 11 runtime backgrounds as 1280×720 WebP at quality 88 / effort 5; exact total 1,818,586 bytes (1.734 MiB).
+- [x] Retire the five 1672×941 runtime PNG copies, formerly 12,006,717 bytes; their WebP replacements save 11,180,271 bytes.
 - [x] Integrate generated title art and a generated backplate for every gameplay location through data background keys.
 - [x] Keep unedited supplied photographs out of the runtime.
-- [x] Visually inspect all 11 generated masters and their runtime outputs as image files.
+- [x] Visually inspect all 11 generated masters and accept an integrated 11-checkpoint contact sheet covering all ten runtime rooms plus the ending.
 - [x] Record provenance, dimensions, format/compression state, visual findings, and replacement notes for all 11 generated assets.
 - [x] Generate and integrate final backplates for the former five procedural gameplay rooms.
 - [x] Realign those five locations' collision and exit geometry to visible fixtures.
-- [ ] Export browser-sized WebP files for the five final rooms, switch runtime paths, and rerun integrated visual/runtime-collision/browser checks; the first attempt was blocked by platform execution quota.
+- [x] Export browser-sized WebP files for the five final rooms, switch runtime paths, pass both production builds, and complete integrated all-room visual QA plus the focused three-engine reciprocal route.
 - [ ] Generate/approve final lead/NPC sprite atlases and dialogue portraits, or explicitly approve the procedural vector character style.
 - [ ] Generate/approve dedicated foreground layers, transition/loading art, ending art, and full prop/VFX/icon set.
 - [ ] Visually inspect every final runtime room, character, prop, effect, and depth relationship in motion.
@@ -213,9 +213,9 @@
 - [x] `npm run lint` passed on the earlier six-art snapshot after including the Node global used by the art optimizer.
 - [x] `npm test` passed after runtime hardening on that snapshot: 27 tests across four test files.
 - [x] Unit coverage includes collision, world graph, save/state, both failures, checkpoint rollback, transition reload, and the full data-driven completion path.
-- [x] Rerun `npm run build` after runtime/save hardening and character polish: the pre-final-art clean copied-source build passed.
+- [x] Rerun strict typecheck, ESLint, 27/27 unit tests, and the normal Vite build after final-art optimization: all passed locally.
 - [x] Chrome visual inspection covered the title, lead selection/New Shift, opening dialogue/typewriter/advance, HUD, and Tea Room gameplay.
-- [x] All 11 generated masters/runtime files were opened and visually inspected; the five final rooms have not yet received an integrated browser visual pass.
+- [x] Capture all ten rooms plus the ending as 11 unique integrated visual-QA checkpoints with zero captured console/page errors; inspect and accept the contact sheet for HUD, characters/targets, exits, textures, and no blank rooms.
 
 ### Browser evidence and remaining release matrix
 
@@ -226,14 +226,15 @@
 - [x] Run the pre-final-art Chromium suite to completion: 7/7 pass in 5.7 minutes on Chromium 149.0.7827.55.
 - [x] Run the pre-final-art Firefox suite to completion: 7/7 pass in 1.6 minutes with zero captured console/page errors.
 - [x] Run the pre-final-art WebKit suite to completion: 7/7 pass in 5.0 minutes (304.6 seconds) with zero captured console/page errors.
-- [ ] Rerun all 21 Playwright cases after the five final backplates/geometry changes; elevated execution was refused by platform quota.
-- [x] Verify post-transition keyboard movement in the Chromium reciprocal-exit test.
+- [x] Record the previous full final-art Actions result exactly: static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7 and failed only the now-fixed stale reciprocal-exit assertion.
+- [ ] Complete the replacement full GitHub Actions rerun; do not infer final-art 21/21 from the focused fix verification.
+- [x] Verify post-transition keyboard movement in the reciprocal-exit test across Chromium, Firefox, and WebKit with a cadence-independent assertion.
 - [ ] Add/execute broader public-input sprint/dodge/hold interaction tests.
-- [x] Execute three physical reciprocal-exit directions and assert destination spawn/location in Chromium.
+- [x] Execute the Tea Room → Main Hall → Feed Store → Main Hall reciprocal route and assert data-driven destination spawn/location in Chromium, Firefox, and WebKit (3/3 focused runs).
 - [ ] Execute the remaining 15 exit directions and their destination spawn/facing.
 - [x] Execute health failure/retry and save/reload/Continue in Chromium.
 - [ ] Add/execute Wayne failure/retry, pause/restart/reset, settings/audio persistence, and representative barrier tests.
-- [ ] Inspect automated screenshots rather than relying only on assertions.
+- [x] Inspect the assembled 11-checkpoint visual-QA contact sheet rather than relying only on assertions; keep `visual-qa/` ignored and unpublished.
 
 ### Manual/quality gates
 
@@ -247,8 +248,8 @@
 ## 13. Performance and production verification
 
 - [x] Show loading progress and stop with a readable error if a required image fails.
-- [x] Use compressed WebP for the original six generated runtime backplates.
-- [ ] Convert the five final full-size PNG runtime backplates to browser-sized WebP.
+- [x] Use compressed 1280×720 WebP for all 11 generated runtime backgrounds; total 1,818,586 bytes (1.734 MiB).
+- [x] Convert the five final full-size runtime PNG copies to WebP, saving 11,180,271 bytes from their former 12,006,717-byte total.
 - [x] Request music by cue rather than decoding all WAV loops in the Phaser preloader.
 - [x] Clear scene-local prop/NPC maps during scene shutdown.
 - [x] Measure a pre-final-art local desktop first navigation, active frame time, and JavaScript heap sample; clearly retain its historical desktop-automation scope.
@@ -258,7 +259,8 @@
 - [ ] Decide whether route-level lazy assets, texture unloading, DPR caps, or compressed audio are required from measurements.
 - [x] Run an earlier six-art copied publishable-source clean-directory `npm ci` followed by typecheck, lint, unit, and build; cross-browser E2E was validated separately in the primary working tree.
 - [x] Serve that pre-final-art clean-install `dist/` locally and verify title, New Shift, HUD/Tea Room, one canvas, scroll lock, all 12 initial resources, HTTP responses, and console/page errors.
-- [ ] Repeat clean install/build/preview after final-art optimisation and integration.
+- [x] Pass post-optimization local strict typecheck, ESLint, 27/27 unit tests, the normal Vite build, and a `/busy_day/` Pages-path Vite build; inspect the generated HTML/CSS URLs beneath `/busy_day/`.
+- [ ] Repeat the post-optimization gates from a fresh clean install and complete a current production-preview smoke.
 - [ ] Verify Continue, audio, and relative asset paths beneath the eventual published host/subpath.
 
 ## 14. Documentation and licensing
@@ -271,19 +273,23 @@
 - [x] `LICENSE` applies MIT to original code/docs, preserves audio CC0, and excludes supplied/likeness-derived assets pending rights confirmation.
 - [x] `docs/AUDIO_MANIFEST.md` documents all 26 audio files and generator/verification method.
 - [x] Complete `docs/ASSET_MANIFEST.md` for the current 43 references and 11 generated master/runtime pairs.
+- [x] Publish `docs/REFERENCE_INVENTORY.json` while keeping the 43 raw reference files and `style_ref.png` local-only.
 - [x] Record the current local desktop performance sample with explicit device/evidence limits.
-- [ ] Add final repository branch, commit SHA, PR/deployment URL, and publication result after they exist.
+- [x] Record the public repository, published branch, and draft PR details without presenting a superseded commit as current.
+- [x] Record the previous full final-art Actions result and the gated Pages workflow configuration.
+- [ ] Add the replacement full Actions result, merged commit, deployment URL, and hosted smoke evidence after they exist.
 
 ## 15. Repository publication
 
-- [x] Build an intended release scope after exclusions: 102 files / 43.34 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, and `style_ref.png`.
+- [x] Verify the intended release scope after exclusions: 107 files / 32.71 MiB; exclude dependencies, builds, reports, caches, session data, all 43 raw references, `style_ref.png`, and ignored visual-QA captures.
 - [x] Scan intended release-file contents for selected high-risk credential/token patterns: zero matching files. This targeted check is not an exhaustive credential scanner.
 - [x] Exclude supplied source references from publication because redistribution rights are undocumented.
-- [ ] Create intentional incremental commits without force-pushing unrelated history.
-- [ ] Push the final branch to `nacho-android/busy_day`.
-- [ ] Open/update a pull request with summary, test evidence, screenshots, limitations, and rights caveats.
-- [ ] Record branch, commit SHA, push result, and PR URL in the completion report.
-- [x] Record exact blocker: local `git` and authenticated `gh` commands are unavailable, and `.git` has no usable local history; no branch/commit/push/PR exists.
+- [x] Create intentional commits without force-pushing unrelated history.
+- [x] Push branch `agent/busy-day-v2` to `nacho-android/busy_day`.
+- [x] Open draft PR #1 with summary, test evidence, limitations, and rights caveats.
+- [x] Record the draft PR URL without labelling an earlier commit as current.
+- [x] Add a gated Pages Actions deployment for successful non-PR `main` runs with `VITE_BASE_PATH=/busy_day/`.
+- [ ] Complete the replacement full Actions rerun, review/merge the draft PR, run the gated Pages job on `main`, and record hosted smoke evidence.
 
 ## 16. Non-negotiable release gates
 
@@ -297,9 +303,10 @@
 - [ ] Touch, orientation, viewports, accessibility options, and gamepad paths are validated in representative environments.
 - [ ] Final-art Chromium, Firefox, and WebKit suites pass with no captured `console.error` or page errors; the preserved pre-art result is 21/21.
 - [ ] Visual, audio, and performance passes are complete with measured findings.
-- [ ] Final-art clean-install typecheck, lint, unit, and production build succeed; the pre-art snapshot passed.
+- [x] Post-optimization local strict typecheck, lint, 27/27 unit tests, normal build, and `/busy_day/` build succeed.
+- [ ] Repeat the final-art static/unit/build gates from a clean installation.
 - [ ] Final-art clean production bundle passes a local preview smoke; the pre-art snapshot passed.
-- [x] Repository is pushed/PR'd, or an exact unavoidable publication blocker is recorded: missing `git`/authenticated `gh` commands and unusable local history.
+- [x] Repository branch is pushed and draft PR #1 is open.
 
 ## Verification log
 
@@ -321,15 +328,21 @@
 | 2026-07-14 | Pre-final-art Chromium physical transition subset | Pass — Tea → Hall → Feed → Hall spawns and post-restart keyboard movement |
 | 2026-07-14 | Pre-final-art Chromium responsive matrix | Pass — 667×375, 932×430, 915×412, 1024×768, 1366×768, 1920×1080, 2560×1080; portrait state, landscape touch controls, and scroll lock |
 | 2026-07-13 | Chrome visual/manual smoke | Title, New Shift, opening dialogue, and Tea Room inspected; not a complete run |
-| 2026-07-13/14 | Generated-art file inspection | All 11 masters/runtime files inspected; final five are identical 1672×941 PNG copies, not WebP |
+| 2026-07-13/14 | Generated-art file inspection | All 11 source-quality 1672×941 PNG masters retained and inspected; every runtime background is now a 1280×720 WebP |
 | 2026-07-14 | Final-room art integration | Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop background keys integrated; collision/exit geometry realigned to visible fixtures |
 | 2026-07-13 | `scripts/verify_audio.py` | Pass for 26 WAV files / 4.99 MiB; format/level/loop-edge checks |
 | 2026-07-14 | V1 SHA-256 recheck | Match — `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85` |
 | 2026-07-14 | Car-park collision/reachability audit | Pass — 13,975-cell initial component; both exits and six hotspots reachable with radius 20/22; every completion state remains connected |
 | 2026-07-14 | Pre-final-art production-data reachability/story audit | Pass — ten rooms, 19 spawns, all required targets/exits reachable at 5-pixel grid; target rooms and prerequisite flag order coherent before five-room geometry revision |
 | 2026-07-14 | Post-final-art radius-22 / 5-pixel-grid audit | Pass — Feed Store 10,644 cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, Coffee Shop 13,348; all spawns/targets/exits reachable after moving `dinosaur_toy` |
-| 2026-07-14 | Post-final-art static asset/document check | Pass — all 11 preloader asset paths exist; all local Markdown links across ten release documents resolve; V1 hash still matches |
-| Pending | Post-final-art build, visual/runtime-collision, and 21-test cross-browser rerun | Elevated Node/Playwright execution refused by platform quota; no pass/fail result claimed |
-| Pending | Complete manual gameplay, representative-device, soak, and published-host validation | Not yet claimed |
-| 2026-07-14 | Intended release-scope scan | 102 files / 43.34 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references and `style_ref.png` excluded; V1 hash/size preserved |
-| Blocked | Git branch/commit/push/PR | Local `git` and authenticated `gh` commands unavailable; `.git` has no usable history; nothing published |
+| 2026-07-14 | Runtime art optimization | Pass — all 11 backgrounds are 1280×720 WebP totaling 1,818,586 bytes (1.734 MiB); five retired 12,006,717-byte PNGs replaced, saving 11,180,271 bytes |
+| 2026-07-14 | Post-optimization local static/unit/build gates | Pass — strict typecheck, ESLint, 27/27 unit tests, and normal Vite production build |
+| 2026-07-14 | Pages-path production build | Pass — `VITE_BASE_PATH=/busy_day/`; generated HTML/CSS asset URLs checked beneath `/busy_day/` |
+| 2026-07-14 | Focused real reciprocal-exit E2E | Pass 3/3 — Chromium, Firefox, and WebKit after data-driven Feed Store spawn and cadence-independent keyboard assertion fixes |
+| 2026-07-14 | Integrated visual QA | Pass — 11 unique checkpoints (all ten rooms plus ending), zero captured console/page errors; contact sheet accepted for HUD, characters/targets, exits, textures, and no blank rooms; outputs ignored/not published |
+| 2026-07-14 | Previous full final-art GitHub Actions | Static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7, failing only the now-fixed stale reciprocal-exit assertion |
+| Pending | Replacement full final-art GitHub Actions | Not complete; final-art 21/21 is not claimed |
+| Pending | Complete no-shortcut gameplay, representative-device, soak, current phone performance, and hosted validation | Not yet claimed |
+| 2026-07-14 | Intended release scope | 107 files / 32.71 MiB after exclusions; zero files containing the checked high-risk credential/token patterns; raw 43 references, `style_ref.png`, and visual-QA captures excluded; V1 hash/size preserved |
+| 2026-07-14 | GitHub publication | Public `nacho-android/busy_day`, branch `agent/busy-day-v2`, draft PR #1 open |
+| Pending | GitHub Pages release | Workflow gated to successful non-PR `main` quality/browser jobs and `VITE_BASE_PATH=/busy_day/`; merge, first deployment run, and hosted smoke remain pending |

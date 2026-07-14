@@ -7,16 +7,6 @@ A focused runtime/data review found no remaining P0/P1 progression blocker after
 
 ## Player-visible scope differences
 
-### Five final room backplates are unoptimised runtime PNGs
-
-Every gameplay location now uses a generated backplate. Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop each load a byte-identical 1672×941 PNG copy of its master. Together these five runtime files are 12,006,717 bytes (11.450 MiB). The original title and five earlier gameplay backplates remain browser-sized 1280×720 WebP files. All 11 images are eagerly preloaded.
-
-The WebP exporter is configured for all 11 masters, but the platform execution quota refused the elevated Node command needed to render the five new outputs. Their data background keys and revised collision/exit geometry are integrated, the masters/runtime copies were visually inspected, and the post-art static radius-22 grid audit passed. Integrated browser visual/movement validation has not run.
-
-**Impact:** the final world has consistent generated-room coverage, but initial transfer, decoding, and texture-memory cost are higher than the earlier measured build. The earlier 2.95 MB navigation sample does not represent this payload.
-**Workaround:** the PNGs are functional source-quality runtime assets; players do not fall back to programmer-art rooms.
-**Release action:** export browser-sized WebP versions, update the five runtime paths, and rerun build, cross-browser, runtime-collision, visual, and performance checks.
-
 ### Characters and props are runtime vector constructions
 
 Leads, NPCs, pigs, sheep, baboons, cars, carts, equipment, and interaction markers are composed from Phaser primitives. `CharacterRig` animates idle/walk, facing, interaction, hit response, perspective, and depth, but the project does not contain final directional sprite sheets, expression portraits, or interaction atlases.
@@ -69,9 +59,9 @@ The UI exposes music volume, SFX volume, and mute. Ambience and UI cues share th
 
 ### Rendering and asset lifetime are simple
 
-The production JavaScript is one main Phaser/application chunk. All 11 runtime images are preloaded up front, including the five unoptimised PNGs described above. There is no route-specific texture bundle, LRU texture policy, DPR cap, particle pool, or runtime performance overlay.
+The production JavaScript is one main Phaser/application chunk. All 11 optimized 1280×720 WebP backgrounds are preloaded up front and total 1,818,586 bytes (1.734 MiB). The five retired runtime PNG copies totaled 12,006,717 bytes, so their conversion saved 11,180,271 bytes; all source-quality 1672×941 masters remain retained outside the runtime path. There is no route-specific texture bundle, LRU texture policy, DPR cap, particle pool, or runtime performance overlay.
 
-Before the five PNGs were added, a local foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured a blank-page baseline of 47.4 FPS / 18.1 ms p95 frame time and active Tea Room play at 33.3 FPS / 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial navigation of that clean production preview took 1.141 seconds for 12 resources and approximately 2.95 MB encoded transfer. This is pre-final-art desktop history, not a current-payload benchmark or phone result.
+Before the final art and optimization work, a local foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured a blank-page baseline of 47.4 FPS / 18.1 ms p95 frame time and active Tea Room play at 33.3 FPS / 36.1 ms p95. A prior same-condition active sample reported 13.5 MiB JavaScript heap. Initial navigation of that clean production preview took 1.141 seconds for 12 resources and approximately 2.95 MB encoded transfer. The payload has changed since then, so this remains desktop history rather than a current-payload benchmark or phone result.
 
 **Impact:** the current small art set limits immediate risk, but decoded memory, transition latency, and long-session growth have not been measured on a mid-range phone.
 **Workaround:** none needed on the inspected desktop Chrome session.
@@ -102,19 +92,22 @@ The following are release gates, not completed claims at this snapshot:
 - page/console/request error monitoring over a full run;
 - manual listening through title, interior, animal, cath, car-park, failure, and ending audio;
 - transition/memory/audio soak testing and representative-device frame-rate, transfer, memory, and decode results;
-- post-final-art visual, runtime-collision, missing-asset, and 21-test cross-browser reruns after the five PNG integrations;
+- completion of the replacement full GitHub Actions rerun; the prior run's only browser failure was fixed, but final-art 21/21 is not yet established;
+- complete runtime traversal/collision confirmation for all 18 exit directions beyond the focused reciprocal route;
 - verification beneath the eventual published host/subpath;
-- final secret/staged-file scan, Git branch/commit/push, and pull request.
+- draft PR review/merge and the first gated Pages deployment from `main`.
 
-On the earlier six-art snapshot, the copied publishable source tree passed `npm ci` (141 packages), strict TypeScript, ESLint, 27/27 Vitest tests across four files, and the post-hardening production build. Its local production preview reached title, New Shift, HUD/Tea Room, one canvas, and scroll 0/0 with 12 resources, no bad HTTP responses, and no captured console/page errors. That snapshot's Playwright suite passed 7/7 in Chromium 149.0.7827.55 (5.7 minutes), 7/7 in Firefox (1.6 minutes), and 7/7 in WebKit (5.0 minutes / 304.6 seconds): 21/21 total with zero captured `console.error` or page errors. The suite covered the test-assisted room-correct full story, three physical reciprocal transition directions, save/Continue, health failure/retry, portrait/landscape state preservation with landscape touch controls, scroll lock, and seven landscape sizes. It was not a no-shortcut manual run and did not cover the other 15 exit directions.
+The earlier six-art snapshot passed clean-install static/unit/build/preview gates and 21/21 Playwright tests. That remains historical, test-assisted evidence rather than a final-art or no-shortcut claim.
 
-Afterward, five generated PNG backplates and matching data geometry were integrated and visually inspected. Attempts to execute the post-art Node/Playwright verification were refused by the platform execution quota, so there is no final-art browser result to claim. This is an execution-capacity blocker, not a recorded test failure.
+Post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and generated URL inspection passed. The real Tea Room → Hall → Feed → Hall route passes in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured every room plus the ending without console/page errors; its contact sheet passed HUD, actor/target, exit, texture, and blank-room review, and `visual-qa/` remains ignored.
+
+The previous full final-art Actions run passed static/audio/type/lint/unit/build gates; every browser passed 6/7 and failed only that now-fixed assertion. The replacement run is incomplete, so final-art 21/21 is not claimed. None of this substitutes for no-shortcut, physical-device, all-exit, soak, current-phone, or hosted evidence.
 
 A post-art radius-22, 5-pixel-grid audit did pass all spawns, targets, and exits in the five revised rooms: Feed Store 10,644 reachable cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, and Coffee Shop 13,348. The optional Feed Store `dinosaur_toy` hotspot was moved from its initially unreachable position before that passing audit. The remaining collision gap is runtime/browser confirmation, not static-data reachability.
 
 ## Rights and distribution caveat
 
-The 43 supplied images are source references and include people, locations, and incidental details. The 11 generated masters/backplates are original project outputs, but some are style-, location-, or likeness-informed derivatives. The repository does not establish consent or redistribution rights for the references or likeness-derived artwork.
+The 43 supplied images are local-only source references and include people, locations, and incidental details. They are excluded from the published repository and catalogued in [`REFERENCE_INVENTORY.json`](REFERENCE_INVENTORY.json). The 11 generated masters/backplates are original project outputs, but some are style-, location-, or likeness-informed derivatives. The repository does not establish consent or redistribution rights for the references or likeness-derived artwork.
 
 **Impact:** technical readiness does not equal publication clearance.
 **Workaround:** keep source references private and do not distribute them as game assets.
@@ -122,10 +115,11 @@ The 43 supplied images are source references and include people, locations, and 
 
 ## Repository and release infrastructure
 
-- No CI workflow is present.
-- The GitHub publish/yeet workflow requires local `git` and an authenticated `gh`; neither command is available in this execution environment.
-- The local `.git` directory contains no usable local history, so no intentional commit can be created or pushed safely from this workspace.
-- No release branch, commit SHA, remote push, deployment URL, or pull request is claimed here.
-- A release-scope scan identified 102 intended files / 43.34 MiB after exclusions and found no intended file containing the checked high-risk credential/token patterns. This was a targeted check, not an exhaustive secret scanner. All 43 raw references plus `style_ref.png` are excluded; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
+- Repository: [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day)
+- Published branch: `agent/busy-day-v2`
+- Pull request: [draft PR #1](https://github.com/nacho-android/busy_day/pull/1)
+- Previous final-art Actions result: static/audio/types/lint/27 unit/build passed; Chromium, Firefox, and WebKit each passed 6/7 and failed only the now-fixed reciprocal-exit assertion. The replacement full rerun is incomplete.
+- Intended release scope: 107 files / 32.71 MiB after exclusions. The selected high-risk credential/token scan found zero matching intended files. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
+- Pages: enabled for `main`; the quality workflow's gated deployment builds with `VITE_BASE_PATH=/busy_day/` only after quality and all browser jobs pass on a non-PR `main` run. Merge, deployment execution, and hosted smoke remain pending.
 
-These are workflow limitations rather than runtime defects, but all remain part of the production completion criteria.
+The remaining repository work is the replacement full CI result, PR review/merge, the gated `main` Pages run, and hosted smoke—not initial branch publication or workflow creation.

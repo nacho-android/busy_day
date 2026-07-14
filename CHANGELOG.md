@@ -15,11 +15,12 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - Added Ross's corridor trap, Thanh's moving car-park hazard and captioned horn, Wayne pressure/failure, and two Wayne dialogue outcomes.
 - Added versioned local persistence for active progress, profile results, audio, controls, and accessibility preferences.
 - Added responsive touch controls, gamepad input paths, landscape orientation handling, safe-area layout, larger text, high contrast, reduced motion, subtitles/captions, handedness, and Relaxed Shift.
-- Added 11 original generated retro-noir images: title plus all ten gameplay locations. The original six have optimized WebP runtime exports; Feed Store, Sheep & Scales, Baboon Wing, Procedure Prep, and Coffee Shop currently use byte-identical 1672×941 PNG runtime copies pending WebP optimisation.
+- Added 11 original generated retro-noir images: title plus all ten gameplay locations. All 11 runtime backgrounds are optimized 1280×720 WebP files, with their 1672×941 PNG masters retained.
 - Added 26 deterministic original synthesized WAV files covering six music/ambience loops and 20 interface/world effects.
 - Added V1 audit, game design, asset/audio manifests, architecture, implementation checklist, known limitations, setup/deployment documentation, and licensing scope.
 - Added Vitest coverage for collision, world validation, save parsing/persistence, objective progression, checkpoints, failures, and full data-driven completion.
 - Added Playwright configuration for Chromium, Firefox, and WebKit. Before the five final backplates were integrated, all three seven-test suites passed (21/21 total) with no captured `console.error` or page errors.
+- Added a gated GitHub Pages deployment to the quality workflow. After merge, a successful `main` quality/browser run builds with `VITE_BASE_PATH=/busy_day/` before deploying the `dist/` artifact.
 - Verified a copied publishable source tree from `npm ci` through typecheck, lint, 27 unit tests, and the production build before the final-art expansion.
 - Verified that pre-final-art clean production bundle in local Chromium through title, New Shift, HUD/Tea Room, resource/HTTP checks, scroll lock, and zero captured console/page errors.
 - Recorded a pre-final-art 1366×768 Intel UHD 620 desktop automation sample for first navigation, frame pacing, and JavaScript heap; this is not presented as current-payload or phone evidence.
@@ -29,6 +30,9 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - Consolidated the initial 16-location design proposal into ten purposeful locations so the implemented world does not contain empty transition-only rooms.
 - Replaced V1's monolithic canvas/script structure with typed, data-driven location, character, objective, save, and interaction definitions.
 - Expanded V1's best-results-only persistence into an active-run save and continue system while using a separate V2 storage key.
+- Converted the five retired 1672×941 runtime PNG copies, formerly 12,006,717 bytes, to 1280×720 WebP. The conversion saved 11,180,271 bytes; all 11 runtime backgrounds now total exactly 1,818,586 bytes (1.734 MiB).
+- Verified post-optimization strict typecheck, ESLint, 27/27 unit tests, the normal Vite production build, and a `/busy_day/` Pages-path build locally. Generated HTML/CSS asset URLs were also checked beneath `/busy_day/`.
+- Captured 11 unique post-optimization visual-QA checkpoints covering all ten rooms plus the ending with zero captured console/page errors; accepted the contact sheet for HUD readability, characters/targets, exits, textures, and no blank rooms. QA captures remain ignored and unpublished.
 
 ### Preserved
 
@@ -50,16 +54,16 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - Added collision footprints for all six car-park vehicles; completing a car plays a drive-away tween and removes its runtime prop/collision obstacle, progressively opening the lane.
 - Integrated the five final room backplates through data background keys and realigned collision/exit geometry to their visible fixtures.
 - Triggered the original pig, sheep, and baboon cues alongside successful species interactions.
+- Replaced the reciprocal-exit E2E's stale pre-art hard-coded Feed Store spawn expectation with data-driven coordinates and made its keyboard assertion cadence-independent. The focused real-route check then passed in Chromium, Firefox, and WebKit (3/3).
 
 ### Known limitations
 
-- The five final room images are unoptimised full-size PNG runtime assets, increasing eager preload cost until browser-sized WebP exports are produced and integrated.
-- Post-final-art integrated visual and cross-browser reruns remain pending because the platform execution quota refused the required elevated Node/Playwright commands; the preserved 21/21 result predates those five assets.
-- Remote publication is blocked because local `git` and authenticated `gh` commands are unavailable and `.git` has no usable history; no branch, commit, push, or PR is claimed.
-- The intended 102-file / 43.34 MiB release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
+- The previous full final-art Actions run passed static/audio verification, strict types, ESLint, 27/27 unit tests, and the production build. Chromium, Firefox, and WebKit each passed 6/7 and failed only the stale reciprocal-exit assertion that has since been fixed. A new full CI rerun is not yet complete, so final-art 21/21 is not claimed.
+- Published branch `agent/busy-day-v2` to the public [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day) repository; [draft PR #1](https://github.com/nacho-android/busy_day/pull/1) remains open.
+- The static verifier's 107-file / 32.71 MiB intended release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
 - Characters, animals, props, and vehicles are animated runtime vector constructions rather than final sprite sheets/atlases.
 - Pointer/tap-to-move, navigation pathfinding, a physical pushable cart/trolley, and a spatial car-sliding puzzle are not implemented.
-- Complete no-shortcut manual runs, real-device and soak testing, published-host validation, and remote publication remain pending.
+- Complete no-shortcut manual runs, real-device and soak testing, the replacement full CI result, PR review/merge, the first gated Pages deployment from `main`, and hosted smoke validation remain pending.
 - See [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the full impact and workaround list.
 
 ## [1.0.0] — Historical single-file version
