@@ -2,13 +2,13 @@
 
 ### Summary
 
-- 
+-
 
 ### Validation
 
 - [ ] `npm ci`
 - [ ] `npm run verify:release`
-- [ ] `npm run verify:audio`
+- [ ] `python scripts/verify_audio.py`
 - [ ] `npm run typecheck`
 - [ ] `npm run lint`
 - [ ] `npm test`
