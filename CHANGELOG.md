@@ -56,14 +56,16 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 - Triggered the original pig, sheep, and baboon cues alongside successful species interactions.
 - Replaced the reciprocal-exit E2E's stale pre-art hard-coded Feed Store spawn expectation with data-driven coordinates and made its keyboard assertion cadence-independent. The focused real-route check then passed in Chromium, Firefox, and WebKit (3/3).
 - Validated the final-art branch on Node 24 in PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450), commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920): clean `npm ci`; release/audio/type/lint checks; 27/27 unit tests; production build; Chromium 7/7 (4.8 minutes), Firefox 7/7 (29.2 seconds), and WebKit 7/7 (1.3 minutes), totaling 21/21. The gated Pages job correctly skipped for the PR event.
+- Merged PR #1 to `main` as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed under Node 24: clean release/audio/type/lint/27-unit/build gates and Chromium/Firefox/WebKit 7/7 each (21/21). Pages deployment `5433749633` succeeded for that SHA/ref `main`.
+- Published [the production game](https://nacho-android.github.io/busy_day/) through workflow-based, HTTPS, main-only GitHub Pages. Cache-busted index, hashed JS/CSS, title WebP, and title WAV returned HTTP 200 with correct types; the index did not expose raw `/src/main.ts`. Hosted title, New Shift, refresh/Continue, and Tea Room resume passed with zero captured warning/error logs.
 
 ### Known limitations
 
-- Published branch `agent/busy-day-v2` to the public [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day) repository; [draft PR #1](https://github.com/nacho-android/busy_day/pull/1) remains open.
-- The static verifier's 107-file / 32.72 MiB intended release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
+- Published and merged [PR #1](https://github.com/nacho-android/busy_day/pull/1) into the public [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day) repository.
+- The static verifier's 107-file / 32.73 MiB intended release scope excludes all 43 raw references and `style_ref.png`; no intended file contained the checked high-risk credential/token patterns.
 - Characters, animals, props, and vehicles are animated runtime vector constructions rather than final sprite sheets/atlases.
 - Pointer/tap-to-move, navigation pathfinding, a physical pushable cart/trolley, and a spatial car-sliding puzzle are not implemented.
-- Complete no-shortcut manual runs, all-18-exit traversal, real-device and soak testing, current-phone performance, rights review, PR review/merge, the first gated Pages deployment from `main`, and hosted smoke validation remain pending.
+- Complete no-shortcut Mel/Josh runs, all-18-exit traversal, physical-device/gamepad checks, audio listening, soak/current-phone performance, and rights review remain pending.
 - See [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the full impact and workaround list.
 
 ## [1.0.0] — Historical single-file version

@@ -204,7 +204,7 @@ The pack is deterministic procedural synthesis with no recordings or sample libr
 
 The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The core preloader loads all 11 generated 1280×720 WebP images, totaling 1,818,586 bytes (1.734 MiB). Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 master remains available outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
 
-After optimization, local strict typecheck, ESLint, 27 unit tests across four files, the normal Vite production build, and a `VITE_BASE_PATH=/busy_day/` Pages-path build passed. The generated HTML/CSS asset URLs were inspected beneath `/busy_day/`. The earlier copied clean-install snapshot and production preview remain useful historical evidence, but do not replace a current hosted smoke or physical-device run.
+After optimization, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and the deployed host later passed asset and Continue smoke checks. Physical-device validation remains separate.
 
 That pre-final-art foreground Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured 47.4 FPS / 18.1 ms p95 for a blank-page baseline and 33.3 FPS / 36.1 ms p95 in the active Tea Room. A prior same-condition sample reported a 13.5 MiB JavaScript heap. Initial local production navigation measured 1.141 seconds, 12 resources, and approximately 2.95 MB encoded transfer. The art payload has changed since that sample, so current-payload and mid-range-phone frame rate, decoded texture/audio memory, long-session growth, transitions, and hosted latency remain unmeasured.
 
@@ -217,17 +217,17 @@ Implemented in source/data:
 - collision, perspective, transition locks, interactions, dialogue, objectives, hazards, failures, recovery, save/settings, touch/orientation, original artwork, and original audio;
 - strict types, lint, unit tests, and production build.
 
-Final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) passed on commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920) under Node 24: clean `npm ci`; release/audio/type/lint checks; 27/27 unit tests; production build; Chromium 7/7 in 4.8 minutes, Firefox 7/7 in 29.2 seconds, and WebKit 7/7 in 1.3 minutes—21/21 total. The Pages job correctly skipped for the PR event. This validates the automated final-art suite, but remains test-assisted rather than a no-shortcut or device result.
+PR #1 merged as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed clean release/audio/type/lint/27-unit/build gates and Playwright 21/21. Pages deployment `5433749633` succeeded for that SHA/ref `main`, and [the hosted build](https://nacho-android.github.io/busy_day/) passed cache-busted asset plus title/New Shift/refresh/Continue smoke checks without captured warning/error logs.
 
 Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 
-Still required before a release claim:
+Still required for a full completion claim:
 
 - broader no-shortcut functional, public-input, and visual viewport execution;
 - complete manual runs for Mel and Josh without test shortcuts;
 - representative real touch device and gamepad checks;
-- complete audio/performance/console/soak review beyond the accepted checkpoint captures;
-- PR review/merge, the gated `main` Pages deployment, and hosted smoke evidence.
+- complete audio-listening and soak/current-phone performance review beyond the accepted checkpoint captures;
+- rights review for likeness-informed artwork.
 
 Deferred rather than silently claimed:
 

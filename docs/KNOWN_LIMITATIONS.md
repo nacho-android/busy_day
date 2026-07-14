@@ -93,12 +93,10 @@ The following are release gates, not completed claims at this snapshot:
 - manual listening through title, interior, animal, cath, car-park, failure, and ending audio;
 - transition/memory/audio soak testing and representative-device frame-rate, transfer, memory, and decode results;
 - complete runtime traversal/collision confirmation for all 18 exit directions beyond the focused reciprocal route;
-- verification beneath the eventual published host/subpath;
-- draft PR review/merge and the first gated Pages deployment from `main`.
 
 Post-optimization local typecheck, lint, 27/27 unit tests, normal/`/busy_day/` builds, and generated URL inspection passed. The real Tea Room → Hall → Feed → Hall route passes in all three engines after data-driven-spawn and cadence-independent-key fixes. Integrated QA captured every room plus the ending without console/page errors; its contact sheet passed HUD, actor/target, exit, texture, and blank-room review, and `visual-qa/` remains ignored.
 
-Final-art PR workflow [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) passed on commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920) under Node 24: clean `npm ci`; release/audio/type/lint checks; 27/27 unit tests; production build; Chromium 7/7 (4.8 minutes), Firefox 7/7 (29.2 seconds), and WebKit 7/7 (1.3 minutes), totaling 21/21. The Pages job correctly skipped on the PR. This does not substitute for no-shortcut, physical-device, all-exit, soak, current-phone, rights, merge, deployment, or hosted evidence.
+PR #1 merged as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed clean release/audio/type/lint/27-unit/build gates and Chromium/Firefox/WebKit 7/7 each (21/21). Pages deployment `5433749633` succeeded for that SHA/ref `main`; hosted asset and title/New Shift/refresh/Continue checks passed without captured warning/error logs. This does not substitute for no-shortcut, physical-device/gamepad, all-exit, audio-listening, soak/current-phone, or rights evidence.
 
 A post-art radius-22, 5-pixel-grid audit did pass all spawns, targets, and exits in the five revised rooms: Feed Store 10,644 reachable cells, Sheep & Scales 9,971, Baboon Wing 12,369, Procedure Prep 14,321, and Coffee Shop 13,348. The optional Feed Store `dinosaur_toy` hotspot was moved from its initially unreachable position before that passing audit. The remaining collision gap is runtime/browser confirmation, not static-data reachability.
 
@@ -113,10 +111,9 @@ The 43 supplied images are local-only source references and include people, loca
 ## Repository and release infrastructure
 
 - Repository: [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day)
-- Published branch: `agent/busy-day-v2`
-- Pull request: [draft PR #1](https://github.com/nacho-android/busy_day/pull/1)
-- Final-art PR workflow: [`29297017450`](https://github.com/nacho-android/busy_day/actions/runs/29297017450) succeeded on validated commit [`bf52920`](https://github.com/nacho-android/busy_day/commit/bf52920); exact gate/timing evidence is recorded above. Pages correctly skipped on the PR.
-- Intended release scope: 107 files / 32.72 MiB after exclusions. The selected high-risk credential/token scan found zero matching intended files. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
-- Pages: enabled for `main`; the quality workflow's gated deployment builds with `VITE_BASE_PATH=/busy_day/` only after quality and all browser jobs pass on a non-PR `main` run. Merge, deployment execution, and hosted smoke remain pending.
+- Main release: [`54499b368d566f3fa4e7da1af3e7a06ed1942b2f`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f), merged through [PR #1](https://github.com/nacho-android/busy_day/pull/1)
+- Main workflow: [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940), success under Node 24 with 21/21 Playwright tests
+- Intended release scope: 107 files / 32.73 MiB after exclusions. The selected high-risk credential/token scan found zero matching intended files. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
+- Pages: [production URL](https://nacho-android.github.io/busy_day/), deployment `5433749633`, workflow build type, HTTPS, main-only policy; SHA/ref/state matched `54499b3`/`main`/`success`.
 
-The remaining repository work is PR review/merge, the gated `main` Pages run, and hosted smoke—not CI repair, initial branch publication, or workflow creation.
+Repository, CI, deployment, and hosted smoke are complete; the genuine remaining limitations are the gameplay/device/audio/performance/rights items above.
