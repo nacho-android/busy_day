@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#050b14" />
+    <meta name="description" content="Busy Day at the Viv V2 — a retro-noir animal-facility adventure." />
+    <title>Busy Day at the Viv V2</title>
+  </head>
+  <body>
+    <main id="game-shell" aria-label="Busy Day at the Viv V2 game">
+      <div id="game" aria-label="Game world"></div>
+      <div id="loading-screen" class="screen screen--solid" aria-live="polite">
+        <div class="loading-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="eyebrow">THE VIV · 06:45</p>
+        <h1>Preparing the shift</h1>
+        <div class="loading-track"><div id="loading-fill"></div></div>
+        <p id="loading-status">Checking the board for optimism…</p>
+      </div>
+
+      <section id="title-screen" class="screen hidden" aria-labelledby="game-title">
+        <div class="title-art" role="img" aria-label="Mel and Josh outside the Viv on a rainy neon-lit night"></div>
+        <div class="title-scrim"></div>
+        <div class="title-panel glass-panel">
+          <p class="eyebrow">A RETRO-NOIR SHIFT ADVENTURE</p>
+          <h1 id="game-title">Busy Day<br /><span>at the Viv</span></h1>
+          <p class="title-copy">Feed the animals. Move the pig. Survive the corridor politics. Earn the coffee.</p>
+          <fieldset class="character-picker">
+            <legend>Choose your shift lead</legend>
+            <button class="character-card selected" data-character="mel" type="button" aria-pressed="true">
+              <span class="portrait portrait--mel">M</span><span><strong>Mel</strong><small>Fast · multitasker · light carry</small></span>
+            </button>
+            <button class="character-card" data-character="josh" type="button" aria-pressed="false">
+              <span class="portrait portrait--josh">J</span><span><strong>Josh</strong><small>Steady · resilient · strong carry</small></span>
+            </button>
+          </fieldset>
+          <div class="title-actions">
+            <button id="new-game-button" class="primary-button" type="button">New shift</button>
+            <button id="continue-button" class="secondary-button hidden" type="button">Continue</button>
+            <button id="title-settings-button" class="ghost-button" type="button">Settings</button>
+          </div>
+          <p class="build-note">Landscape recommended · Keyboard, touch and gamepad ready</p>
+        </div>
+      </section>
+
+      <header id="hud" class="hud hidden" aria-live="polite">
+        <div class="hud-brand"><span id="hud-lead">MEL</span><small id="hud-location">TEA ROOM</small></div>
+        <div class="hud-objective">
+          <small id="hud-act">PROLOGUE · 06:45</small>
+          <strong id="hud-objective-title">Check the shift board</strong>
+          <span id="hud-objective-progress">0 / 1</span>
+        </div>
+        <div class="meter-group" aria-label="Player condition">
+          <label>Health <span id="health-value">100</span><i><b id="health-fill"></b></i></label>
+          <label>Stamina <span id="stamina-value">100</span><i><b id="stamina-fill"></b></i></label>
+          <label>Stress <span id="stress-value">0</span><i><b id="stress-fill"></b></i></label>
+          <label id="wayne-meter" class="hidden">Wayne <span id="wayne-value">0</span><i><b id="wayne-fill"></b></i></label>
+        </div>
+        <div class="hud-buttons">
+          <button id="objective-button" type="button" aria-label="Objectives">◎</button>
+          <button id="pause-button" type="button" aria-label="Pause">Ⅱ</button>
+        </div>
+      </header>
+
+      <div id="interaction-prompt" class="interaction-prompt hidden" aria-live="polite">
+        <kbd>E</kbd><span><small id="interaction-verb">USE</small><strong id="interaction-label">Shift board</strong></span>
+        <i><b id="interaction-progress"></b></i>
+      </div>
+      <div id="caption" class="caption hidden" aria-live="assertive"></div>
+      <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+      <section id="dialogue-panel" class="dialogue-panel glass-panel hidden" aria-live="polite" aria-modal="true" role="dialog">
+        <div id="dialogue-portrait" class="dialogue-portrait">S</div>
+        <div class="dialogue-content">
+          <h2 id="dialogue-speaker">Sally</h2>
+          <p id="dialogue-text">Board first. Cart second.</p>
+          <div id="dialogue-choices" class="dialogue-choices"></div>
+          <button id="dialogue-advance" class="dialogue-advance" type="button">Continue <span>↵</span></button>
+        </div>
+      </section>
+
+      <aside id="objective-panel" class="drawer hidden" aria-labelledby="objective-panel-title">
+        <button class="drawer-close" data-close-drawer type="button" aria-label="Close objectives">×</button>
+        <p class="eyebrow">SHIFT PLAN</p>
+        <h2 id="objective-panel-title">Current objective</h2>
+        <p id="objective-panel-copy"></p>
+        <ol id="objective-list"></ol>
+        <h3>Kit</h3>
+        <div id="kit-list" class="kit-list"></div>
+        <button id="hint-button" class="secondary-button" type="button">Show a hint</button>
+        <p id="hint-copy" class="hint-copy hidden"></p>
+      </aside>
+
+      <section id="pause-menu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="modal-card glass-panel">
+          <p class="eyebrow">SHIFT PAUSED</p><h2 id="pause-title">Take one professional breath.</h2>
+          <button id="resume-button" class="primary-button" type="button">Resume</button>
+          <button id="pause-objectives-button" class="secondary-button" type="button">Objectives</button>
+          <button id="pause-settings-button" class="secondary-button" type="button">Settings</button>
+          <button id="restart-checkpoint-button" class="ghost-button" type="button">Restart checkpoint</button>
+          <button id="restart-shift-button" class="danger-button" type="button">Restart shift</button>
+          <button id="title-button" class="ghost-button" type="button">Title screen</button>
+        </div>
+      </section>
+
+      <section id="settings-menu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-card glass-panel settings-card">
+          <button class="drawer-close" data-close-settings type="button" aria-label="Close settings">×</button>
+          <p class="eyebrow">ACCESS & AUDIO</p><h2 id="settings-title">Settings</h2>
+          <label>Music <input id="music-volume" type="range" min="0" max="1" step="0.05" /></label>
+          <label>Sound effects <input id="sfx-volume" type="range" min="0" max="1" step="0.05" /></label>
+          <label class="toggle"><input id="mute-setting" type="checkbox" /><span>Mute all audio</span></label>
+          <label class="toggle"><input id="typewriter-setting" type="checkbox" /><span>Dialogue typewriter</span></label>
+          <label class="toggle"><input id="reduced-motion-setting" type="checkbox" /><span>Reduced motion</span></label>
+          <label class="toggle"><input id="high-contrast-setting" type="checkbox" /><span>High-contrast interface</span></label>
+          <label class="toggle"><input id="subtitles-setting" type="checkbox" /><span>Sound captions</span></label>
+          <label>Text size <select id="text-size-setting"><option value="normal">Normal</option><option value="large">Large</option></select></label>
+          <label>Touch layout <select id="handedness-setting"><option value="right">Right-handed</option><option value="left">Left-handed</option></select></label>
+          <label class="toggle"><input id="relaxed-setting" type="checkbox" /><span>Relaxed shift</span></label>
+        </div>
+      </section>
+
+      <section id="failure-screen" class="screen result-screen hidden" role="dialog" aria-modal="true">
+        <div class="result-card glass-panel"><p class="eyebrow">SETBACK</p><h2>The day has made a point.</h2><p id="failure-reason"></p>
+          <button id="failure-retry-button" class="primary-button" type="button">Retry checkpoint</button>
+          <button id="failure-restart-button" class="secondary-button" type="button">Restart shift</button>
+          <button id="failure-title-button" class="ghost-button" type="button">Title screen</button>
+        </div>
+      </section>
+
+      <section id="ending-screen" class="screen result-screen hidden" aria-labelledby="ending-title">
+        <div class="ending-art"></div><div class="result-card glass-panel"><p class="eyebrow">SHIFT COMPLETE</p><h2 id="ending-title">Coffee is now a realistic outcome.</h2>
+          <div class="rank"><span id="ending-rank">A</span><small>SHIFT RANK</small></div><p id="ending-summary"></p>
+          <div class="result-stats"><span><b id="ending-tasks">15/15</b> tasks</span><span><b id="ending-coins">0</b> coins</span></div>
+          <button id="ending-replay-button" class="primary-button" type="button">Another shift</button><button id="ending-title-button" class="ghost-button" type="button">Title screen</button>
+        </div>
+      </section>
+
+      <div id="touch-controls" class="touch-controls hidden" aria-label="Touch controls">
+        <div id="joystick" class="joystick" aria-label="Movement joystick"><div id="joystick-knob"></div></div>
+        <div class="touch-actions"><button id="touch-sprint" type="button">SPRINT</button><button id="touch-dodge" type="button">DODGE</button><button id="touch-use" class="touch-use" type="button">USE</button></div>
+      </div>
+
+      <section id="rotate-prompt" aria-live="assertive">
+        <div class="rotate-icon" aria-hidden="true">↻</div><h2>Turn the day sideways</h2><p>Busy shifts work better in landscape. Your progress is safe.</p>
+      </section>
+      <div id="confirm-dialog" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card glass-panel"><h2 id="confirm-title">Are you sure?</h2><p id="confirm-copy"></p><div class="confirm-actions"><button id="confirm-cancel" class="secondary-button" type="button">Cancel</button><button id="confirm-accept" class="danger-button" type="button">Confirm</button></div></div></div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
