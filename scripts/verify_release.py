@@ -89,6 +89,7 @@ EXCLUDED_DIRS = {
     "playwright-report",
     "test-results",
     "test-results-preview",
+    "tmp",
     "visual-qa",
 }
 SECRET_PATTERNS = {
