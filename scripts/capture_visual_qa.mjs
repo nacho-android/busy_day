@@ -7,7 +7,7 @@ import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'visual-qa');
-const baseUrl = process.env.BUSY_DAY_URL ?? 'http://127.0.0.1:4174';
+const baseUrl = process.env.BUSY_DAY_URL ?? 'http://127.0.0.1:5173';
 const labels = {
   teaRoom: '01 Tea Room', mainHall: '02 Main Hallway', feedStore: '03 Feed Store',
   pigHousing: '04 Pig Housing', sheepScales: '05 Sheep & Scales', baboonWing: '06 Baboon Wing',

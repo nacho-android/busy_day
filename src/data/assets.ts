@@ -1,4 +1,5 @@
 import type { LocationDefinition, MusicCueId } from '../types/game';
+import { WORLD_SPRITE_SHEETS } from './worldArt';
 
 type LocationBackgroundKey = NonNullable<LocationDefinition['backgroundKey']>;
 
@@ -63,6 +64,38 @@ export const PORTRAIT_ASSETS = {
   wayne: 'portraits/wayne.webp',
 } as const;
 
+export const CHARACTER_SPRITE_ASSETS = {
+  mel: 'characters/mel-sheet.webp',
+  josh: 'characters/josh-sheet.webp',
+  alan: 'characters/npcs/alan-sheet.webp',
+  anugra: 'characters/npcs/anugra-sheet.webp',
+  dhanya: 'characters/npcs/dhanya-sheet.webp',
+  eddy: 'characters/npcs/eddy-sheet.webp',
+  erin: 'characters/npcs/erin-sheet.webp',
+  james: 'characters/npcs/james-sheet.webp',
+  juan: 'characters/npcs/juan-sheet.webp',
+  leila: 'characters/npcs/leila-sheet.webp',
+  luther: 'characters/npcs/luther-sheet.webp',
+  max: 'characters/npcs/max-sheet.webp',
+  mitch: 'characters/npcs/mitch-sheet.webp',
+  pierre: 'characters/npcs/pierre-sheet.webp',
+  poonam: 'characters/npcs/poonam-sheet.webp',
+  ross: 'characters/npcs/ross-sheet.webp',
+  sally: 'characters/npcs/sally-sheet.webp',
+  sam: 'characters/npcs/sam-sheet.webp',
+  shinya: 'characters/npcs/shinya-sheet.webp',
+  thanh: 'characters/npcs/thanh-sheet.webp',
+  tony: 'characters/npcs/tony-sheet.webp',
+  urja: 'characters/npcs/urja-sheet.webp',
+  vu: 'characters/npcs/vu-sheet.webp',
+  wayne: 'characters/npcs/wayne-sheet.webp',
+  xing: 'characters/npcs/xing-sheet.webp',
+} as const;
+
+export const WORLD_ART_ASSETS = Object.fromEntries(
+  Object.entries(WORLD_SPRITE_SHEETS).map(([id, asset]) => [id, asset.path]),
+) as Readonly<Record<keyof typeof WORLD_SPRITE_SHEETS, string>>;
+
 export type SfxCue = keyof typeof SFX_ASSETS;
 
 export const RUNTIME_ASSET_PATHS = [
@@ -70,4 +103,6 @@ export const RUNTIME_ASSET_PATHS = [
   ...Object.values(MUSIC_ASSETS),
   ...Object.values(SFX_ASSETS),
   ...Object.values(PORTRAIT_ASSETS),
+  ...Object.values(CHARACTER_SPRITE_ASSETS),
+  ...Object.values(WORLD_ART_ASSETS),
 ] as const;

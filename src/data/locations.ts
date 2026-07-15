@@ -1,6 +1,10 @@
 import type { LocationDefinition, LocationId, NpcAmbientDefinition, NpcPlacement, Point } from '../types/game';
 
 const PERSPECTIVE = { farY: 120, nearY: 650, farScale: 0.78, nearScale: 1.15 } as const;
+// The Tea Room is viewed from a notably higher camera than the facility rooms.
+// Its steeper scale curve keeps the upper-right doorway compact while allowing
+// the foreground social group to read at the same visual weight as other rooms.
+const TEA_ROOM_PERSPECTIVE = { farY: 205, nearY: 620, farScale: 0.62, nearScale: 1.12 } as const;
 const BOUNDS = { x: 55, y: 105, width: 1170, height: 565 } as const;
 
 const idle = (reaction: NpcAmbientDefinition['reaction'] = 'wave'): NpcAmbientDefinition => ({ mode: 'idle', awarenessRadius: 104, reaction });
@@ -20,23 +24,24 @@ const npc = (
 
 export const LOCATIONS: Record<LocationId, LocationDefinition> = {
   teaRoom: {
-    id: 'teaRoom', name: 'Tea Room', subtitle: 'Optimism on the board', theme: 'social', backgroundKey: 'teaRoom', bounds: BOUNDS, music: 'facility', perspective: PERSPECTIVE,
+    id: 'teaRoom', name: 'Tea Room', subtitle: 'Optimism on the board', theme: 'social', backgroundKey: 'teaRoom', bounds: BOUNDS, music: 'facility', perspective: TEA_ROOM_PERSPECTIVE,
     spawns: [
       { id: 'start', x: 260, y: 510, facing: 'away' },
-      { id: 'fromHall', x: 1060, y: 350, facing: 'left' },
+      { id: 'fromHall', x: 1005, y: 385, facing: 'toward' },
     ],
     exits: [
-      { id: 'tea_to_hall', label: 'Main Hallway', x: 1160, y: 270, width: 60, height: 170, destination: 'mainHall', destinationSpawn: 'fromTea', facing: 'right' },
+      { id: 'tea_to_hall', label: 'Main Hallway', x: 975, y: 245, width: 65, height: 95, destination: 'mainHall', destinationSpawn: 'fromTea', facing: 'away', portal: { target: { x: 1005, y: 205 }, durationMs: 430, fadeFrom: .62 } },
     ],
     obstacles: [
-      { id: 'tea_table', x: 390, y: 270, width: 370, height: 190 },
-      { id: 'kitchen', x: 80, y: 120, width: 290, height: 115 },
-      { id: 'notice_wall', x: 780, y: 120, width: 300, height: 85 },
+      { id: 'tea_table', x: 390, y: 270, width: 370, height: 205 },
+      { id: 'kitchen', x: 350, y: 135, width: 240, height: 145 },
+      { id: 'left_service_shelf', x: 70, y: 315, width: 190, height: 155 },
+      { id: 'right_service_shelf', x: 1105, y: 350, width: 120, height: 180 },
     ],
     interactions: [
-      { id: 'shift_board', label: 'Shift board', verb: 'Use', x: 850, y: 230, radius: 88, holdMs: 700, prop: 'board' },
-      { id: 'tea_kettle', label: 'Tea-room kettle', verb: 'Inspect', x: 210, y: 250, radius: 76, optionalLine: 'The kettle clicks off with the confidence of someone who has completed their only task.', prop: 'machine' },
-      { id: 'early_coffee', label: 'Coffee machine', verb: 'Use', x: 320, y: 250, radius: 76, optionalLine: 'The machine displays: REWARD LOCKED UNTIL MORALE IMPROVES.', prop: 'coffee' },
+      { id: 'shift_board', label: 'Shift board', verb: 'Use', x: 715, y: 245, radius: 88, holdMs: 700, prop: 'board' },
+      { id: 'tea_kettle', label: 'Tea-room kettle', verb: 'Inspect', x: 230, y: 380, radius: 82, optionalLine: 'The kettle clicks off with the confidence of someone who has completed their only task.', prop: 'machine' },
+      { id: 'early_coffee', label: 'Coffee machine', verb: 'Use', x: 230, y: 445, radius: 82, optionalLine: 'The machine displays: REWARD LOCKED UNTIL MORALE IMPROVES.', prop: 'coffee' },
     ],
     npcs: [
       npc('sally', 'Sally', 'Cardiologist', 820, 510, 'Morning. The board is already optimistic. Grab the cart and outrun reality.', 'sally', patrol([{ x: 820, y: 510 }, { x: 1030, y: 510 }])),
@@ -49,50 +54,48 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
   mainHall: {
     id: 'mainHall', name: 'Main Hallway', subtitle: 'Every route is urgent', theme: 'corridor', backgroundKey: 'facilityHub', bounds: BOUNDS, music: 'facility', perspective: PERSPECTIVE,
     spawns: [
-      { id: 'fromTea', x: 120, y: 270, facing: 'right' }, { id: 'fromFeed', x: 1140, y: 270, facing: 'left' },
-      { id: 'fromPig', x: 120, y: 500, facing: 'right' }, { id: 'fromSheep', x: 1140, y: 500, facing: 'left' },
-      { id: 'fromBaboon', x: 640, y: 150, facing: 'toward' }, { id: 'fromPrep', x: 650, y: 620, facing: 'away' },
-      { id: 'fromCar', x: 860, y: 620, facing: 'away' },
+      { id: 'fromTea', x: 200, y: 340, facing: 'toward' }, { id: 'fromFeed', x: 425, y: 275, facing: 'toward' },
+      { id: 'fromBaboon', x: 640, y: 260, facing: 'toward' }, { id: 'fromSheep', x: 865, y: 280, facing: 'toward' },
+      { id: 'fromPig', x: 1095, y: 350, facing: 'toward' }, { id: 'fromPrep', x: 350, y: 620, facing: 'away' },
+      { id: 'fromCar', x: 925, y: 620, facing: 'away' },
     ],
     exits: [
-      { id: 'hall_to_tea', label: 'Tea Room', x: 55, y: 190, width: 60, height: 150, destination: 'teaRoom', destinationSpawn: 'fromHall', facing: 'left' },
-      { id: 'hall_to_feed', label: 'Feed Store', x: 1165, y: 190, width: 60, height: 150, destination: 'feedStore', destinationSpawn: 'fromHall', facing: 'right' },
-      { id: 'hall_to_pig', label: 'Pig Housing', x: 55, y: 430, width: 60, height: 150, destination: 'pigHousing', destinationSpawn: 'fromHall', facing: 'left' },
-      { id: 'hall_to_sheep', label: 'Sheep & Scales', x: 1165, y: 430, width: 60, height: 150, destination: 'sheepScales', destinationSpawn: 'fromHall', facing: 'right' },
-      { id: 'hall_to_baboon', label: 'Baboon Wing', x: 570, y: 105, width: 140, height: 60, destination: 'baboonWing', destinationSpawn: 'fromHall', facing: 'away' },
-      { id: 'hall_to_prep', label: 'Procedure Prep', x: 330, y: 620, width: 150, height: 50, destination: 'prepRoom', destinationSpawn: 'fromHall', facing: 'toward' },
-      { id: 'hall_to_car', label: 'Car Park', x: 780, y: 620, width: 160, height: 50, destination: 'carPark', destinationSpawn: 'fromHall', facing: 'toward', requiredFlag: 'procedureComplete', lockedLine: 'The loading gate stays locked until cath signs off the procedure.' },
+      { id: 'hall_to_tea', label: 'Tea Room', x: 155, y: 245, width: 80, height: 75, destination: 'teaRoom', destinationSpawn: 'fromHall', facing: 'away', portal: { target: { x: 200, y: 205 }, fadeFrom: .56 } },
+      { id: 'hall_to_feed', label: 'Feed Store', x: 385, y: 180, width: 75, height: 70, destination: 'feedStore', destinationSpawn: 'fromHall', facing: 'away', portal: { target: { x: 425, y: 145 }, fadeFrom: .56 } },
+      { id: 'hall_to_baboon', label: 'Baboon Wing', x: 600, y: 155, width: 80, height: 75, destination: 'baboonWing', destinationSpawn: 'fromHall', facing: 'away', portal: { target: { x: 640, y: 115 }, fadeFrom: .56 } },
+      { id: 'hall_to_sheep', label: 'Sheep & Scales', x: 825, y: 180, width: 75, height: 75, destination: 'sheepScales', destinationSpawn: 'fromHall', facing: 'away', portal: { target: { x: 865, y: 145 }, fadeFrom: .56 } },
+      { id: 'hall_to_pig', label: 'Pig Housing', x: 1055, y: 245, width: 75, height: 80, destination: 'pigHousing', destinationSpawn: 'fromHall', facing: 'away', portal: { target: { x: 1095, y: 210 }, fadeFrom: .56 } },
+      { id: 'hall_to_prep', label: 'Procedure Prep', x: 285, y: 650, width: 135, height: 20, destination: 'prepRoom', destinationSpawn: 'fromHall', facing: 'toward', portal: { target: { x: 350, y: 718 }, durationMs: 470, fadeFrom: .62 } },
+      { id: 'hall_to_car', label: 'Car Park', x: 855, y: 650, width: 145, height: 20, destination: 'carPark', destinationSpawn: 'fromHall', facing: 'toward', portal: { target: { x: 925, y: 718 }, durationMs: 470, fadeFrom: .62 }, requiredFlag: 'procedureComplete', lockedLine: 'The loading gate stays locked until cath signs off the procedure.' },
     ],
     obstacles: [
-      { id: 'hall_scale', x: 390, y: 455, width: 210, height: 150 },
-      { id: 'hall_hay_cart', x: 820, y: 445, width: 210, height: 125 },
-      { id: 'hall_sink', x: 715, y: 140, width: 150, height: 95 },
-      { id: 'hall_cabinet', x: 930, y: 135, width: 190, height: 95 },
+      { id: 'hall_route_console', x: 515, y: 325, width: 105, height: 80 },
+      { id: 'hall_hay_cart', x: 700, y: 465, width: 150, height: 95 },
     ],
     interactions: [
-      { id: 'route_console', label: 'Route-control console', verb: 'Operate', x: 640, y: 245, radius: 82, holdMs: 900, requiresFlag: 'boardChecked', missingFlagLine: 'Read Sally’s board before rewriting the building’s idea of where anything lives.', prop: 'machine' },
-      { id: 'hall_map', label: 'Facility map', verb: 'Inspect', x: 640, y: 205, radius: 78, optionalLine: 'The YOU ARE HERE arrow has been moved twice and is now expressing uncertainty.', prop: 'board' },
-      { id: 'hay_cart', label: 'Hay obstruction', verb: 'Inspect', x: 820, y: 430, radius: 82, optionalLine: 'A mobile haystack is blocking exactly the amount of corridor required by policy.', prop: 'cart' },
+      { id: 'route_console', label: 'Route-control console', verb: 'Operate', x: 565, y: 400, radius: 82, holdMs: 900, requiresFlag: 'boardChecked', missingFlagLine: 'Read Sally’s board before rewriting the building’s idea of where anything lives.', prop: 'machine' },
+      { id: 'hall_map', label: 'Facility map', verb: 'Inspect', x: 520, y: 300, radius: 78, optionalLine: 'The YOU ARE HERE arrow has been moved twice and is now expressing uncertainty.', prop: 'board' },
+      { id: 'hay_cart', label: 'Hay obstruction', verb: 'Inspect', x: 775, y: 535, radius: 82, optionalLine: 'A mobile haystack is blocking exactly the amount of corridor required by policy.', prop: 'cart' },
     ],
     npcs: [
-      npc('ross', 'Ross', 'Welfare', 620, 370, 'Quick question. Have you considered the full philosophical meaning of corridor etiquette?'),
-      npc('dhanya', 'Dhanya', 'Researcher', 260, 375, 'Please tell me the car park situation is a rumour.', 'dhanya', patrol([{ x: 260, y: 375 }, { x: 340, y: 375 }], 'inspect', 29)),
-      npc('poonam', 'Poonam', 'Researcher', 360, 365, 'I just need to leave on time. Which means I absolutely will not.'),
-      npc('max', 'Max', 'Researcher', 960, 350, 'I was promised a normal day. I can only assume that was theoretical.'),
-      npc('leila', 'Leila', 'Researcher', 1040, 340, 'Everyone is walking faster, which is somehow making the corridor slower.'),
-      npc('erin', 'Erin', 'Researcher', 1080, 590, 'I can feel the schedule slipping through the walls.'),
+      npc('ross', 'Ross', 'Welfare', 650, 405, 'Quick question. Have you considered the full philosophical meaning of corridor etiquette?'),
+      npc('dhanya', 'Dhanya', 'Researcher', 300, 405, 'Please tell me the car park situation is a rumour.', 'dhanya', patrol([{ x: 300, y: 405 }, { x: 400, y: 405 }], 'inspect', 29)),
+      npc('poonam', 'Poonam', 'Researcher', 400, 470, 'I just need to leave on time. Which means I absolutely will not.'),
+      npc('max', 'Max', 'Researcher', 970, 410, 'I was promised a normal day. I can only assume that was theoretical.'),
+      npc('leila', 'Leila', 'Researcher', 1050, 470, 'Everyone is walking faster, which is somehow making the corridor slower.'),
+      npc('erin', 'Erin', 'Researcher', 1090, 585, 'I can feel the schedule slipping through the walls.'),
     ],
   },
 
   feedStore: {
     id: 'feedStore', name: 'Feed Store', subtitle: 'Everybody is hungry at once', theme: 'storage', backgroundKey: 'feedStore', bounds: BOUNDS, music: 'facility', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromHall', x: 235, y: 390, facing: 'right' }],
-    exits: [{ id: 'feed_to_hall', label: 'Main Hallway', x: 115, y: 185, width: 80, height: 170, destination: 'mainHall', destinationSpawn: 'fromFeed', facing: 'left' }],
+    spawns: [{ id: 'fromHall', x: 245, y: 390, facing: 'toward' }],
+    exits: [{ id: 'feed_to_hall', label: 'Main Hallway', x: 210, y: 185, width: 75, height: 140, destination: 'mainHall', destinationSpawn: 'fromFeed', facing: 'away', portal: { target: { x: 245, y: 155 }, durationMs: 420, fadeFrom: .58 } }],
     obstacles: [
-      { id: 'back_shelves', x: 300, y: 115, width: 350, height: 220 },
+      { id: 'back_shelves', x: 315, y: 115, width: 335, height: 220 },
       { id: 'feed_mixer', x: 650, y: 125, width: 160, height: 230 },
       { id: 'prep_bench', x: 800, y: 190, width: 250, height: 190 },
-      { id: 'left_sink', x: 55, y: 335, width: 150, height: 265 },
+      { id: 'left_sink', x: 55, y: 335, width: 130, height: 265 },
       { id: 'right_cages', x: 1060, y: 330, width: 165, height: 290 },
     ],
     interactions: [
@@ -106,8 +109,8 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
 
   pigHousing: {
     id: 'pigHousing', name: 'Pig Housing', subtitle: 'The committee is in session', theme: 'animal', backgroundKey: 'pigHousing', bounds: BOUNDS, music: 'animals', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromHall', x: 1120, y: 360, facing: 'left' }],
-    exits: [{ id: 'pig_to_hall', label: 'Main Hallway', x: 1165, y: 280, width: 60, height: 160, destination: 'mainHall', destinationSpawn: 'fromPig', facing: 'right' }],
+    spawns: [{ id: 'fromHall', x: 900, y: 390, facing: 'left' }],
+    exits: [{ id: 'pig_to_hall', label: 'Main Hallway', x: 945, y: 285, width: 55, height: 145, destination: 'mainHall', destinationSpawn: 'fromPig', facing: 'right', portal: { target: { x: 1015, y: 355 }, durationMs: 420, fadeFrom: .55 } }],
     obstacles: [
       { id: 'pig_pens_left', x: 55, y: 150, width: 255, height: 470 },
       { id: 'pig_pens_right_north', x: 1005, y: 105, width: 160, height: 170 },
@@ -115,25 +118,25 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'pig_fan', x: 520, y: 350, width: 115, height: 150 },
     ],
     interactions: [
-      { id: 'pig_feed_1', label: 'Pig pen one', verb: 'Give', x: 350, y: 300, radius: 82, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'You need the feed cart. The pig has logged the omission.', prop: 'animal' },
-      { id: 'pig_feed_2', label: 'Pig pen two', verb: 'Give', x: 350, y: 540, radius: 82, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'The empty-handed approach has not impressed the second pig.', prop: 'animal' },
-      { id: 'pig_feed_3', label: 'Pig pen three', verb: 'Give', x: 950, y: 390, radius: 82, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'Feed cart first. Pig diplomacy is materially based.', prop: 'animal' },
+      { id: 'pig_feed_1', label: 'Pig pen one', verb: 'Give', x: 235, y: 425, radius: 116, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'You need the feed cart. The pig has logged the omission.', prop: 'animal' },
+      { id: 'pig_feed_2', label: 'Pig pen two', verb: 'Give', x: 300, y: 570, radius: 104, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'The empty-handed approach has not impressed the second pig.', prop: 'animal' },
+      { id: 'pig_feed_3', label: 'Pig pen three', verb: 'Give', x: 1005, y: 570, radius: 104, holdMs: 900, requiresFlag: 'hasFeedCart', missingFlagLine: 'Feed cart first. Pig diplomacy is materially based.', prop: 'animal' },
       { id: 'industrial_fan', label: 'Heroic industrial fan', verb: 'Inspect', x: 650, y: 460, radius: 88, optionalLine: 'The fan turns at one speed: retrospective safety concern.', prop: 'machine' },
     ],
-    npcs: [npc('luther', 'Luther', 'Vet', 930, 470, 'This would all be easier if nobody needed anything at exactly the same minute.', 'luther', patrol([{ x: 930, y: 470 }, { x: 850, y: 520 }], 'inspect', 28))],
+    npcs: [npc('luther', 'Luther', 'Vet', 820, 500, 'This would all be easier if nobody needed anything at exactly the same minute.', 'luther', patrol([{ x: 820, y: 500 }, { x: 730, y: 540 }], 'inspect', 28))],
     foregroundLayers: [
-      { id: 'pig-left-pens-foreground', x: 55, y: 150, width: 255, height: 470, depth: 835 },
-      { id: 'pig-right-south-foreground', x: 1005, y: 440, width: 160, height: 180, depth: 840 },
+      { id: 'pig-left-pens-foreground', x: 55, y: 150, width: 255, height: 470, depth: 835, alpha: .38 },
+      { id: 'pig-right-south-foreground', x: 1005, y: 440, width: 160, height: 180, depth: 840, alpha: .38 },
     ],
   },
 
   sheepScales: {
     id: 'sheepScales', name: 'Sheep & Scales', subtitle: 'Wool, weight and timing', theme: 'animal', backgroundKey: 'sheepScales', bounds: BOUNDS, music: 'animals', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromHall', x: 310, y: 390, facing: 'right' }],
-    exits: [{ id: 'sheep_to_hall', label: 'Main Hallway', x: 55, y: 170, width: 100, height: 160, destination: 'mainHall', destinationSpawn: 'fromSheep', facing: 'left' }],
+    spawns: [{ id: 'fromHall', x: 300, y: 390, facing: 'right' }],
+    exits: [{ id: 'sheep_to_hall', label: 'Main Hallway', x: 55, y: 170, width: 100, height: 160, destination: 'mainHall', destinationSpawn: 'fromSheep', facing: 'left', portal: { target: { x: 45, y: 245 }, durationMs: 420, fadeFrom: .56 } }],
     obstacles: [
-      { id: 'left_foreground_rail', x: 55, y: 355, width: 210, height: 315 },
-      { id: 'rear_pen', x: 320, y: 135, width: 200, height: 210 },
+      { id: 'left_foreground_rail', x: 55, y: 355, width: 180, height: 315 },
+      { id: 'rear_pen', x: 335, y: 135, width: 185, height: 210 },
       { id: 'scale_platform', x: 370, y: 350, width: 430, height: 210 },
       { id: 'rear_bed', x: 680, y: 170, width: 270, height: 170 },
       { id: 'right_foreground_rail', x: 1030, y: 460, width: 195, height: 210 },
@@ -146,7 +149,7 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       { id: 'shearing_station', label: 'Shearing station', verb: 'Operate', x: 500, y: 520, radius: 92, holdMs: 1200, requiresFlag: 'procedureComplete', missingFlagLine: 'The station is booked for the afternoon overflow, not the morning optimism.', prop: 'animal' },
       { id: 'scale_readout', label: 'Scale readout', verb: 'Inspect', x: 500, y: 315, radius: 70, optionalLine: 'The display currently reads: PATIENCE, LOW.', prop: 'machine' },
     ],
-    npcs: [npc('shinya', 'Shinya', 'Researcher', 960, 590, 'I calibrated the scale. Emotionally, I am choosing confidence.', 'max')],
+    npcs: [npc('shinya', 'Shinya', 'Researcher', 960, 590, 'I calibrated the scale. Emotionally, I am choosing confidence.', 'shinya')],
     foregroundLayers: [
       { id: 'sheep-left-rail-foreground', x: 55, y: 355, width: 210, height: 315, depth: 835 },
       { id: 'sheep-right-rail-foreground', x: 1030, y: 460, width: 195, height: 210, depth: 845 },
@@ -155,8 +158,8 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
 
   baboonWing: {
     id: 'baboonWing', name: 'Baboon Wing', subtitle: 'Calm is a control system', theme: 'animal', backgroundKey: 'baboonWing', bounds: BOUNDS, music: 'animals', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromHall', x: 640, y: 610, facing: 'away' }],
-    exits: [{ id: 'baboon_to_hall', label: 'Main Hallway', x: 570, y: 620, width: 140, height: 50, destination: 'mainHall', destinationSpawn: 'fromBaboon', facing: 'toward' }],
+    spawns: [{ id: 'fromHall', x: 640, y: 590, facing: 'away' }],
+    exits: [{ id: 'baboon_to_hall', label: 'Main Hallway', x: 570, y: 660, width: 140, height: 10, destination: 'mainHall', destinationSpawn: 'fromBaboon', facing: 'toward', portal: { target: { x: 640, y: 718 }, durationMs: 450, fadeFrom: .6 } }],
     obstacles: [
       { id: 'baboon_cage_1', x: 110, y: 130, width: 280, height: 230 }, { id: 'baboon_cage_2', x: 500, y: 130, width: 280, height: 230 },
       { id: 'baboon_cage_3', x: 890, y: 130, width: 280, height: 230 },
@@ -181,8 +184,8 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
     id: 'prepRoom', name: 'Procedure Prep', subtitle: 'The trolley becomes a plot device', theme: 'clinical', backgroundKey: 'prepRoom', bounds: BOUNDS, music: 'facility', perspective: PERSPECTIVE,
     spawns: [{ id: 'fromHall', x: 260, y: 430, facing: 'right' }, { id: 'fromCath', x: 1020, y: 430, facing: 'left' }],
     exits: [
-      { id: 'prep_to_hall', label: 'Main Hallway', x: 55, y: 200, width: 80, height: 180, destination: 'mainHall', destinationSpawn: 'fromPrep', facing: 'left' },
-      { id: 'prep_to_cath', label: 'Cath Lab', x: 1165, y: 280, width: 60, height: 160, destination: 'cathLab', destinationSpawn: 'fromPrep', facing: 'right', requiredFlag: 'hasTrolley', lockedLine: 'Cath is not accepting conceptual trolleys. Load the pig first.' },
+      { id: 'prep_to_hall', label: 'Main Hallway', x: 55, y: 205, width: 85, height: 175, destination: 'mainHall', destinationSpawn: 'fromPrep', facing: 'left', portal: { target: { x: 45, y: 290 }, durationMs: 420, fadeFrom: .55 } },
+      { id: 'prep_to_cath', label: 'Cath Lab', x: 1165, y: 235, width: 60, height: 185, destination: 'cathLab', destinationSpawn: 'fromPrep', facing: 'right', portal: { target: { x: 1235, y: 330 }, durationMs: 420, fadeFrom: .55 }, requiredFlag: 'hasTrolley', lockedLine: 'Cath is not accepting conceptual trolleys. Load the pig first.' },
     ],
     obstacles: [
       { id: 'rear_counter', x: 390, y: 170, width: 570, height: 230 },
@@ -207,8 +210,8 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
 
   cathLab: {
     id: 'cathLab', name: 'Cath Lab', subtitle: 'Everything works unless observed', theme: 'clinical', backgroundKey: 'cathLab', bounds: BOUNDS, music: 'cath', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromPrep', x: 120, y: 360, facing: 'right' }],
-    exits: [{ id: 'cath_to_prep', label: 'Procedure Prep', x: 55, y: 280, width: 60, height: 160, destination: 'prepRoom', destinationSpawn: 'fromCath', facing: 'left' }],
+    spawns: [{ id: 'fromPrep', x: 195, y: 350, facing: 'toward' }],
+    exits: [{ id: 'cath_to_prep', label: 'Procedure Prep', x: 150, y: 165, width: 90, height: 110, destination: 'prepRoom', destinationSpawn: 'fromCath', facing: 'away', portal: { target: { x: 195, y: 115 }, durationMs: 430, fadeFrom: .58 } }],
     obstacles: [
       { id: 'cath_table', x: 390, y: 260, width: 430, height: 170 }, { id: 'c_arm', x: 530, y: 140, width: 190, height: 130 },
       { id: 'monitor_bank', x: 865, y: 130, width: 270, height: 160 }, { id: 'cath_cart', x: 860, y: 480, width: 230, height: 120 },
@@ -226,18 +229,20 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
       npc('tony', 'Tony', 'Engineer', 1080, 430, 'If the monitor flickers again, pretend it is intentional until I get there.'),
       npc('urja', 'Urja', 'Engineer', 1130, 520, 'Engineering update: the thing works, unless observed directly.'),
     ],
-    foregroundLayers: [{ id: 'cath-cart-foreground', x: 860, y: 480, width: 230, height: 120, depth: 840 }],
+    foregroundLayers: [
+      { id: 'cath-cart-foreground', x: 860, y: 480, width: 230, height: 120, depth: 840 },
+    ],
   },
 
   carPark: {
     id: 'carPark', name: 'Car Park', subtitle: 'Diplomacy on wet asphalt', theme: 'exterior', backgroundKey: 'carPark', bounds: BOUNDS, music: 'carpark', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromHall', x: 260, y: 170, facing: 'toward' }, { id: 'fromCoffee', x: 1190, y: 170, facing: 'toward' }],
+    spawns: [{ id: 'fromHall', x: 480, y: 215, facing: 'toward' }, { id: 'fromCoffee', x: 1185, y: 235, facing: 'toward' }],
     exits: [
-      { id: 'car_to_hall', label: 'Main Hallway', x: 55, y: 105, width: 150, height: 70, destination: 'mainHall', destinationSpawn: 'fromCar', facing: 'away' },
-      { id: 'car_to_coffee', label: 'Coffee Shop', x: 1060, y: 105, width: 165, height: 70, destination: 'coffeeShop', destinationSpawn: 'fromCar', facing: 'away', requiredFlag: 'carParkClear', lockedLine: 'The coffee route is blocked until all six cars are sensibly placed.' },
+      { id: 'car_to_hall', label: 'Main Hallway', x: 445, y: 105, width: 70, height: 75, destination: 'mainHall', destinationSpawn: 'fromCar', facing: 'away', portal: { target: { x: 480, y: 75 }, durationMs: 420, fadeFrom: .55 } },
+      { id: 'car_to_coffee', label: 'Coffee Shop', x: 1060, y: 105, width: 165, height: 50, destination: 'coffeeShop', destinationSpawn: 'fromCar', facing: 'away', portal: { target: { x: 1185, y: 70 }, durationMs: 460, fadeFrom: .58 }, requiredFlag: 'carParkClear', lockedLine: 'The coffee route is blocked until all six cars are sensibly placed.' },
     ],
     obstacles: [
-      { id: 'parked_row', x: 650, y: 185, width: 500, height: 170 }, { id: 'guard_hut', x: 70, y: 200, width: 170, height: 130 },
+      { id: 'guard_hut', x: 70, y: 200, width: 170, height: 130 },
       { id: 'island', x: 930, y: 500, width: 220, height: 110 },
       { id: 'car_sally', x: 310, y: 220, width: 100, height: 60 }, { id: 'car_alan', x: 450, y: 305, width: 100, height: 60 },
       { id: 'car_vu', x: 600, y: 390, width: 100, height: 60 }, { id: 'car_max', x: 470, y: 505, width: 100, height: 60 },
@@ -255,16 +260,16 @@ export const LOCATIONS: Record<LocationId, LocationDefinition> = {
     npcs: [
       npc('wayne', 'Wayne', 'PI', 930, 390, 'Do not touch my car. Ask me and I will move it myself. Carefully.'),
       npc('juan_park', 'Juan', 'Cardiologist', 850, 560, 'I can move my car. I am choosing not to comment on the others.', 'juan'),
-      npc('thanh', 'Thanh', 'Mobile hazard', 300, 610, 'HONK.', 'thanh'),
+      npc('thanh', 'Thanh', 'Mobile hazard', 260, 440, 'HONK.', 'thanh'),
     ],
   },
 
   coffeeShop: {
     id: 'coffeeShop', name: 'Coffee Shop', subtitle: 'Caffeine in cinematic lighting', theme: 'coffee', backgroundKey: 'coffeeShop', bounds: BOUNDS, music: 'finale', perspective: PERSPECTIVE,
-    spawns: [{ id: 'fromCar', x: 430, y: 520, facing: 'away' }],
-    exits: [{ id: 'coffee_to_car', label: 'Hospital Footpath', x: 375, y: 175, width: 90, height: 175, destination: 'carPark', destinationSpawn: 'fromCoffee', facing: 'away' }],
+    spawns: [{ id: 'fromCar', x: 520, y: 430, facing: 'toward' }],
+    exits: [{ id: 'coffee_to_car', label: 'Hospital Footpath', x: 485, y: 220, width: 70, height: 130, destination: 'carPark', destinationSpawn: 'fromCoffee', facing: 'away', portal: { target: { x: 520, y: 180 }, durationMs: 430, fadeFrom: .56 } }],
     obstacles: [
-      { id: 'coffee_counter', x: 520, y: 200, width: 620, height: 185 },
+      { id: 'coffee_counter', x: 575, y: 200, width: 565, height: 185 },
       { id: 'window_bar', x: 55, y: 290, width: 300, height: 220 },
       { id: 'right_cabinet', x: 1120, y: 350, width: 105, height: 250 },
     ],

@@ -34,6 +34,7 @@ All notable changes to Busy Day at the Viv are documented here. The project uses
 ### Validation status
 
 - Node 24 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) passed the clean release/audio/type/lint/49-unit/build gate, 48/48 dev-server browser tests, and 6/6 built-preview tests: 16+2 in each of Chromium, Firefox, and WebKit. Pages correctly skipped on the PR branch.
+- [PR #2](https://github.com/nacho-android/busy_day/pull/2) merged as [`d5bc627`](https://github.com/nacho-android/busy_day/commit/d5bc627235f70865290b34e8efe28824debb1e54). Main workflow [`29350906888`](https://github.com/nacho-android/busy_day/actions/runs/29350906888) and [Pages job `87149283383`](https://github.com/nacho-android/busy_day/actions/runs/29350906888/job/87149283383) succeeded; the hosted V2.1 title, New Shift/dialogue, Tea Room checkpoint recovery, and 18-objective drawer passed with zero captured console entries.
 - The opt-in public-input Mel journey reached the visible shift-board prompt but did not complete because shared-host software WebGL stopped delivering reliable update frames during the hold interaction; Josh was not run. This is not a no-shortcut completion claim or an established progression defect.
 - Physical touch devices, hardware controllers, screen readers, manual audio listening, soak/current-phone performance, and likeness/publication-rights review remain unverified.
 

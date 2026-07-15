@@ -27,3 +27,7 @@ __pycache__/
 /*.jpeg
 /*.jpg
 /style_ref.png
+# Local image-generation inputs derived directly from the supplied private
+# references. Runtime art is rebuilt from the authored sprite masters instead.
+/art/generated-sources/character-sprites/*_reference_*
+/art/generated-sources/character-sprites/style_ref_*

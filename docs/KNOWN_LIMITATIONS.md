@@ -8,17 +8,15 @@ Static world/asset validation, unit coverage, focused Chromium hardening runs, a
 
 ## Player-visible scope differences
 
-### In-world characters and props use the vector renderer
+### Runtime animation is atlas-based but deliberately compact
 
-Leads, NPCs, animals, cars, carts, equipment, and interaction markers are composed from Phaser primitives. `CharacterRig` can execute vector, sprite-sheet, or atlas definitions through data-defined assets, frames, named animations, timing, origin/scale, collision footprint, portraits, and voice metadata, but the shipped world definitions deliberately select vector mode.
+Mel and Josh ship as separate transparent 8×4 directional sheets. Twenty-three named NPCs, including Vu and Shinya, each ship with an 8×4 sheet containing two idle phases, four walk phases, and two interaction phases in toward, away, right, and left rows. Animals, trolleys, seven vehicles, and forty facility-prop states use separate transparent atlases. Definitions, frame timing, scale, footprint, portrait, and voice metadata remain independent from objectives and interaction logic.
 
-Eight principal speakers have generated rendered dialogue portraits. A generated Mel/Josh directional source sheet is retained in `art/generated-sources/`, but it is not a packed, approved, or runtime-loaded animation atlas.
+**Impact:** the important cast and world props now have authored directional/action animation, perspective scaling, and depth sorting, but the compact frame counts are not cinematic motion capture. NPC patrols are short ambient routes rather than full schedules, and dialogue expressions still reuse eight neutral rendered portraits with CSS treatment.
 
-**Impact:** the paper-doll rig provides direction-specific workwear, faces, hair, glasses, facial hair, idle/walk/interaction/hit animation, perspective, and depth, but it remains vector rather than rendered sprite art. Seven NPCs have short patrols and proximity reactions; there are no long-form schedules or cinematic character atlases.
+**Workaround:** every runtime sheet and frame map is replaceable through data definitions without rewriting gameplay.
 
-**Workaround:** gameplay definitions and visual definitions are separate, so sheets, atlases, portraits, timing, footprints, and voice metadata can change without rewriting objectives.
-
-**Release action:** either approve the vector world look as intentional or pack, integrate, and verify replacement atlases. Dedicated expression portraits can independently replace the current neutral portraits plus CSS-expression treatment.
+**Release action:** future art passes can add more walk in-betweens, dedicated expression portraits, and longer NPC behaviours while preserving the current contracts and asset tests.
 
 ### No pointer-to-move or pathfinding
 
@@ -32,7 +30,7 @@ Movement is direct through keyboard, virtual joystick, or gamepad. There is no t
 
 ### Cart, trolley, and car systems are abstracted
 
-Feed-cart and pig-trolley ownership are saved flags. Carrying the pig trolley changes speed through the lead's carry factor, but no separate trolley body follows the character and no widened collision footprint is used. The six-car finale uses hold interactions with owner-specific Juan/Wayne dialogue rather than a free spatial sliding puzzle. Each car is a collision obstacle until completed, then its runtime prop/collider is removed to open the lane.
+Feed-cart and pig-trolley ownership are saved flags. Their in-room bodies use animated multi-angle atlas art and visibly depart when collected, but no separate trolley body follows the character and no widened carrying footprint is used. The six-car finale uses hold interactions with owner-specific Juan/Wayne dialogue rather than a free spatial sliding puzzle. Each independently rendered car is a collision obstacle until completed, then turns, drives out, and removes its collider to open the lane.
 
 **Impact:** the car park physically clears through short drive-away animations, but cars follow authored exits rather than player-positioned paths; cart/trolley transport remains less physical than the early design proposal.
 
@@ -72,11 +70,11 @@ The UI exposes music volume, SFX volume, and mute. Ambience and UI cues share th
 
 ### Rendering lifetime is bounded but still needs device profiling
 
-The production JavaScript remains one main Phaser/application chunk. The 11 optimized 1280×720 WebP backgrounds total 1,818,586 bytes (1.734 MiB), but only title and Tea Room load up front; later rooms load on entry through a three-location decoded-background LRU. With title retained, the normal decoded backplate ceiling is roughly four textures rather than eleven. Browser HTTP caching still avoids repeated transfer. There is no route-split JavaScript chunk, DPR cap, particle pool, or runtime performance overlay.
+The production JavaScript remains one main Phaser/application chunk. The 11 optimized 1280×720 WebP backgrounds total 1,777,598 bytes (1.695 MiB), but only title and Tea Room load up front; later rooms load on entry through a three-location decoded-background LRU. With title retained, the normal decoded backplate ceiling is roughly four textures rather than eleven. Browser HTTP caching still avoids repeated transfer. There is no route-split JavaScript chunk, DPR cap, particle pool, or runtime performance overlay.
 
 A pre-final-art Chromium automation sample at 1366×768 on Intel UHD 620/D3D11 measured a blank-page baseline of 47.4 FPS / 18.1 ms p95 and active Tea Room play at 33.3 FPS / 36.1 ms p95. A prior same-condition sample reported 13.5 MiB JavaScript heap. Initial navigation of that historical production preview took 1.141 seconds for 12 resources and approximately 2.95 MB encoded transfer. The payload and loading policy have changed, so these are desktop history rather than current-build or phone results.
 
-The V2.1 production preview was also sampled at 1366×768 in Playwright Chromium 149: 693 ms local navigation, 15 resources, 0.73 MiB reported transfer, and 12.1 MiB JavaScript heap before and during Tea Room play. That shared worker exposed only ANGLE/SwiftShader software WebGL; it produced 9.1 FPS on the title and 4.5 FPS during movement, matching the public-journey frame starvation. Those frame rates characterize the constrained automation host, not hardware-accelerated desktop or phone performance.
+The final animated-art production preview was sampled at 1366×768 in Playwright Chromium 149: 899 ms local navigation, 44 resources, 7.50 MiB reported transfer, and 12.8 MiB JavaScript heap before and during Tea Room play. The host exposed only ANGLE/SwiftShader software WebGL; it produced 9.3 FPS on the title and 6.8 FPS during movement. Those frame rates characterize the constrained software renderer, not hardware-accelerated desktop or phone performance; no physical-device performance claim is made.
 
 **Impact:** decoded memory and local transfer are now bounded more tightly, but current hardware-accelerated transition latency, long-session growth, and representative phone performance remain unmeasured.
 
@@ -129,9 +127,9 @@ The 43 supplied images are local-only source references and include people, loca
 ## Repository and release infrastructure
 
 - Repository: [`nacho-android/busy_day`](https://github.com/nacho-android/busy_day)
-- Deployed V2.0 baseline: [`54499b368d566f3fa4e7da1af3e7a06ed1942b2f`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f), merged through [PR #1](https://github.com/nacho-android/busy_day/pull/1)
-- Baseline main workflow: [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940), success under Node 24 with its then-current 21/21 Playwright tests
+- Deployed V2.1 merge: [`d5bc627235f70865290b34e8efe28824debb1e54`](https://github.com/nacho-android/busy_day/commit/d5bc627235f70865290b34e8efe28824debb1e54), merged through [PR #2](https://github.com/nacho-android/busy_day/pull/2)
+- V2.1 main workflow: [`29350906888`](https://github.com/nacho-android/busy_day/actions/runs/29350906888), success under Node 24 for quality plus Chromium, Firefox, and WebKit jobs
 - Current V2.1 static scope: `npm run verify:release` passed at 141 intended files / 50.27 MiB after exclusions, with no selected high-risk credential-pattern match. All 43 raw references plus `style_ref.png` remain local-only; V1 remains 168,208 bytes with SHA-256 `A36E47A820A947CE7025311A3F89AC96EE119F649FE1524BD42C49D707154A85`.
-- Pages baseline: [production URL](https://nacho-android.github.io/busy_day/), deployment `5433749633`, workflow build type, HTTPS, main-only policy; SHA/ref/state matched `54499b3`/`main`/`success`.
+- Pages release: [production URL](https://nacho-android.github.io/busy_day/), successful [Pages job `87149283383`](https://github.com/nacho-android/busy_day/actions/runs/29350906888/job/87149283383), workflow build type, HTTPS, and main-only policy. The host served `assets/index-DEBHc20z.js` and `assets/index-CyZvj29T.css`.
 
-Repository, baseline CI/deployment, and hosted V2.0 smoke are complete. V2.1's integrated PR gates are green; merge/main workflow, Pages deployment, and hosted smoke remain before publication. Its genuine manual gameplay/device/audio/performance/rights limitations are listed above.
+Repository publication, V2.1 main CI, Pages deployment, and hosted smoke are complete. The genuine manual gameplay, device, audio, performance, accessibility, and rights limitations listed above remain open.

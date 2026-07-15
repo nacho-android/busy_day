@@ -95,8 +95,8 @@ describe('GameSession', () => {
     expect(first.run).toMatchObject({
       locationId: 'mainHall',
       spawnId: 'fromTea',
-      player: { x: 120, y: 270 },
-      facing: 'right',
+      player: { x: 200, y: 340 },
+      facing: 'toward',
     });
     expect(() => first.transitionTo('mainHall', 'missing')).toThrow('Unknown spawn mainHall.missing');
 
@@ -172,7 +172,7 @@ describe('GameSession', () => {
       objectiveIndex: 3,
       locationId: 'mainHall',
       spawnId: 'fromTea',
-      player: { x: 120, y: 270 },
+      player: { x: 200, y: 340 },
       failure: null,
       meters: {
         health: 100,

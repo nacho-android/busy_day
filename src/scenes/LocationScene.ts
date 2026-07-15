@@ -5,10 +5,10 @@ import { CHARACTERS } from '../data/characters';
 import { LOCATIONS, findInteraction } from '../data/locations';
 import { FINAL_DIALOGUE, OBJECTIVE_DIALOGUE } from '../data/story';
 import { CharacterRig } from '../entities/CharacterRig';
-import { createInteractionProp } from '../entities/WorldProps';
+import { animateWorldPropDeparture, createInteractionProp, createThanhVehicle, playWorldPropAction } from '../entities/WorldProps';
 import { session } from '../state/GameSession';
 import { canOccupy, circleIntersectsRect, distance, moveCircle } from '../systems/collision';
-import type { InputSnapshot, InteractionDefinition, LocationDefinition, LocationId, NpcPlacement, ObstacleDefinition, Point } from '../types/game';
+import type { ExitDefinition, InputSnapshot, InteractionDefinition, LocationDefinition, LocationId, NpcPlacement, ObstacleDefinition, Point, WorldPropTestSnapshot } from '../types/game';
 import { ui } from '../ui/GameUI';
 import { renderBackdrop } from './BackdropRenderer';
 
@@ -45,6 +45,7 @@ const assetUrl = (path: string): string => `${import.meta.env.BASE_URL}assets/${
 export class LocationScene extends Phaser.Scene {
   private player!: CharacterRig;
   private readonly propObjects = new Map<string, Phaser.GameObjects.Container>();
+  private readonly departingPropObjects = new Map<string, Phaser.GameObjects.Container>();
   private readonly npcObjects = new Map<string, NpcRuntime>();
   private nearby: Nearby | null = null;
   private heldTargetId: string | null = null;
@@ -68,6 +69,7 @@ export class LocationScene extends Phaser.Scene {
   private hornAt = 0;
   private worldReady = false;
   private motionVelocity: Point = { x: 0, y: 0 };
+  private portalTween: Phaser.Tweens.Tween | null = null;
 
   constructor() {
     super('LocationScene');
@@ -98,7 +100,10 @@ export class LocationScene extends Phaser.Scene {
     this.worldReady = true;
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.portalTween?.stop();
+      this.portalTween = null;
       this.propObjects.clear();
+      this.departingPropObjects.clear();
       this.npcObjects.clear();
     });
   }
@@ -187,6 +192,7 @@ export class LocationScene extends Phaser.Scene {
     this.hazardHitAt = 0;
     this.hornAt = 0;
     this.motionVelocity = { x: 0, y: 0 };
+    this.portalTween = null;
   }
 
   override update(time: number, delta: number): void {
@@ -198,7 +204,11 @@ export class LocationScene extends Phaser.Scene {
     this.updateAmbient(seconds, time);
 
     const input = this.readInput();
-    if (ui.isBlocking || this.transitionLocked) {
+    if (this.transitionLocked) {
+      ui.setNearby(null, 0);
+      return;
+    }
+    if (ui.isBlocking) {
       this.motionVelocity = { x: 0, y: 0 };
       this.player.updateRig(0, 0, seconds, LOCATIONS[run.locationId]);
       ui.setNearby(null, 0);
@@ -278,6 +288,31 @@ export class LocationScene extends Phaser.Scene {
     return result.success;
   }
 
+  setWorldTweenScaleForTest(scale: number): boolean {
+    if (!this.worldReady || !Number.isFinite(scale)) return false;
+    const clamped = Phaser.Math.Clamp(scale, 0, 4);
+    if (clamped === 0) {
+      this.tweens.pauseAll();
+    } else {
+      this.tweens.timeScale = clamped;
+      this.tweens.resumeAll();
+    }
+    return true;
+  }
+
+  getWorldPropSnapshotForTest(id: string): WorldPropTestSnapshot | null {
+    const wrapper = this.propObjects.get(id) ?? this.departingPropObjects.get(id);
+    if (!wrapper?.active) return null;
+    const sprite = wrapper.getData('mainSprite') as Phaser.GameObjects.Sprite | undefined;
+    return {
+      x: wrapper.x,
+      y: wrapper.y,
+      alpha: wrapper.alpha,
+      frame: sprite?.frame.name ?? -1,
+      active: wrapper.active,
+    };
+  }
+
   travelToObjectiveForTest(): boolean {
     if (!this.worldReady) return false;
     const objective = session.currentObjective;
@@ -315,19 +350,18 @@ export class LocationScene extends Phaser.Scene {
     const location = LOCATIONS[run.locationId];
     const exit = location.exits.find((candidate) => candidate.id === id);
     if (!exit) return null;
-    const centre = { x: exit.x + exit.width / 2, y: exit.y + exit.height / 2 };
     const radius = this.player.collisionRadius;
     const clearance = radius + 6;
     const samples = [.5, .25, .75, .125, .875];
     let candidates: Point[];
     let key: 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown';
-    if (exit.x <= location.bounds.x + 80) {
+    if (exit.facing === 'left') {
       candidates = samples.map((sample) => ({ x: exit.x + exit.width + clearance, y: exit.y + exit.height * sample }));
       key = 'ArrowLeft';
-    } else if (exit.x + exit.width >= location.bounds.x + location.bounds.width - 80) {
+    } else if (exit.facing === 'right') {
       candidates = samples.map((sample) => ({ x: exit.x - clearance, y: exit.y + exit.height * sample }));
       key = 'ArrowRight';
-    } else if (exit.y <= location.bounds.y + 80) {
+    } else if (exit.facing === 'away') {
       candidates = samples.map((sample) => ({ x: exit.x + exit.width * sample, y: exit.y + exit.height + clearance }));
       key = 'ArrowUp';
     } else {
@@ -337,12 +371,15 @@ export class LocationScene extends Phaser.Scene {
     const obstacles = this.activeObstacles(location);
     const target = candidates.find((candidate) => canOccupy(candidate, radius, location.bounds, obstacles));
     if (!target) {
-      console.warn(`No collision-valid test approach exists for exit ${location.id}.${exit.id} around ${centre.x},${centre.y}.`);
+      console.warn(`No collision-valid test approach exists for exit ${location.id}.${exit.id}.`);
       return null;
     }
     this.player.setPosition(target.x, target.y);
     session.recordPosition(target.x, target.y, this.player.direction);
-    this.exitsArmed = false;
+    // The helper has already proved that `target` is a collision-valid point
+    // outside the exit. Arm synchronously so an immediate synthetic key-down
+    // cannot cross the threshold before the next browser animation frame.
+    this.exitsArmed = true;
     return key;
   }
 
@@ -351,9 +388,9 @@ export class LocationScene extends Phaser.Scene {
     const location = LOCATIONS[run.locationId];
     for (const interaction of location.interactions) {
       const completed = run.completedTargets.includes(interaction.id);
-      if (completed && interaction.id.startsWith('car_')) continue;
-      const object = createInteractionProp(this, interaction, completed);
-      object.setAlpha(this.isCurrentTarget(interaction.id) ? 1 : completed ? .45 : .72);
+      if (completed && (interaction.id.startsWith('car_') || interaction.id === 'feed_cart' || interaction.id === 'pig_trolley')) continue;
+      const object = createInteractionProp(this, interaction, completed, location);
+      object.setAlpha(this.isCurrentTarget(interaction.id) ? 1 : completed ? .82 : .9);
       this.propObjects.set(interaction.id, object);
     }
     for (const npc of location.npcs) {
@@ -494,7 +531,7 @@ export class LocationScene extends Phaser.Scene {
     if (result.success && id.startsWith('baboon_')) audio.playSfx('baboon', .28);
     ui.toast(result.message, result.success ? (result.objectiveCompleted ? 'success' : 'info') : 'warn');
     if (!result.success) return;
-    this.refreshProp(id);
+    this.refreshProp(id, true);
     if (result.dialogueKey === 'wayne_choice') {
       ui.showDialogue([{
         speaker: 'Wayne',
@@ -528,26 +565,26 @@ export class LocationScene extends Phaser.Scene {
     ui.refresh();
   }
 
-  private refreshProp(id: string): void {
+  private refreshProp(id: string, playAction = false): void {
     const run = session.run;
     const interaction = LOCATIONS[run!.locationId].interactions.find((candidate) => candidate.id === id);
     if (!interaction) return;
     const previous = this.propObjects.get(id);
-    if (id.startsWith('car_') && run!.completedTargets.includes(id) && previous) {
+    const departs = id.startsWith('car_') || id === 'feed_cart' || id === 'pig_trolley';
+    if (departs && run!.completedTargets.includes(id) && previous) {
       this.propObjects.delete(id);
-      this.tweens.add({
-        targets: previous,
-        x: previous.x + (id === 'car_wayne' ? 230 : -180),
-        alpha: 0,
-        duration: session.settings.reducedMotion ? 1 : 520,
-        ease: 'Cubic.In',
-        onComplete: () => previous.destroy(true),
+      this.departingPropObjects.set(id, previous);
+      animateWorldPropDeparture(this, previous, interaction, session.settings.reducedMotion, () => {
+        this.departingPropObjects.delete(id);
+        previous.destroy(true);
       });
       return;
     }
     previous?.destroy(true);
-    const object = createInteractionProp(this, interaction, run!.completedTargets.includes(id));
-    object.setAlpha(this.isCurrentTarget(id) ? 1 : .45);
+    const completed = run!.completedTargets.includes(id);
+    const object = createInteractionProp(this, interaction, completed, LOCATIONS[run!.locationId]);
+    if (playAction && !completed) playWorldPropAction(this, object, interaction);
+    object.setAlpha(this.isCurrentTarget(id) ? 1 : .82);
     this.propObjects.set(id, object);
   }
 
@@ -561,7 +598,7 @@ export class LocationScene extends Phaser.Scene {
     const run = session.run!;
     for (const interaction of LOCATIONS[run.locationId].interactions) {
       const object = this.propObjects.get(interaction.id);
-      object?.setAlpha(this.isCurrentTarget(interaction.id) ? 1 : run.completedTargets.includes(interaction.id) ? .45 : .7);
+      object?.setAlpha(this.isCurrentTarget(interaction.id) ? 1 : run.completedTargets.includes(interaction.id) ? .82 : .9);
     }
   }
 
@@ -577,7 +614,7 @@ export class LocationScene extends Phaser.Scene {
       if (!exit) this.exitsArmed = true;
       return;
     }
-    if (time < this.transitionCooldownUntil || this.transitionLocked || this.nearby) return;
+    if (time < this.transitionCooldownUntil || this.transitionLocked) return;
     if (!exit) return;
     if (exit.requiredFlag && !session.hasFlag(exit.requiredFlag)) {
       ui.toast(exit.lockedLine ?? 'That route is not available yet.', 'warn');
@@ -585,25 +622,62 @@ export class LocationScene extends Phaser.Scene {
       this.transitionCooldownUntil = time + 1200;
       return;
     }
+    this.beginExitTransition(exit, location);
+  }
+
+  private beginExitTransition(exit: ExitDefinition, location: LocationDefinition): void {
     this.transitionLocked = true;
+    this.motionVelocity = { x: 0, y: 0 };
+    ui.setNearby(null, 0);
     audio.playSfx('door', .65);
     audio.playSfx('transition', .45);
-    const finish = () => {
+
+    const finish = (): void => {
       session.transitionTo(exit.destination, exit.destinationSpawn);
       this.scene.restart();
     };
-    if (session.settings.reducedMotion) finish();
-    else this.cameras.main.fadeOut(280, 3, 9, 16, (_camera: Phaser.Cameras.Scene2D.Camera, progress: number) => { if (progress === 1) finish(); });
+    if (session.settings.reducedMotion) {
+      finish();
+      return;
+    }
+
+    const target = exit.portal?.target ?? {
+      x: exit.x + exit.width / 2,
+      y: exit.y + exit.height / 2,
+    };
+    const duration = exit.portal?.durationMs ?? 380;
+    const fadeFrom = Phaser.Math.Clamp(exit.portal?.fadeFrom ?? .58, .2, .95);
+    let previousX = this.player.x;
+    let previousY = this.player.y;
+    this.player.direction = exit.facing;
+    this.portalTween = this.tweens.add({
+      targets: this.player,
+      x: target.x,
+      y: target.y,
+      duration,
+      ease: 'Sine.In',
+      onUpdate: (tween) => {
+        const deltaSeconds = Math.max(1 / 120, this.game.loop.delta / 1000);
+        const velocityX = (this.player.x - previousX) / deltaSeconds;
+        const velocityY = (this.player.y - previousY) / deltaSeconds;
+        previousX = this.player.x;
+        previousY = this.player.y;
+        this.player.updateRig(velocityX, velocityY, deltaSeconds, location);
+        const progress = tween.progress;
+        if (progress >= fadeFrom) this.player.setAlpha(1 - (progress - fadeFrom) / (1 - fadeFrom));
+      },
+      onComplete: () => {
+        this.portalTween = null;
+        this.cameras.main.fadeOut(130, 3, 9, 16, (_camera: Phaser.Cameras.Scene2D.Camera, progress: number) => {
+          if (progress === 1) finish();
+        });
+      },
+    });
   }
 
   private createLocationHazard(): void {
     if (session.run?.locationId !== 'carPark') return;
-    const body = this.add.rectangle(0, -12, 76, 34, 0xd9b83e).setStrokeStyle(3, 0x1a2025, .75);
-    const roof = this.add.rectangle(0, -22, 36, 21, 0x26394a);
-    const beacon = this.add.circle(0, -40, 6, 0xff665f, .9);
-    const wheels = [this.add.circle(-25, 6, 7, 0x10151a), this.add.circle(25, 6, 7, 0x10151a)];
-    this.hazard = this.add.container(250, 610, [body, roof, beacon, ...wheels]).setDepth(760);
-    this.tweens.add({ targets: beacon, alpha: .2, duration: 260, yoyo: true, repeat: -1 });
+    this.hazard = createThanhVehicle(this, 250, 610, LOCATIONS.carPark);
   }
 
   private updateNpcAmbient(seconds: number, time: number, location: LocationDefinition): void {

@@ -42,6 +42,15 @@ export interface SpawnDefinition extends Point {
   facing: Direction;
 }
 
+export interface ExitPortalDefinition {
+  /** Final world-space point inside the visible doorway or aperture. */
+  target: Point;
+  /** Time spent walking from the trigger into the aperture. */
+  durationMs?: number;
+  /** Fraction of the walk after which the actor starts disappearing. */
+  fadeFrom?: number;
+}
+
 export interface ExitDefinition extends Rect {
   id: string;
   label: string;
@@ -50,6 +59,7 @@ export interface ExitDefinition extends Rect {
   facing: Direction;
   requiredFlag?: string;
   lockedLine?: string;
+  portal?: ExitPortalDefinition;
 }
 
 export interface ObstacleDefinition extends Rect {
@@ -199,6 +209,13 @@ export interface CharacterAnimationDefinition {
   motion: CharacterMotionDefinition;
 }
 
+export interface CharacterDirectionalFrames {
+  idle?: Readonly<Partial<Record<Direction, readonly (number | string)[]>>>;
+  interaction?: Readonly<Partial<Record<Direction, readonly (number | string)[]>>>;
+  contextual?: Readonly<Partial<Record<Direction, readonly (number | string)[]>>>;
+  hit?: Readonly<Partial<Record<Direction, readonly (number | string)[]>>>;
+}
+
 export interface CharacterVectorAppearance {
   suit: number;
   suitHighlight: number;
@@ -246,6 +263,8 @@ export interface CharacterVisualDefinition {
   frameLayout?: CharacterFrameLayout;
   vector?: CharacterVectorAppearance;
   animations: Readonly<Record<CharacterAnimationName, CharacterAnimationDefinition>>;
+  /** Optional authored angle-specific poses for otherwise non-directional actions. */
+  directionalFrames?: CharacterDirectionalFrames;
   displayScale: number;
   spriteOrigin: Readonly<Point>;
   footprint: CharacterCollisionFootprint;
@@ -342,6 +361,14 @@ export interface InputSnapshot {
   dodge: boolean;
 }
 
+export interface WorldPropTestSnapshot {
+  x: number;
+  y: number;
+  alpha: number;
+  frame: number | string;
+  active: boolean;
+}
+
 export interface BusyDayTestApi {
   getState(): RunState | null;
   getLocation(): LocationId | null;
@@ -350,6 +377,9 @@ export interface BusyDayTestApi {
   travelToObjective(): boolean;
   prepareExit(locationId: LocationId, exitId: string): boolean;
   approachExit(id: string): 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown' | null;
+  setWorldTweenScale(scale: number): boolean;
+  setReducedMotion(reduced: boolean): boolean;
+  getWorldPropSnapshot(id: string): WorldPropTestSnapshot | null;
   setMeters(partial: Partial<PlayerMeters>): void;
   showDialogue(lines: readonly DialogueLine[]): void;
 }

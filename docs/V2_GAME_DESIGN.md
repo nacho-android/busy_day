@@ -32,7 +32,7 @@ The shared aesthetic is an original retro-noir animal facility: high three-quart
 The current build combines:
 
 - 11 generated 3D-rendered backplates: the title plus all ten gameplay locations;
-- 11 browser-sized 1280×720 WebP runtime images totaling 1,818,586 bytes (1.734 MiB), with every 1672×941 PNG master retained;
+- 11 browser-sized 1280×720 WebP runtime images totaling 1,777,598 bytes (1.695 MiB), with fourteen environment masters retained for revision;
 - eight generated 384×384 WebP portraits for the principal speaking cast, cropped from one retained 2048×1024 master;
 - one retained Mel/Josh directional character source sheet for possible future atlas production; it is not a packed or runtime-loaded sprite atlas;
 - data-driven animated vector characters plus runtime animals, vehicles, props, markers, patrols, and ambient motion;
@@ -208,7 +208,7 @@ The pack is deterministic procedural synthesis with no recordings or sample libr
 
 ## Performance design
 
-The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The title and Tea Room backplates load up front; later rooms load on entry through the typed runtime manifest and a three-location decoded-background LRU. With the title retained, the normal decoded backplate ceiling is roughly four 1280×720 textures instead of eleven. The complete encoded background set remains 1,818,586 bytes (1.734 MiB) and benefits from browser HTTP caching. Converting the five retired runtime PNG copies saved 11,180,271 bytes, while every 1672×941 scene master remains outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
+The game uses a fixed 1280×720 logical canvas with Phaser FIT scaling. The title and Tea Room backplates load up front; later rooms load on entry through the typed runtime manifest and a three-location decoded-background LRU. With the title retained, the normal decoded backplate ceiling is roughly four 1280×720 textures instead of eleven. The complete encoded background set is 1,777,598 bytes (1.695 MiB) and benefits from browser HTTP caching. Fourteen environment masters remain outside the runtime path. Music is requested on demand through HTML audio, and one-shot cues are instantiated when played. Scene-owned Phaser objects/tweens are destroyed on scene shutdown by Phaser; local maps are cleared.
 
 For the deployed V2.0 baseline, local strict typecheck, ESLint, 27 unit tests, normal and Pages-path builds passed. The generated URLs were inspected beneath `/busy_day/`, and that deployed host later passed asset and Continue smoke checks. V2.1 PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739) passed clean release/audio/type/lint/49-unit/build gates plus 48/48 dev-server and 6/6 built-preview tests; physical-device validation remains separate.
 
@@ -223,7 +223,7 @@ Implemented in source/data:
 - collision, perspective, transition locks, interactions, dialogue, objectives, hazards, failures, recovery, save/settings, touch/orientation, original artwork, and original audio;
 - strict types, lint, unit tests, and production build.
 
-The deployed V2.0 baseline merged through PR #1 as [`54499b3`](https://github.com/nacho-android/busy_day/commit/54499b368d566f3fa4e7da1af3e7a06ed1942b2f). Node 24 main workflow [`29298026940`](https://github.com/nacho-android/busy_day/actions/runs/29298026940) passed its recorded release/audio/type/lint/27-unit/build gates and Playwright 21/21. Pages deployment `5433749633` succeeded for that SHA/ref `main`, and [the hosted build](https://nacho-android.github.io/busy_day/) passed cache-busted asset plus title/New Shift/refresh/Continue smoke checks without captured warning/error logs. Do not apply those workflow/deployment identifiers to V2.1.
+V2.1 merged through [PR #2](https://github.com/nacho-android/busy_day/pull/2) as [`d5bc627`](https://github.com/nacho-android/busy_day/commit/d5bc627235f70865290b34e8efe28824debb1e54). Node 24 main workflow [`29350906888`](https://github.com/nacho-android/busy_day/actions/runs/29350906888) passed the quality and Chromium, Firefox, and WebKit jobs; [Pages job `87149283383`](https://github.com/nacho-android/busy_day/actions/runs/29350906888/job/87149283383) succeeded. [The hosted build](https://nacho-android.github.io/busy_day/) served `assets/index-DEBHc20z.js` and `assets/index-CyZvj29T.css`; title, New Shift confirmation, opening dialogue, Tea Room objective 0/1, refresh/Continue recovery, and the 18-objective drawer passed with zero captured console entries.
 
 Post-optimization visual QA captured all ten rooms plus the ending without console/page errors. The contact sheet passed HUD, actor/target, exit, texture, and blank-room review; `visual-qa/` remains ignored.
 

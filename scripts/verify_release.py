@@ -33,6 +33,9 @@ EXPECTED_BACKGROUND_MASTERS = {
 }
 EXPECTED_MASTER_DIMENSIONS = {
     **{name: (1672, 941) for name in EXPECTED_BACKGROUND_MASTERS},
+    "facility_hub_v2_master.png": (1672, 941),
+    "tea_room_v2_master.png": (1672, 941),
+    "car_park_empty_master.png": (1671, 941),
     "dialogue_portraits_master.png": (2048, 1024),
 }
 EXPECTED_RUNTIME_BACKGROUNDS = {
@@ -82,8 +85,10 @@ EXCLUDED_DIRS = {
     "coverage",
     "dist",
     "node_modules",
+    "playwright-preview-report",
     "playwright-report",
     "test-results",
+    "test-results-preview",
     "visual-qa",
 }
 SECRET_PATTERNS = {
@@ -96,6 +101,23 @@ SECRET_PATTERNS = {
         re.I,
     ),
 }
+PRIVATE_DERIVATIVE_IGNORE_RULES = {
+    "/art/generated-sources/character-sprites/*_reference_*",
+    "/art/generated-sources/character-sprites/style_ref_*",
+}
+
+
+def looks_like_private_reference_derivative(relative: Path) -> bool:
+    name = relative.name.lower()
+    return "_reference_" in name or name.startswith("style_ref_")
+
+
+def is_private_reference_derivative(relative: Path) -> bool:
+    """Return true for local generation inputs that reproduce supplied refs."""
+    return (
+        relative.parent.as_posix() == "art/generated-sources/character-sprites"
+        and looks_like_private_reference_derivative(relative)
+    )
 
 
 class Verification:
@@ -162,6 +184,8 @@ def release_files() -> list[Path]:
             relative.suffix.lower() in {".jpeg", ".jpg"}
             or relative.name in {"style_ref.png", "debug.log"}
         ):
+            continue
+        if is_private_reference_derivative(relative):
             continue
         if relative.suffix.lower() in {".log", ".tsbuildinfo", ".pyc"}:
             continue
@@ -355,6 +379,23 @@ def verify_release_scope(check: Verification) -> None:
 
     ignored_root_assets = [path for path in files if len(path.parts) == 1 and path.suffix.lower() in {".jpeg", ".jpg"}]
     check.require(not ignored_root_assets, "Raw JPEG references are excluded from release scope", f"Raw references in scope: {ignored_root_assets}")
+
+    ignore_rules = set((ROOT / ".gitignore").read_text(encoding="utf-8").splitlines())
+    check.require(
+        PRIVATE_DERIVATIVE_IGNORE_RULES <= ignore_rules,
+        "Private reference derivatives are excluded from Git scope",
+        f"Missing private-derivative ignore rules: {sorted(PRIVATE_DERIVATIVE_IGNORE_RULES - ignore_rules)}",
+    )
+    public_derivatives = sorted(
+        path.relative_to(ROOT)
+        for path in (ROOT / "public").rglob("*")
+        if path.is_file() and looks_like_private_reference_derivative(path.relative_to(ROOT))
+    )
+    check.require(
+        not public_derivatives,
+        "Private reference derivatives are absent from public/",
+        f"Private reference derivatives leaked into public/: {public_derivatives}",
+    )
 
 
 def main() -> int:

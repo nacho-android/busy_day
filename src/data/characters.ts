@@ -5,7 +5,7 @@ import type {
   CharacterVectorAppearance,
   CharacterVisualDefinition,
 } from '../types/game';
-import { PORTRAIT_ASSETS } from './assets';
+import { CHARACTER_SPRITE_ASSETS, PORTRAIT_ASSETS } from './assets';
 
 export const CHARACTERS: Record<'mel' | 'josh', CharacterDefinition> = {
   mel: {
@@ -103,13 +103,94 @@ const PALETTES = [
 
 export const CHARACTER_VISUALS: Record<string, CharacterVisualDefinition> = { ...BASE_VISUALS };
 
-['xing', 'anugra', 'luther', 'tony', 'vu', 'urja', 'dhanya', 'poonam', 'max', 'leila', 'erin', 'sam', 'mitch', 'james', 'eddy', 'pierre'].forEach((id, index) => {
+const SUPPORTING_IDS = ['xing', 'anugra', 'luther', 'tony', 'vu', 'urja', 'dhanya', 'poonam', 'max', 'leila', 'erin', 'sam', 'mitch', 'james', 'eddy', 'pierre', 'shinya'] as const;
+
+SUPPORTING_IDS.forEach((id, index) => {
   const palette = PALETTES[index % PALETTES.length] ?? PALETTES[0]!;
   CHARACTER_VISUALS[id] = paperDollVisual(id, {
     suit: palette[0]!, suitHighlight: palette[1]!, skin: index % 3 === 0 ? 0xd29a73 : index % 3 === 1 ? 0xb97955 : 0xe1ac83,
     hair: index % 4 === 0 ? 0x29231f : 0x4a3429, accent: palette[2]!, hairStyle: index % 5 === 0 ? 'long' : 'short',
     glasses: index % 3 === 0, facialHair: index % 4 === 1,
   }, [`#${palette[2]!.toString(16).padStart(6, '0')}`, `#${palette[0]!.toString(16).padStart(6, '0')}`], .94 + (index % 3) * .03, 17);
+});
+
+const PLAYER_SPRITE_ANIMATIONS: Readonly<Record<CharacterAnimationName, CharacterAnimationDefinition>> = {
+  idle: animation([0, 1], 3, -1, still, true),
+  walkToward: animation([2, 3, 4, 5], 8, -1, walk),
+  walkAway: animation([10, 11, 12, 13], 8, -1, walk),
+  walkRight: animation([18, 19, 20, 21], 8, -1, walk),
+  walkLeft: animation([26, 27, 28, 29], 8, -1, walk),
+  interaction: animation([6, 7], 7, 0, gesture, true),
+  contextual: animation([6, 7], 6, 0, gesture, true),
+  hit: animation([6, 7], 11, 0, gesture, true),
+};
+
+function usePlayerSprite(id: 'mel' | 'josh', displayScale: number): void {
+  const base = CHARACTER_VISUALS[id]!;
+  const directional = {
+    toward: [0, 1],
+    away: [8, 9],
+    right: [16, 17],
+    left: [24, 25],
+  } as const;
+  const directionalActions = {
+    toward: [6, 7],
+    away: [14, 15],
+    right: [22, 23],
+    left: [30, 31],
+  } as const;
+  CHARACTER_VISUALS[id] = {
+    ...base,
+    renderer: 'sprite-sheet',
+    assets: { image: { key: `character-${id}`, path: CHARACTER_SPRITE_ASSETS[id] } },
+    frameLayout: { frameWidth: 128, frameHeight: 256, startFrame: 0, endFrame: 31 },
+    animations: PLAYER_SPRITE_ANIMATIONS,
+    directionalFrames: {
+      idle: directional,
+      interaction: directionalActions,
+      contextual: directionalActions,
+      hit: directionalActions,
+    },
+    displayScale,
+    spriteOrigin: { x: .5, y: .94 },
+  };
+}
+
+const NPC_SPRITE_ANIMATIONS: Readonly<Record<CharacterAnimationName, CharacterAnimationDefinition>> = {
+  idle: animation([0, 1], 2.4, -1, still, true),
+  walkToward: animation([2, 3, 4, 5], 7, -1, walk),
+  walkAway: animation([10, 11, 12, 13], 7, -1, walk),
+  walkRight: animation([18, 19, 20, 21], 7, -1, walk),
+  walkLeft: animation([26, 27, 28, 29], 7, -1, walk),
+  interaction: animation([6, 7], 5, 0, gesture, true),
+  contextual: animation([6, 7], 5, 0, gesture, true),
+  hit: animation([6, 7], 9, 0, gesture, true),
+};
+
+function useNpcSprite(id: string, displayScale = .55): void {
+  const base = CHARACTER_VISUALS[id];
+  if (!base) return;
+  CHARACTER_VISUALS[id] = {
+    ...base,
+    renderer: 'sprite-sheet',
+    assets: { image: { key: `character-${id}`, path: CHARACTER_SPRITE_ASSETS[id as keyof typeof CHARACTER_SPRITE_ASSETS] } },
+    frameLayout: { frameWidth: 128, frameHeight: 192, startFrame: 0, endFrame: 31 },
+    animations: NPC_SPRITE_ANIMATIONS,
+    directionalFrames: {
+      idle: { toward: [0, 1], away: [8, 9], right: [16, 17], left: [24, 25] },
+      interaction: { toward: [6, 7], away: [14, 15], right: [22, 23], left: [30, 31] },
+      contextual: { toward: [6, 7], away: [14, 15], right: [22, 23], left: [30, 31] },
+      hit: { toward: [6, 7], away: [14, 15], right: [22, 23], left: [30, 31] },
+    },
+    displayScale,
+    spriteOrigin: { x: .5, y: .96 },
+  };
+}
+
+usePlayerSprite('mel', .41);
+usePlayerSprite('josh', .42);
+['sally', 'juan', 'alan', 'ross', 'wayne', 'thanh', ...SUPPORTING_IDS].forEach((id, index) => {
+  useNpcSprite(id, .52 + (index % 3) * .015);
 });
 
 export function getVisual(id: string): CharacterVisualDefinition {
