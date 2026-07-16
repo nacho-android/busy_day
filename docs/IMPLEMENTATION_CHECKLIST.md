@@ -107,8 +107,8 @@
 - [x] Implement Dodge with stamina cost and cooldown.
 - [x] Implement per-location perspective scale and Y-based actor/prop depth.
 - [x] Implement transition lock, fade/sound, named destination spawn, reduced-motion cut, and entry cooldown.
-- [x] Implement procedural four-direction facing, idle/walk motion, interaction, and hit reaction for the lead rig.
-- [x] Polish the vector paper doll with tapered workwear, boots/hands/cuffs, seams/pockets/ID badge, face shading/features, glasses/facial hair, six hair styles, directional redraws, purposeful interaction, and mirrored left profile.
+- [x] Implement four-direction facing, idle/walk motion, interaction, and hit reaction for the lead rig, with a vector fallback and final raster-sheet runtime mode.
+- [x] Integrate distinct Mel/Josh 8×4 runtime sheets with two idle, four walk, and two interaction phases in all four directions.
 - [x] Keep character visual IDs/definitions separate enough to replace rendering without changing objectives.
 - [x] Add lead-specific smooth acceleration/deceleration and feed collision-resolved velocity back into animation/footsteps.
 - [ ] Add pointer/tap-to-move and pathfinding, or formally exclude them from the supported control set.
@@ -144,7 +144,7 @@
 ## 8. Artwork and visual production
 
 - [x] Retain all 11 generated 1672×941 PNG masters in `art/generated-masters/`.
-- [x] Export all 11 runtime backgrounds as 1280×720 WebP at quality 88 / effort 5; exact total 1,818,586 bytes (1.734 MiB).
+- [x] Export all 11 runtime backgrounds as 1280×720 WebP; replacement Main Hall/Tea Room/Car Park art brings the exact total to 1,777,598 bytes (1.695 MiB).
 - [x] Retire the five 1672×941 runtime PNG copies, formerly 12,006,717 bytes; their WebP replacements save 11,180,271 bytes.
 - [x] Integrate generated title art and a generated backplate for every gameplay location through data background keys.
 - [x] Keep unedited supplied photographs out of the runtime.
@@ -154,8 +154,9 @@
 - [x] Realign those five locations' collision and exit geometry to visible fixtures.
 - [x] Export browser-sized WebP files for the five final rooms, switch runtime paths, pass both production builds, and complete integrated all-room visual QA plus the focused three-engine reciprocal route.
 - [x] Generate, optimise, visually inspect, manifest, and integrate final dialogue portraits for eight key speakers through `CharacterVisualDefinition`.
-- [x] Retain and manifest the generated Mel/Josh directional source separately from runtime art; do not claim it as a packed/approved atlas.
-- [ ] Approve/integrate final lead/NPC sprite atlases, or explicitly approve the procedural vector character style. A generated Mel/Josh directional source sheet exists but is not yet approved as a runtime atlas.
+- [x] Retain generated directional/chroma sources separately from optimized runtime art.
+- [x] Integrate final Mel/Josh sheets plus 23 named NPC sheets, including dedicated Vu and Shinya artwork, through replaceable character definitions.
+- [x] Integrate animated animals, multi-angle trolleys, seven independent vehicles, and 40 facility-console/prop states through data-defined world-art mappings.
 - [x] Implement data-defined foreground occlusion crops from matching generated backplate pixels.
 - [ ] Generate/approve dedicated editable foreground layers, transition/loading art, ending art, and full prop/VFX/icon set.
 - [ ] Visually inspect every final runtime room, character, prop, effect, and depth relationship in motion.
@@ -258,7 +259,7 @@
 ## 13. Performance and production verification
 
 - [x] Show loading progress and stop with a readable error if a required image fails.
-- [x] Use compressed 1280×720 WebP for all 11 generated runtime backgrounds; total 1,818,586 bytes (1.734 MiB).
+- [x] Use compressed 1280×720 WebP for all 11 generated runtime backgrounds; current total 1,777,598 bytes (1.695 MiB).
 - [x] Convert the five final full-size runtime PNG copies to WebP, saving 11,180,271 bytes from their former 12,006,717-byte total.
 - [x] Request music by cue rather than decoding all WAV loops in the Phaser preloader.
 - [x] Preload only title/Tea Room backplates; load later rooms on entry and retain a three-location decoded-background LRU (roughly four decoded backplates including title).
@@ -274,7 +275,7 @@
 - [x] Serve that pre-final-art clean-install `dist/` locally and verify title, New Shift, HUD/Tea Room, one canvas, scroll lock, all 12 initial resources, HTTP responses, and console/page errors.
 - [x] Pass post-optimization local strict typecheck, ESLint, 27/27 unit tests, the normal Vite build, and a `/busy_day/` Pages-path Vite build; inspect the generated HTML/CSS URLs beneath `/busy_day/`.
 - [x] Repeat the final V2.1 gates from a clean `npm ci` and pass the production-preview suite 2/2 in Chromium, Firefox, and WebKit in workflow `29348227739`.
-- [x] Verify hosted Continue plus built JS/CSS, title WebP, and title WAV paths beneath `/busy_day/`; cache-busted requests returned HTTP 200 with correct types.
+- [x] Verify the deployed V2.1 title, New Shift confirmation, opening dialogue, Tea Room HUD/checkpoint, refresh/Continue recovery, and 18-objective drawer; production served `assets/index-DEBHc20z.js` and `assets/index-CyZvj29T.css` with zero captured console entries.
 
 ## 14. Documentation and licensing
 
@@ -301,7 +302,7 @@
 - [x] Push branch `agent/busy-day-v2` to `nacho-android/busy_day`.
 - [x] Open and merge PR #1 with summary, test evidence, limitations, and rights caveats.
 - [x] Push `agent/busy-day-v2-hardening`, open PR #2, and pass clean PR workflow `29348227739` on implementation head `61cfdb8`.
-- [x] Record merged `main` SHA `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`.
+- [x] Record historical V2.0 merge `54499b368d566f3fa4e7da1af3e7a06ed1942b2f` and V2.1 merge `d5bc627235f70865290b34e8efe28824debb1e54`.
 - [x] Add a gated Pages Actions deployment for successful non-PR `main` runs with `VITE_BASE_PATH=/busy_day/`.
 - [x] Pass main workflow `29298026940`, deploy Pages as `5433749633`, and complete the hosted HTTP/in-app smoke.
 
@@ -324,7 +325,7 @@
 - [x] Final-art clean production bundle passes local Chromium/WebKit preview reruns and 2/2 per engine in final three-engine CI.
 - [x] V2.0 PR #1 is merged to `main`, its Pages deployment succeeded, and its production URL passed hosted smoke.
 - [x] Commit/push V2.1, open PR #2, and pass its clean Node 24 PR workflow.
-- [ ] Merge PR #2, pass the V2.1 main workflow/Pages deployment, and repeat hosted smoke against the deployed SHA.
+- [x] Merge PR #2 as `d5bc627235f70865290b34e8efe28824debb1e54`, pass main workflow `29350906888` and Pages job `87149283383`, and repeat hosted smoke against the deployed build.
 
 ## Verification log
 
@@ -374,6 +375,9 @@
 | 2026-07-15 | V2.1 staged-tree `npm run verify:release` | Pass — V1 size/hash; 43-reference inventory/integrity/exclusion; 11 backgrounds; eight portraits; 26 WAVs; manifest/docs/links; file-size and selected credential-pattern gates; 141 intended files / 50.27 MiB. |
 | 2026-07-15 | V2.1 cross-engine regression rechecks | Pass locally — Firefox full-story 1/1; WebKit full story, phone touch, and gamepad 3/3 sequentially; WebKit exit directions 1–6 plus phone touch 2/2; Chromium and WebKit built previews 2/2 each after replacing pre-dialogue/retry-count timing samples with completion waits. |
 | 2026-07-15 | V2.1 final PR workflow [`29348227739`](https://github.com/nacho-android/busy_day/actions/runs/29348227739), commit [`61cfdb8`](https://github.com/nacho-android/busy_day/commit/61cfdb8df7df211af7ed7d0516865ef596114dd0) | Pass — clean `npm ci`; release/audio/type/lint; 49/49 unit; build; Chromium dev 16/16 + preview 2/2, Firefox 16/16 + 2/2, WebKit 16/16 + 2/2; 48/48 dev and 6/6 preview total; Pages correctly skipped on PR. |
-| 2026-07-14 | Main merge and workflow | PR #1 merged as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`; Node 24 workflow `29298026940` passed release/audio/type/lint/27-unit/build and Chromium/Firefox/WebKit 7/7 each (21/21) |
-| 2026-07-14 | GitHub Pages deployment | Pass — deployment `5433749633`, SHA/ref/state matched merge/`main`/success; workflow build type, HTTPS, main-only policy; https://nacho-android.github.io/busy_day/ |
-| 2026-07-14 | Hosted HTTP and in-app smoke | Pass — cache-busted index and hashed JS/CSS/title WebP/title WAV returned 200/correct types; no raw `/src/main.ts`; title → New Shift → Tea Room → refresh → Continue resumed Tea Room objective; zero captured warning/error logs |
+| 2026-07-14 | V2.1 final-head PR workflow [`29349669471`](https://github.com/nacho-android/busy_day/actions/runs/29349669471), commit [`91c9be7`](https://github.com/nacho-android/busy_day/commit/91c9be774975cc28586ebfecd950e60a3d3a3c45) | Pass — static/unit/build, Chromium, Firefox, and WebKit jobs all green for the final PR head before merge. |
+| 2026-07-14 | V2.1 main merge and workflow | [PR #2](https://github.com/nacho-android/busy_day/pull/2) merged as [`d5bc627`](https://github.com/nacho-android/busy_day/commit/d5bc627235f70865290b34e8efe28824debb1e54); Node 24 workflow [`29350906888`](https://github.com/nacho-android/busy_day/actions/runs/29350906888) passed quality plus Chromium, Firefox, and WebKit jobs. |
+| 2026-07-14 | V2.1 GitHub Pages job | Pass — [Pages job `87149283383`](https://github.com/nacho-android/busy_day/actions/runs/29350906888/job/87149283383), workflow build type, HTTPS, main-only policy; https://nacho-android.github.io/busy_day/ |
+| 2026-07-14 | V2.1 hosted in-app smoke | Pass — production loaded `assets/index-DEBHc20z.js` and `assets/index-CyZvj29T.css`; title → New Shift confirmation → Sally/Juan dialogue → Tea Room objective 0/1 → refresh → Continue restored the checkpoint; all 18 objectives appeared in the drawer; zero captured console entries. |
+| 2026-07-14 | Historical V2.0 main merge and workflow | PR #1 merged as `54499b368d566f3fa4e7da1af3e7a06ed1942b2f`; Node 24 workflow `29298026940` passed release/audio/type/lint/27-unit/build and Chromium/Firefox/WebKit 7/7 each (21/21) |
+| 2026-07-14 | Historical V2.0 GitHub Pages deployment | Pass — deployment `5433749633`, SHA/ref/state matched merge/`main`/success; workflow build type, HTTPS, main-only policy. |

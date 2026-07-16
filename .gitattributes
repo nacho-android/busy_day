@@ -1,0 +1,3 @@
+# V1 is a historical artifact with a release-verified byte hash. Never let a
+# platform's autocrlf setting rewrite it during checkout.
+/Busy_Day_v1.html binary

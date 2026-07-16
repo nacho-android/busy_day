@@ -45,6 +45,8 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   private baseScale = 1;
   private renderedDirection: Direction = 'toward';
   private activeAnimation: CharacterAnimationName = 'idle';
+  private activeAnimationKey = '';
+  private actionTimer: Phaser.Time.TimerEvent | null = null;
 
   get collisionRadius(): number {
     return this.visual.footprint.radius;
@@ -81,10 +83,10 @@ export class CharacterRig extends Phaser.GameObjects.Container {
         ? scene.add.sprite(0, visual.footprint.originY, textureKey).setOrigin(visual.spriteOrigin.x, visual.spriteOrigin.y)
         : null;
 
-    if (visual.renderer !== 'vector-paper-doll' && !sprite) {
+    if (visual.renderer !== 'vector-paper-doll' && !sprite && !visual.vector) {
       throw new Error(`Character ${visualId} renderer ${visual.renderer} is missing its loaded texture.`);
     }
-    bodyLayer.setVisible(visual.renderer === 'vector-paper-doll');
+    bodyLayer.setVisible(visual.renderer === 'vector-paper-doll' || !sprite);
 
     const children: Phaser.GameObjects.GameObject[] = [shadow, bodyLayer];
     if (sprite) children.push(sprite);
@@ -127,6 +129,10 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     return `busy-day-character-${this.visualId}-${name}`;
   }
 
+  private directionalAnimationKey(name: 'idle' | 'interaction' | 'contextual' | 'hit', direction: Direction): string {
+    return `${this.animationKey(name)}-${direction}`;
+  }
+
   private registerSpriteAnimations(): void {
     const textureKey = this.textureKey;
     if (!this.sprite || !textureKey) return;
@@ -142,18 +148,48 @@ export class CharacterRig extends Phaser.GameObjects.Container {
         yoyo: definition.yoyo ?? false,
       });
     }
+    for (const name of ['idle', 'interaction', 'contextual', 'hit'] as const) {
+      const definition = this.visual.animations[name];
+      const authoredDirections = this.visual.directionalFrames?.[name];
+      if (!authoredDirections) continue;
+      for (const direction of ['left', 'right', 'toward', 'away'] as const) {
+        const frames = authoredDirections[direction];
+        if (!frames?.length) continue;
+        const key = this.directionalAnimationKey(name, direction);
+        if (this.scene.anims.exists(key)) continue;
+        this.scene.anims.create({
+          key,
+          frames: frames.map((frame) => ({ key: textureKey, frame })),
+          frameRate: definition.frameRate,
+          repeat: definition.repeat,
+          yoyo: definition.yoyo ?? false,
+        });
+      }
+    }
   }
 
   private playAnimation(name: CharacterAnimationName, restart = false): void {
-    if (!restart && this.activeAnimation === name) return;
+    const directional = name === 'idle' || name === 'interaction' || name === 'contextual' || name === 'hit';
+    const directionKey = directional && this.visual.directionalFrames?.[name]?.[this.direction]
+      ? this.directionalAnimationKey(name, this.direction)
+      : this.animationKey(name);
+    if (!restart && this.activeAnimation === name && this.activeAnimationKey === directionKey) return;
     this.activeAnimation = name;
-    this.sprite?.play(this.animationKey(name), !restart);
+    this.activeAnimationKey = directionKey;
+    this.sprite?.play(directionKey, !restart);
   }
 
   faceToward(point: Point): void {
     const dx = point.x - this.x;
     const dy = point.y - this.y;
     this.direction = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'away' : 'toward');
+  }
+
+  private shouldMirrorSprite(): boolean {
+    if (this.direction !== 'left') return false;
+    const left = this.visual.animations.walkLeft.frames;
+    const right = this.visual.animations.walkRight.frames;
+    return left.length === right.length && left.every((frame, index) => frame === right[index]);
   }
 
   private resetPartPositions(): void {
@@ -172,7 +208,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   }
 
   private redrawArtwork(): void {
-    if (this.visual.renderer !== 'vector-paper-doll') return;
+    if (!this.bodyLayer.visible || !this.visual.vector) return;
     const visual = this.vector;
     const sideOn = this.direction === 'left' || this.direction === 'right';
     const away = this.direction === 'away';
@@ -446,6 +482,12 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     this.shadow.scaleX = this.moving ? 1.08 : 1;
     this.shadow.scaleY = sideOn ? .86 : 1;
     this.shadow.alpha = .36 + Math.sin(this.phase * .5) * motion.shadowPulse;
+    if (this.sprite) {
+      this.sprite.setFlipX(this.shouldMirrorSprite());
+      this.sprite.y = this.visual.footprint.originY - bob;
+      this.sprite.rotation = (this.moving ? walk : Math.sin(this.phase * .5)) * motion.torsoSwayRadians;
+      this.sprite.anims.timeScale = speedFactor;
+    }
 
     const perspective = location.perspective;
     const t = Phaser.Math.Clamp((this.y - perspective.farY) / (perspective.nearY - perspective.farY), 0, 1);
@@ -457,8 +499,18 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   playInteraction(): void {
     const animation = this.visual.animations.interaction;
     const stepMs = Math.max(60, 1000 / animation.frameRate);
+    this.actionTimer?.remove(false);
     this.interacting = true;
     this.playAnimation('interaction', true);
+    if (this.sprite) {
+      const totalMs = Math.max(stepMs, animation.frames.length / animation.frameRate * 1000 * (Math.max(0, animation.repeat) + 1));
+      this.actionTimer = this.scene.time.delayedCall(totalMs, () => {
+        this.interacting = false;
+        this.actionTimer = null;
+        this.playAnimation('idle', true);
+      });
+      return;
+    }
     this.scene.tweens.killTweensOf([this.leftArm, this.rightArm, this.accent]);
     this.scene.tweens.add({
       targets: this.rightArm,
@@ -473,10 +525,6 @@ export class CharacterRig extends Phaser.GameObjects.Container {
       },
     });
     this.scene.tweens.add({ targets: this.accent, alpha: { from: .5, to: 1 }, yoyo: true, repeat: 2, duration: stepMs * .7 });
-    if (this.sprite) {
-      const totalMs = Math.max(stepMs, animation.frames.length / animation.frameRate * 1000 * (Math.max(0, animation.repeat) + 1));
-      this.scene.time.delayedCall(totalMs, () => { this.interacting = false; });
-    }
   }
 
   playReaction(style: 'wave' | 'inspect' | 'startle' = 'wave'): void {
@@ -484,8 +532,18 @@ export class CharacterRig extends Phaser.GameObjects.Container {
     const animation = this.visual.animations.contextual;
     const stepMs = Math.max(75, 1000 / animation.frameRate);
     const reach = animation.motion.armSwingRadians * (style === 'startle' ? .72 : style === 'inspect' ? .38 : 1);
+    this.actionTimer?.remove(false);
     this.interacting = true;
     this.playAnimation('contextual', true);
+    if (this.sprite) {
+      const totalMs = Math.max(stepMs * 2, animation.frames.length / animation.frameRate * 1000 * (Math.max(0, animation.repeat) + 1));
+      this.actionTimer = this.scene.time.delayedCall(totalMs, () => {
+        this.interacting = false;
+        this.actionTimer = null;
+        this.playAnimation('idle', true);
+      });
+      return;
+    }
     this.scene.tweens.killTweensOf([this.leftArm, this.rightArm, this.head]);
     this.scene.tweens.add({
       targets: style === 'startle' ? [this.leftArm, this.rightArm] : this.rightArm,
@@ -505,6 +563,7 @@ export class CharacterRig extends Phaser.GameObjects.Container {
   playHit(): void {
     const animation = this.visual.animations.hit;
     const stepMs = Math.max(55, 1000 / animation.frameRate);
+    this.actionTimer?.remove(false);
     this.interacting = true;
     this.playAnimation('hit', true);
     this.scene.tweens.killTweensOf(this);
@@ -516,7 +575,11 @@ export class CharacterRig extends Phaser.GameObjects.Container {
       duration: stepMs,
       repeat: Math.max(0, animation.repeat),
       ease: 'Sine.InOut',
-      onComplete: () => { this.interacting = false; this.setAngle(0); },
+      onComplete: () => {
+        this.interacting = false;
+        this.setAngle(0);
+        this.playAnimation('idle', true);
+      },
     });
   }
 }

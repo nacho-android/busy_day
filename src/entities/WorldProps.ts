@@ -1,85 +1,264 @@
 import Phaser from 'phaser';
+import { getWorldArt, THANH_CAR_ART, WORLD_SPRITE_SHEETS, type WorldArtDefinition } from '../data/worldArt';
 import type { InteractionDefinition, LocationDefinition } from '../types/game';
 
-function marker(scene: Phaser.Scene, color: number): Phaser.GameObjects.Arc {
-  return scene.add.circle(0, 2, 22, color, .08).setStrokeStyle(2, color, .75);
+function stableNumber(value: string): number {
+  return [...value].reduce((total, character) => (total * 31 + character.charCodeAt(0)) >>> 0, 17);
 }
 
-function pig(scene: Phaser.Scene): Phaser.GameObjects.Container {
-  const body = scene.add.ellipse(0, -16, 46, 28, 0xeaa6a0).setStrokeStyle(2, 0x6d4244, .75);
-  const head = scene.add.ellipse(22, -18, 24, 22, 0xf0b1aa);
-  const snout = scene.add.ellipse(31, -16, 12, 9, 0xd98987);
-  const ear = scene.add.triangle(18, -32, 0, 10, 10, 0, 18, 11, 0xd98b89);
-  const legs = [-13, 8].map((x) => scene.add.rectangle(x, 0, 6, 17, 0xc77f7d).setOrigin(.5, 0));
-  return scene.add.container(0, 0, [body, head, snout, ear, ...legs]);
+function animationKey(art: WorldArtDefinition, purpose: string, frames: readonly number[]): string {
+  return `busy-day-world-${art.sheet}-${purpose}-${frames.join('-')}`;
 }
 
-function sheep(scene: Phaser.Scene): Phaser.GameObjects.Container {
-  const puffs = [-18, -8, 3, 14, 22].map((x, index) => scene.add.circle(x, -18 - (index % 2) * 4, 15, 0xe8e2d5));
-  const head = scene.add.ellipse(29, -18, 19, 25, 0x5c554f);
-  const legs = [-11, 12].map((x) => scene.add.rectangle(x, -4, 5, 20, 0x524c47).setOrigin(.5, 0));
-  return scene.add.container(0, 0, [...puffs, head, ...legs]);
-}
-
-function baboon(scene: Phaser.Scene): Phaser.GameObjects.Container {
-  const body = scene.add.ellipse(0, -19, 34, 41, 0x7a5745).setStrokeStyle(2, 0x352a25, .8);
-  const head = scene.add.circle(2, -45, 14, 0x866250);
-  const muzzle = scene.add.ellipse(9, -40, 15, 10, 0xc17c78);
-  const tail = scene.add.arc(-9, -15, 28, 60, 250, false).setStrokeStyle(5, 0x6a4d40).setFillStyle(0, 0);
-  return scene.add.container(0, 0, [tail, body, head, muzzle]);
-}
-
-function cart(scene: Phaser.Scene, trolley = false): Phaser.GameObjects.Container {
-  const base = scene.add.rectangle(0, -10, trolley ? 66 : 50, trolley ? 32 : 41, trolley ? 0x65707c : 0x3e6f69).setStrokeStyle(3, 0x9cb8b3, .8);
-  const rail = scene.add.rectangle(0, -32, trolley ? 70 : 54, 5, 0xb4c0c3);
-  const handle = scene.add.rectangle(-32, -20, 5, 42, 0xaab8ba);
-  const wheels = [scene.add.circle(-20, 10, 6, 0x121820), scene.add.circle(20, 10, 6, 0x121820)];
-  if (trolley) {
-    const payload = pig(scene).setPosition(0, -22).setScale(.82).setAlpha(.9);
-    return scene.add.container(0, 0, [base, rail, handle, ...wheels, payload]);
+function ensureAnimation(
+  scene: Phaser.Scene,
+  art: WorldArtDefinition,
+  purpose: string,
+  frames: readonly number[],
+  frameRate: number,
+  repeat: number,
+  yoyo = false,
+): string | null {
+  if (frames.length < 2) return null;
+  const sheet = WORLD_SPRITE_SHEETS[art.sheet];
+  const key = animationKey(art, purpose, frames);
+  if (!scene.anims.exists(key)) {
+    scene.anims.create({
+      key,
+      frames: frames.map((frame) => ({ key: sheet.key, frame })),
+      frameRate,
+      repeat,
+      yoyo,
+    });
   }
-  return scene.add.container(0, 0, [base, rail, handle, ...wheels]);
+  return key;
 }
 
-function machine(scene: Phaser.Scene): Phaser.GameObjects.Container {
-  const console = scene.add.rectangle(0, -18, 48, 39, 0x263b47).setStrokeStyle(2, 0x72e6dd, .7);
-  const screen = scene.add.rectangle(0, -22, 29, 14, 0x54ded2, .48);
-  const lights = [-11, 0, 11].map((x, index) => scene.add.circle(x, -2, 3, index === 1 ? 0xff68ac : 0xffd37c, .9));
-  return scene.add.container(0, 0, [console, screen, ...lights]);
+function playFrames(
+  scene: Phaser.Scene,
+  sprite: Phaser.GameObjects.Sprite,
+  art: WorldArtDefinition,
+  purpose: string,
+  frames: readonly number[],
+  frameRate: number,
+  repeat: number,
+  yoyo = false,
+): void {
+  const key = ensureAnimation(scene, art, purpose, frames, frameRate, repeat, yoyo);
+  if (key) sprite.play(key, true);
+  else if (frames[0] !== undefined) sprite.setFrame(frames[0]);
 }
 
-function car(scene: Phaser.Scene, id: string): Phaser.GameObjects.Container {
-  const colors: Record<string, number> = { car_sally: 0xb65b76, car_alan: 0x708a68, car_vu: 0x7e6cb1, car_max: 0xc48d4e, car_juan: 0x707b86, car_wayne: 0x197bd4 };
-  const body = scene.add.rectangle(0, -16, 82, 39, colors[id] ?? 0x637481).setStrokeStyle(3, 0xdce9ec, .32);
-  const roof = scene.add.rectangle(0, -20, 40, 27, 0x152637, .85);
-  const lights = [scene.add.rectangle(-31, -34, 12, 5, 0xffd988), scene.add.rectangle(31, -34, 12, 5, 0xffd988)];
-  return scene.add.container(0, 0, [body, roof, ...lights]);
-}
-
-export function createInteractionProp(scene: Phaser.Scene, interaction: InteractionDefinition, completed: boolean): Phaser.GameObjects.Container {
-  let prop: Phaser.GameObjects.Container;
-  if (interaction.prop === 'animal') {
-    prop = interaction.id.startsWith('pig') ? pig(scene) : interaction.id.startsWith('sheep') || interaction.id === 'shearing_station' ? sheep(scene) : baboon(scene);
-  } else if (interaction.prop === 'cart') prop = cart(scene);
-  else if (interaction.prop === 'trolley') prop = cart(scene, true);
-  else if (interaction.prop === 'car') prop = car(scene, interaction.id);
-  else if (interaction.prop === 'machine') prop = machine(scene);
-  else if (interaction.prop === 'coffee') {
-    const cup = scene.add.rectangle(0, -13, 24, 26, 0xe8e1cf).setStrokeStyle(2, 0x5d4c3c);
-    const steam = scene.add.arc(2, -35, 12, 190, 340, false).setStrokeStyle(2, 0xf2f7f5, .6).setFillStyle(0, 0);
-    prop = scene.add.container(0, 0, [cup, steam]);
-  } else if (interaction.prop === 'board') {
-    prop = scene.add.container(0, 0, [scene.add.rectangle(0, -25, 62, 46, 0x223e4a).setStrokeStyle(2, 0x78dbd4), scene.add.rectangle(0, -25, 43, 4, 0xffd27a)]);
-  } else {
-    prop = scene.add.container(0, 0, [scene.add.circle(0, -12, 17, 0x6b7f88).setStrokeStyle(2, 0xa9c6c9)]);
+function createArtSprite(
+  scene: Phaser.Scene,
+  art: WorldArtDefinition,
+  scale: number,
+  completed: boolean,
+): Phaser.GameObjects.Sprite {
+  const sheet = WORLD_SPRITE_SHEETS[art.sheet];
+  const initial = completed ? art.actionFrames[0] ?? art.idleFrames[0] : art.idleFrames[0];
+  const sprite = scene.add.sprite(0, 2, sheet.key, initial ?? 0)
+    .setOrigin(.5, art.originY ?? .84)
+    .setScale(art.displayScale * scale);
+  if (completed) {
+    const frameRate = art.motion === 'machine' ? 2.8 : 5;
+    const repeat = art.motion === 'machine' ? -1 : 0;
+    playFrames(scene, sprite, art, 'complete', art.actionFrames, frameRate, repeat, true);
   }
-  const pulse = marker(scene, completed ? 0x6d8c88 : 0x62e0d5);
-  const check = scene.add.text(0, -58, completed ? '✓' : '◆', { fontFamily: 'Segoe UI, sans-serif', fontSize: completed ? '18px' : '12px', color: completed ? '#86baa9' : '#77f2e5', stroke: '#03101b', strokeThickness: 4 }).setOrigin(.5);
-  const wrapper = scene.add.container(interaction.x, interaction.y, [pulse, prop, check]).setDepth(interaction.y + 30);
-  if (!completed) scene.tweens.add({ targets: pulse, scale: 1.35, alpha: .18, duration: 980, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-  if (interaction.prop === 'animal') scene.tweens.add({ targets: prop, y: -2, duration: 700 + (interaction.x % 300), yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-  if (interaction.prop === 'coffee') scene.tweens.add({ targets: prop, angle: 3, duration: 1100, yoyo: true, repeat: -1 });
+  else playFrames(scene, sprite, art, 'idle', art.idleFrames, art.motion === 'animal' ? 2.4 : 1.8, -1, true);
+  return sprite;
+}
+
+function addAmbientMotion(
+  scene: Phaser.Scene,
+  wrapper: Phaser.GameObjects.Container,
+  sprite: Phaser.GameObjects.Sprite,
+  art: WorldArtDefinition,
+  id: string,
+  completed: boolean,
+): void {
+  const seed = stableNumber(id);
+  if (art.motion === 'animal' && !completed) {
+    const idleFrames = art.idleFrames;
+    const actionFrames = [idleFrames[0]!, ...art.actionFrames, idleFrames[0]!];
+    scene.time.addEvent({
+      delay: 2800 + seed % 2400,
+      loop: true,
+      callback: () => {
+        if (!sprite.active || sprite.anims.isPlaying && sprite.anims.currentAnim?.key.includes('action')) return;
+        playFrames(scene, sprite, art, 'action', actionFrames, 3.2, 0);
+        sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+          if (sprite.active) playFrames(scene, sprite, art, 'idle', idleFrames, 2.4, -1, true);
+        });
+      },
+    });
+    scene.tweens.add({ targets: sprite, y: { from: 1, to: -1.5 }, duration: 850 + seed % 350, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return;
+  }
+
+  if (art.motion === 'trolley') {
+    scene.tweens.add({ targets: sprite, angle: { from: -.35, to: .35 }, y: { from: 2, to: 0 }, duration: 1150 + seed % 420, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return;
+  }
+
+  if (art.motion === 'vehicle') {
+    const reflection = scene.add.ellipse(0, -24, 75, 9, 0xbfeaff, .09).setBlendMode(Phaser.BlendModes.ADD);
+    wrapper.addAt(reflection, 1);
+    scene.tweens.add({ targets: reflection, alpha: { from: .04, to: .2 }, scaleX: { from: .82, to: 1.14 }, duration: 1450 + seed % 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return;
+  }
+
+  if (art.motion === 'steam') {
+    scene.tweens.add({ targets: sprite, y: { from: 5, to: -7 }, alpha: { from: .55, to: .95 }, scaleX: { from: sprite.scaleX * .88, to: sprite.scaleX * 1.08 }, duration: 1250, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return;
+  }
+
+  if (art.motion === 'machine') {
+    const glow = scene.add.ellipse(0, -27, 64, 36, completed ? 0x72f3bf : 0x5ce5df, completed ? .2 : .1)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    wrapper.addAt(glow, 1);
+    scene.tweens.add({ targets: glow, alpha: { from: completed ? .12 : .05, to: completed ? .34 : .2 }, scale: { from: .88, to: 1.14 }, duration: 720 + seed % 480, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return;
+  }
+
+  if (art.motion === 'board' && completed) {
+    const confirmation = scene.add.rectangle(0, -24, 56, 5, 0x76f0c3, .5).setBlendMode(Phaser.BlendModes.ADD);
+    wrapper.add(confirmation);
+    scene.tweens.add({ targets: confirmation, alpha: { from: .25, to: .8 }, duration: 900, yoyo: true, repeat: -1 });
+  }
+}
+
+export function createInteractionProp(
+  scene: Phaser.Scene,
+  interaction: InteractionDefinition,
+  completed: boolean,
+  location: LocationDefinition,
+): Phaser.GameObjects.Container {
+  const art = getWorldArt(interaction);
+  const scale = perspectiveScale(interaction.y, location);
+  const shadowWidth = WORLD_SPRITE_SHEETS[art.sheet].frameWidth * art.displayScale * scale * .58;
+  const shadow = scene.add.ellipse(0, 5, shadowWidth, Math.max(10, shadowWidth * .2), 0x000000, .34);
+  const focus = scene.add.ellipse(0, 6, Math.max(38, shadowWidth * .8), Math.max(13, shadowWidth * .2), completed ? 0x72ba9e : 0x60e8d8, completed ? .025 : .07)
+    .setStrokeStyle(completed ? 1 : 2, completed ? 0x72ba9e : 0x60e8d8, completed ? .16 : .48);
+  const sprite = createArtSprite(scene, art, scale, completed);
+  if (interaction.id === 'pig_feed_2') {
+    // Only the head and forequarters project through the lower feeding hatch;
+    // the rest of the animal remains visually inside the fixed pen.
+    sprite.setCrop(72, 0, 88, WORLD_SPRITE_SHEETS.animals.frameHeight);
+  }
+  if (interaction.id === 'pig_feed_3') {
+    // Crop coordinates are evaluated after the right-side sprite is mirrored.
+    sprite.setCrop(0, 0, 88, WORLD_SPRITE_SHEETS.animals.frameHeight);
+  }
+  // The south-right pen opens toward the aisle, so its pig faces out through
+  // the feeding threshold while the body remains occluded by the authored pen.
+  if (interaction.id === 'pig_feed_3') sprite.setFlipX(true);
+  const wrapper = scene.add.container(interaction.x, interaction.y, [shadow, focus, sprite]).setDepth(interaction.y + 30);
   wrapper.setData('interactionId', interaction.id);
+  wrapper.setData('mainSprite', sprite);
+  wrapper.setData('worldArt', art);
+  if (!completed) {
+    scene.tweens.add({ targets: focus, scaleX: 1.28, scaleY: 1.22, alpha: .13, duration: 1050, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+  }
+  addAmbientMotion(scene, wrapper, sprite, art, interaction.id, completed);
+  return wrapper;
+}
+
+/**
+ * Plays a prop's authored interaction state without marking it permanently
+ * complete. This is used by successful optional consoles: they acknowledge
+ * the input, then return to their ambient standby cycle.
+ */
+export function playWorldPropAction(
+  scene: Phaser.Scene,
+  wrapper: Phaser.GameObjects.Container,
+  interaction: InteractionDefinition,
+): void {
+  const art = getWorldArt(interaction);
+  const sprite = wrapper.getData('mainSprite') as Phaser.GameObjects.Sprite | undefined;
+  if (!sprite?.active || art.actionFrames.length === 0) return;
+
+  const actionKey = ensureAnimation(scene, art, 'interaction', art.actionFrames, art.motion === 'machine' ? 3.4 : 5, 0, true);
+  if (!actionKey) {
+    sprite.setFrame(art.actionFrames[0]!);
+    scene.time.delayedCall(320, () => {
+      if (sprite.active) playFrames(scene, sprite, art, 'idle', art.idleFrames, art.motion === 'animal' ? 2.4 : 1.8, -1, true);
+    });
+    return;
+  }
+
+  sprite.play(actionKey, true);
+  sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+    if (sprite.active) playFrames(scene, sprite, art, 'idle', art.idleFrames, art.motion === 'animal' ? 2.4 : 1.8, -1, true);
+  });
+}
+
+export function animateWorldPropDeparture(
+  scene: Phaser.Scene,
+  wrapper: Phaser.GameObjects.Container,
+  interaction: InteractionDefinition,
+  reducedMotion: boolean,
+  onComplete: () => void,
+): void {
+  const art = getWorldArt(interaction);
+  const sprite = wrapper.getData('mainSprite') as Phaser.GameObjects.Sprite | undefined;
+  if (sprite && art.movementFrames?.length) playFrames(scene, sprite, art, 'move', art.movementFrames, art.motion === 'vehicle' ? 7 : 5, -1, true);
+  if (reducedMotion) {
+    onComplete();
+    return;
+  }
+
+  if (art.motion === 'vehicle') {
+    const turnX = Math.min(1080, wrapper.x + 95);
+    const turnY = Math.min(590, wrapper.y + 35);
+    scene.tweens.add({
+      targets: wrapper,
+      x: turnX,
+      y: turnY,
+      angle: 5,
+      duration: 560,
+      ease: 'Sine.InOut',
+      onUpdate: () => wrapper.setDepth(wrapper.y + 30),
+      onComplete: () => {
+        scene.tweens.add({
+          targets: wrapper,
+          x: 1360,
+          y: Math.min(620, turnY + 20),
+          scale: .64,
+          alpha: .08,
+          angle: 10,
+          duration: 1160,
+          ease: 'Cubic.In',
+          onUpdate: () => wrapper.setDepth(wrapper.y + 30),
+          onComplete,
+        });
+      },
+    });
+    return;
+  }
+
+  const leavesRight = interaction.id === 'pig_trolley';
+  scene.tweens.add({
+    targets: wrapper,
+    x: leavesRight ? 1245 : 205,
+    y: leavesRight ? 330 : 270,
+    alpha: .05,
+    angle: leavesRight ? -3 : 3,
+    duration: 720,
+    ease: 'Cubic.InOut',
+    onComplete,
+  });
+}
+
+export function createThanhVehicle(scene: Phaser.Scene, x: number, y: number, location: LocationDefinition): Phaser.GameObjects.Container {
+  const scale = perspectiveScale(y, location);
+  const shadow = scene.add.ellipse(0, 7, 90, 18, 0x000000, .38);
+  const sprite = createArtSprite(scene, THANH_CAR_ART, scale, false);
+  playFrames(scene, sprite, THANH_CAR_ART, 'hazard-drive', THANH_CAR_ART.movementFrames ?? THANH_CAR_ART.idleFrames, 7, -1, true);
+  const wrapper = scene.add.container(x, y, [shadow, sprite]).setDepth(y + 150);
+  const beacon = scene.add.circle(0, -48, 8, 0xff554f, .28).setBlendMode(Phaser.BlendModes.ADD);
+  wrapper.add(beacon);
+  scene.tweens.add({ targets: beacon, alpha: { from: .12, to: .8 }, scale: { from: .7, to: 1.45 }, duration: 260, yoyo: true, repeat: -1 });
   return wrapper;
 }
 

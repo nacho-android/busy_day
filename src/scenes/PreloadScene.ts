@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BACKGROUND_ASSETS } from '../data/assets';
 import { CHARACTER_VISUALS } from '../data/characters';
+import { WORLD_SPRITE_SHEETS } from '../data/worldArt';
 import { ui } from '../ui/GameUI';
 import type { CharacterAssetReference } from '../types/game';
 
@@ -52,6 +53,9 @@ export class PreloadScene extends Phaser.Scene {
     // entry by LocationScene and retained in a small LRU texture cache.
     for (const key of ['titleArt', 'teaRoom'] as const) this.load.image(key, assetUrl(BACKGROUND_ASSETS[key]));
     this.queueCharacterAssets();
+    for (const sheet of Object.values(WORLD_SPRITE_SHEETS)) {
+      this.load.spritesheet(sheet.key, assetUrl(sheet.path), { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight });
+    }
   }
 
   private queueImage(asset: CharacterAssetReference | undefined): void {

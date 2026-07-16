@@ -149,9 +149,13 @@ test.describe('Busy Day V2 browser hardening', () => {
     await page.waitForTimeout(900);
     const key = await page.evaluate(() => window.__busyDayTest?.approachExit('hall_to_car') ?? null);
     expect(key).toBe('ArrowDown');
-    await pushFor(page, 'ArrowDown', 850);
+    await page.keyboard.down('ArrowDown');
+    try {
+      await expect(page.locator('.toast').last()).toContainText('loading gate stays locked', { timeout: 20_000 });
+    } finally {
+      await page.keyboard.up('ArrowDown');
+    }
     expect((await state(page))?.locationId).toBe('mainHall');
-    await expect(page.locator('.toast').last()).toContainText('loading gate stays locked');
   });
 
   test('Wayne failure retries the car-park checkpoint and the checkpoint survives reload', async ({ page, runtimeIssues: _runtimeIssues }) => {
